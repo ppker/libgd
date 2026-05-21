@@ -1,0 +1,4 @@
+LIST(APPEND TESTS_FILES
+	test_core
+)
+ADD_GD_TESTS()
