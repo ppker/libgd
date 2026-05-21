@@ -119,7 +119,7 @@ static void run_tests(gdImagePtr im, int *error)
 	gdImageSetPixel(im, 3, 2, seashell)
 
 	INITIALIZE_IMAGE();
-	n = gdImageColorReplaceThreshold(im, white, yellow, 2.0);
+	n = gdImageColorReplaceThreshold(im, white, yellow, 14.1);
 	CHECK_VALUE(n, 9);
 	CHECK_PIXEL(0, 0, black);
 	CHECK_PIXEL(1, 1, yellow);
@@ -135,7 +135,7 @@ int main()
 {
 	gdImagePtr im;
 	int error = 0;
-
+	FILE *fp;
 	gdSetErrorMethod(gdSilence);
 
 	/* true color */
@@ -146,6 +146,16 @@ int main()
 	/* palette */
 	im = gdImageCreate(5, 5);
 	run_tests(im, &error);
+
+	fp = fopen("b.png", "wb");
+	if (!fp) {
+		fprintf(stderr, "Can't save png image.\n");
+		gdImageDestroy(im);
+		return 1;
+	}
+	gdImagePng(im, fp);
+	fclose(fp);
+
 	gdImageDestroy(im);
 
 	return error;
