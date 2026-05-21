@@ -5,3 +5,6 @@ if(WIN32)
 endif()
 add_library(gdTest STATIC ${GDTEST_FILES})
 target_link_libraries(gdTest ${GD_LIB})
+
+add_executable(gdpdiff gdpdiff.c)
+target_link_libraries(gdpdiff gdTest ${GD_LIB})
