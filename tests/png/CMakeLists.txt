@@ -1,6 +1,7 @@
 IF(PNG_FOUND)
 LIST(APPEND TESTS_FILES
 	png_im2im
+	png_conformance
 	png_null
 	png_resolution
 	bug00011
