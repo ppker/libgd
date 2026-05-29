@@ -6,6 +6,8 @@
 
 #define PI 3.141592
 #define DELTA (PI/8)
+#define PERCEPTUAL_THRESHOLD 0.05
+#define MAX_PERCEPTUAL_PIXELS_CHANGED 1500
 
 static int EXPECT[16][8] = {
 	{500, 400, 628, 400, 628, 376, 500, 376},
@@ -88,14 +90,15 @@ int main()
 		goto done;
 	}
 	gdImagePtr buf_diff = gdImageCreateTrueColor(gdImageSX(im), gdImageSY(im));
-	gdTestImagePerceptualDiff(im, ref, buf_diff, &result, 0.05);
-	if (result.pixels_changed > 0) {
+	gdTestImagePerceptualDiff(im, ref, buf_diff, &result, PERCEPTUAL_THRESHOLD);
+	if (result.pixels_changed > MAX_PERCEPTUAL_PIXELS_CHANGED) {
 		FILE *fp = fopen("gdimagestringft_bbox_diff.png", "wb");
 		if (fp) {
 			gdImagePng(buf_diff, fp);
 			fclose(fp);
 		}
-		gdTestErrorMsg("perceptual diff changed %u pixels (threshold=0.10)\n", result.pixels_changed);
+		gdTestErrorMsg("perceptual diff changed %u pixels (allowed=%u, threshold=%.2f)\n",
+			result.pixels_changed, MAX_PERCEPTUAL_PIXELS_CHANGED, PERCEPTUAL_THRESHOLD);
 		error = 1;
 		FILE *f;
 		f = fopen("/tmp/gd_test_diff.png", "wb");

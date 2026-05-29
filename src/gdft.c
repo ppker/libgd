@@ -1220,8 +1220,14 @@ BGD_DECLARE(char *) gdImageStringFTEx (gdImagePtr im, int *brect, int fg, const 
 	matrix.xy = -matrix.yx;
 	matrix.yy = matrix.xx;
 
+	/* Keep RAQM layout in text space; apply transform later only for
+	 * the render glyph load. */
+#ifdef HAVE_LIBRAQM
+	FT_Set_Transform (face, NULL, NULL);
+#else
 	/* set rotation transform */
 	FT_Set_Transform (face, &matrix, NULL);
+#endif
 
 	FT_New_Size (face, &platform_independent);
 	FT_Activate_Size (platform_independent);
@@ -1460,6 +1466,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (gdImagePtr im, int *brect, int fg, const 
 		}
 		oldpenf.x = penf.x;
 
+#ifdef HAVE_LIBRAQM
+		/* Keep RAQM brect/layout metrics in unrotated text space. */
+		FT_Set_Transform (face, NULL, NULL);
+#endif
+
 		/* load glyph image into the slot (erase previous one) */
 		err = FT_Load_Glyph (face, glyph_index, render_mode);
 		if (err) {
@@ -1510,6 +1521,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (gdImagePtr im, int *brect, int fg, const 
 		if (render) {
 			FT_Activate_Size (platform_specific);
 
+#ifdef HAVE_LIBRAQM
+			/* Render rotated glyph bitmaps while RAQM pen advances remain in
+			 * layout space. */
+			FT_Set_Transform (face, &matrix, NULL);
+#endif
+
 			/* load glyph again into the slot (erase previous one)  - this time with scaling */
 			err = FT_Load_Glyph (face, glyph_index, render_mode);
 			if (err) {
@@ -1545,15 +1562,9 @@ BGD_DECLARE(char *) gdImageStringFTEx (gdImagePtr im, int *brect, int fg, const 
 			(the estimate was rounded up to next 1/METRIC_RES, so this should fit) */
 			FT_Pos pen_x = penf.x + info[i].x_offset;
 			FT_Pos pen_y = penf.y - info[i].y_offset;
-#if defined(HAVE_LIBRAQM) && RAQM_VERSION_ATLEAST (0, 9, 0)
-			gdft_draw_bitmap (tc_cache, im, fg, bm->bitmap,
-					  (int)(x + pen_x*hdpi/(METRIC_RES*64) + bm->left),
-					  (int)(y - pen_y*vdpi/(METRIC_RES*64) - bm->top));
-#else
 			gdft_draw_bitmap (tc_cache, im, fg, bm->bitmap,
 					  (int)(x + (pen_x * cos_a + pen_y * sin_a)*hdpi/(METRIC_RES*64) + bm->left),
 					  (int)(y - (pen_x * sin_a - pen_y * cos_a)*vdpi/(METRIC_RES*64) - bm->top));
-#endif
 
 			FT_Done_Glyph (image);
 		}
