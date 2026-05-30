@@ -499,7 +499,7 @@ BGD_DECLARE(gdImagePtr) gdImageNeuQuant(gdImagePtr im, const int max_color, int 
 
 	int i,x;
 
-	unsigned char map[MAXNETSIZE][4];
+	unsigned char map[MAXNETSIZE][4] = {{0}};
 	unsigned char *d;
 
 	nn_quant *nnq = NULL;
@@ -507,6 +507,11 @@ BGD_DECLARE(gdImagePtr) gdImageNeuQuant(gdImagePtr im, const int max_color, int 
 	int row;
 	unsigned char *rgba = NULL;
 	gdImagePtr dst = NULL;
+
+	if (newcolors <= 0 || newcolors > MAXNETSIZE) {
+		gd_error("neuquant: max_color must be between 1 and %d\n", MAXNETSIZE);
+		goto done;
+	}
 
 	/* Default it to 3 */
 	if (sample_factor < 1) {
