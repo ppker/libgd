@@ -31,6 +31,12 @@ if(NOT HAVE_EXIV2_TESTS)
 endif()
 ENDIF()
 
+set(GD_SKIP_PNG_EXIV2_TEST OFF)
+if(WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|AARCH64|arm64|aarch64)$")
+	set(GD_SKIP_PNG_EXIV2_TEST ON)
+	message(STATUS "Skipping PNG exiv2 validation test on Windows arm64")
+endif()
+
 function(gd_metadata_link_exiv2_test target)
 	target_include_directories(${target} PRIVATE ${EXIV2_INCLUDE_DIRS})
 	target_compile_options(${target} PRIVATE ${EXIV2_CFLAGS_OTHER})
@@ -57,12 +63,12 @@ IF(PNG_FOUND)
 LIST(APPEND TESTS_FILES
 	png_metadata
 )
-IF(HAVE_EXIV2_TESTS)
+IF(HAVE_EXIV2_TESTS AND NOT GD_SKIP_PNG_EXIV2_TEST)
 add_executable(test_metadata_png_exiv2 png_exiv2.cpp)
 gd_metadata_link_exiv2_test(test_metadata_png_exiv2)
 add_test(NAME test_metadata_png_exiv2 COMMAND test_metadata_png_exiv2)
 SET_PROPERTY(TEST test_metadata_png_exiv2 PROPERTY SKIP_RETURN_CODE 77)
-ENDIF(HAVE_EXIV2_TESTS)
+ENDIF(HAVE_EXIV2_TESTS AND NOT GD_SKIP_PNG_EXIV2_TEST)
 ENDIF(PNG_FOUND)
 
 ADD_GD_TESTS()
