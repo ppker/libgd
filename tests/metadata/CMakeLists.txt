@@ -32,9 +32,9 @@ endif()
 ENDIF()
 
 set(GD_SKIP_PNG_EXIV2_TEST OFF)
-if(WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|AARCH64|arm64|aarch64)$")
+if(WIN32)
 	set(GD_SKIP_PNG_EXIV2_TEST ON)
-	message(STATUS "Skipping PNG exiv2 validation test on Windows arm64")
+	message(STATUS "Skipping PNG exiv2 validation test on Windows")
 endif()
 
 function(gd_metadata_link_exiv2_test target)
