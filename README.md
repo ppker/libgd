@@ -28,7 +28,7 @@ We also have a mailing list. To subscribe to any mailing list,
 send an email to gd-devel-subscribe@lists.php.net.
 Then emails can be sent to gd-devel@lists.php.net.
 
-## Downloads/etc...
+## Downloads/etc.
 
 Please visit our [homepage](https://libgd.github.io/) for more details.
 
