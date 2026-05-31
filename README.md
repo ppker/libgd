@@ -11,7 +11,7 @@ used to generate charts, graphics, thumbnails, and most anything else, on the
 fly. It is also useful to convert images to another format.
 
 The most common applications of GD involve website development, although it
-can be used with any standalone application!
+can be used with any standalone application!  
 
 The library was originally developed by Thomas Boutell and is now maintained
 by many contributors (see the [CONTRIBUTORS](CONTRIBUTORS) file).
@@ -28,7 +28,7 @@ We also have a mailing list. To subscribe to any mailing list,
 send an email to gd-devel-subscribe@lists.php.net.
 Then emails can be sent to gd-devel@lists.php.net.
 
-## Downloads/etc.
+## Downloads
 
 Please visit our [homepage](https://libgd.github.io/) for more details.
 
