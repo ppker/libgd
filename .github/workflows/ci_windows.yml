@@ -51,7 +51,7 @@ jobs:
           copy libultrahdr-src\ultrahdr_api.h libultrahdr-install\include\
           copy libultrahdr-build\uhdr.lib libultrahdr-install\lib\
           copy libultrahdr-build\uhdr.dll libultrahdr-install\bin\
-          if exist libultrahdr-build\ultrahdr_app.exe copy libultrahdr-build\ultrahdr_app.exe libultrahdr-install\bin\
+          for /R libultrahdr-build %%f in (ultrahdr_app.exe) do copy "%%f" libultrahdr-install\bin\
           dir /s /b libultrahdr-install
 
       - name: Install exiv2 test dependency

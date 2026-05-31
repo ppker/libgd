@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/wait.h>
+#endif
 
 #define MAX_METADATA_ENTRIES 32
 #define MAX_METADATA_VALUES 3
@@ -25,6 +27,7 @@ typedef struct {
 	int count;
 } MetadataTable;
 
+#ifndef _WIN32
 static int has_single_quote(const char *s)
 {
 	const char *p;
@@ -41,6 +44,49 @@ static int has_single_quote(const char *s)
 
 	return 0;
 }
+#endif
+
+#ifdef _WIN32
+static int has_double_quote(const char *s)
+{
+	const char *p;
+
+	if (!s) {
+		return 0;
+	}
+
+	for (p = s; *p != '\0'; p++) {
+		if (*p == '"') {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+#endif
+
+static int cli_status_succeeded(int status, const char *cmd)
+{
+#ifdef _WIN32
+	if (status != 0) {
+		gdTestErrorMsg("CLI invocation failed: exit=%d, command=%s\n", status, cmd);
+		return 0;
+	}
+#else
+	if (WIFEXITED(status)) {
+		int exit_code = WEXITSTATUS(status);
+		if (exit_code != 0) {
+			gdTestErrorMsg("CLI invocation failed: exit=%d, command=%s\n", exit_code, cmd);
+			return 0;
+		}
+	} else {
+		gdTestErrorMsg("CLI invocation did not exit normally: command=%s\n", cmd);
+		return 0;
+	}
+#endif
+
+	return 1;
+}
 
 static int run_cli_decode(const char *input_jpg, const char *metadata_path, const char *raw_path)
 {
@@ -53,6 +99,16 @@ static int run_cli_decode(const char *input_jpg, const char *metadata_path, cons
 		return 0;
 	}
 
+#ifdef _WIN32
+	if (has_double_quote(input_jpg) || has_double_quote(metadata_path) || has_double_quote(raw_path)) {
+		gdTestErrorMsg("CLI invocation paths must not include double quote characters\n");
+		return 0;
+	}
+
+	rc = snprintf(cmd, sizeof(cmd),
+		"ultrahdr_app -m 1 -j \"%s\" -f \"%s\" -z \"%s\" >nul 2>&1",
+		input_jpg, metadata_path, raw_path);
+#else
 	if (has_single_quote(input_jpg) || has_single_quote(metadata_path) || has_single_quote(raw_path)) {
 		gdTestErrorMsg("CLI invocation paths must not include single quote characters\n");
 		return 0;
@@ -61,6 +117,7 @@ static int run_cli_decode(const char *input_jpg, const char *metadata_path, cons
 	rc = snprintf(cmd, sizeof(cmd),
 		"ultrahdr_app -m 1 -j '%s' -f '%s' -z '%s' >/dev/null 2>&1",
 		input_jpg, metadata_path, raw_path);
+#endif
 	if (rc < 0 || (size_t) rc >= sizeof(cmd)) {
 		gdTestErrorMsg("CLI command buffer overflow while preparing command\n");
 		return 0;
@@ -72,18 +129,7 @@ static int run_cli_decode(const char *input_jpg, const char *metadata_path, cons
 		return 0;
 	}
 
-	if (WIFEXITED(status)) {
-		int exit_code = WEXITSTATUS(status);
-		if (exit_code != 0) {
-			gdTestErrorMsg("CLI invocation failed: exit=%d, command=%s\n", exit_code, cmd);
-			return 0;
-		}
-	} else {
-		gdTestErrorMsg("CLI invocation did not exit normally: command=%s\n", cmd);
-		return 0;
-	}
-
-	return 1;
+	return cli_status_succeeded(status, cmd);
 }
 
 static int parse_metadata_file(const char *path, MetadataTable *table)
