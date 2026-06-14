@@ -10,17 +10,16 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
-    gdImagePtr im = gdImageCreate(100, 100);
+int main() {
+	gdImagePtr im = gdImageCreate(100, 100);
 
-    int rect[8];
-    int fg = gdImageColorAllocate(im, 255, 255, 255);
-    char *path = gdTestFilePath("freetype/DejaVuSans.ttf");
-    char *res = gdImageStringFT(im, rect, fg, path, 12, 0, 10, 10, "");
+	int rect[8];
+	int fg = gdImageColorAllocate(im, 255, 255, 255);
+	char *path = gdTestFilePath("freetype/DejaVuSans.ttf");
+	char *res = gdImageStringFT(im, rect, fg, path, 12, 0, 10, 10, "");
 
-    gdTestAssert(res == NULL);
-    free(path);
-    gdImageDestroy(im);
-    return gdNumFailures();
+	gdTestAssert(res == NULL);
+	free(path);
+	gdImageDestroy(im);
+	return gdNumFailures();
 }

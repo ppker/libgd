@@ -3,8 +3,8 @@
 #endif
 
 /* Bring in standard I/O and string manipulation functions */
-#include <stdarg.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +13,8 @@
 #endif
 
 #ifdef __clang__
-/* Workaround broken clang behavior: https://llvm.org/bugs/show_bug.cgi?id=20144 */
+/* Workaround broken clang behavior: https://llvm.org/bugs/show_bug.cgi?id=20144
+ */
 #undef strcmp
 #endif
 
@@ -24,26 +25,27 @@
 
 static const char argv0[] = "webpng";
 
-static void usage(const char *msg)
-{
+static void usage(const char *msg) {
 	/* If the command failed, output an explanation. */
 	fprintf(msg == NULL ? stdout : stderr,
-		"Usage: %s [-i y|n] [-l] [-t index|none] [-d] [-a] pngname.png\n"
-		"  -i <y|n>   Turns on/off interlace\n"
-		"  -l         Prints the table of color indexes\n"
-		"  -t <index> Set the transparent color to the specified index (0-255 or \"none\")\n"
-		"  -d         Reports the dimensions and other characteristics of the image\n"
-		"  -a         Prints all alpha channels that are not 100%% opaque\n"
-		"\n"
-		"If you specify '-' as the input file, stdin/stdout will be used as input/output.\n",
-		argv0);
+			"Usage: %s [-i y|n] [-l] [-t index|none] [-d] [-a] pngname.png\n"
+			"  -i <y|n>   Turns on/off interlace\n"
+			"  -l         Prints the table of color indexes\n"
+			"  -t <index> Set the transparent color to the specified index "
+			"(0-255 or \"none\")\n"
+			"  -d         Reports the dimensions and other characteristics of "
+			"the image\n"
+			"  -a         Prints all alpha channels that are not 100%% opaque\n"
+			"\n"
+			"If you specify '-' as the input file, stdin/stdout will be used "
+			"as input/output.\n",
+			argv0);
 	if (msg)
 		fprintf(stderr, "\nError: %s\n", msg);
 	exit(msg == NULL ? 0 : 1);
 }
 
-static void err(const char *fmt, ...)
-{
+static void err(const char *fmt, ...) {
 	va_list ap;
 	int e = errno;
 
@@ -58,9 +60,7 @@ static void err(const char *fmt, ...)
 	exit(1);
 }
 
-int
-main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	FILE *in;
 	FILE *out;
 	const char *infile;
@@ -172,11 +172,9 @@ main(int argc, char **argv)
 			printf("Index	Red	Green	Blue Alpha\n");
 			for (j = 0; j < gdImageColorsTotal(im); ++j) {
 				/* Use access macros to learn colors. */
-				printf("%d	%d	%d	%d	%d\n", j,
-					gdImageRed(im, j),
-					gdImageGreen(im, j),
-					gdImageBlue(im, j),
-					gdImageAlpha(im, j));
+				printf("%d	%d	%d	%d	%d\n", j, gdImageRed(im, j),
+					   gdImageGreen(im, j), gdImageBlue(im, j),
+					   gdImageAlpha(im, j));
 			}
 		} else
 			printf("Truecolor image, no palette entries to list.\n");
@@ -185,10 +183,8 @@ main(int argc, char **argv)
 	if (report_details) {
 		/* Output dimensions, etc. */
 		int t;
-		printf("Width: %d Height: %d Colors: %d\n",
-			gdImageSX(im),
-			gdImageSY(im),
-			gdImageColorsTotal(im));
+		printf("Width: %d Height: %d Colors: %d\n", gdImageSX(im),
+			   gdImageSY(im), gdImageColorsTotal(im));
 
 		/* -1 means the image is not transparent. */
 		t = gdImageGetTransparent(im);
@@ -220,14 +216,11 @@ main(int argc, char **argv)
 
 					if (alpha > gdAlphaOpaque) {
 						/* Use access macros to learn colors. */
-						printf("%d	%d	%d	%d\n",
-							gdTrueColorGetRed(pix),
-							gdTrueColorGetGreen(pix),
-							gdTrueColorGetBlue(pix),
-							alpha);
+						printf("%d	%d	%d	%d\n", gdTrueColorGetRed(pix),
+							   gdTrueColorGetGreen(pix),
+							   gdTrueColorGetBlue(pix), alpha);
 						nalpha++;
 					}
-
 				}
 			}
 		} else

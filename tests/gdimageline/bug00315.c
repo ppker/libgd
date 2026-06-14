@@ -9,8 +9,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int white, black;
 	char *path;
@@ -18,14 +17,14 @@ int main()
 	im = gdImageCreateTrueColor(6, 6);
 	white = gdImageColorAllocate(im, 255, 255, 255);
 	black = gdImageColorAllocate(im, 0, 0, 0);
-	gdImageFilledRectangle(im, 0,0, 5,5, white);
+	gdImageFilledRectangle(im, 0, 0, 5, 5, white);
 
-	gdImageLine(im, 4,4, 4,4, black);
-	gdImageLine(im, 1,4, 2,4, black);
-	gdImageLine(im, 4,1, 4,2, black);
+	gdImageLine(im, 4, 4, 4, 4, black);
+	gdImageLine(im, 1, 4, 2, 4, black);
+	gdImageLine(im, 4, 1, 4, 2, black);
 
 	gdImageSetAntiAliased(im, black);
-	gdImageLine(im, 1,1, 1,1, gdAntiAliased);
+	gdImageLine(im, 1, 1, 1, 1, gdAntiAliased);
 
 	path = gdTestFilePath2("gdimageline", "bug00315_exp.png");
 	gdAssertImageEqualsToFile(path, im);

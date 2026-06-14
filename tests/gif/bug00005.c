@@ -1,11 +1,11 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
-	char * giffiles[4] = {"bug00005_0.gif", "bug00005_1.gif", "bug00005_2.gif", "bug00005_3.gif"};
-	int valid[4]       = {0, 0, 0, 0};
+	char *giffiles[4] = {"bug00005_0.gif", "bug00005_1.gif", "bug00005_2.gif",
+						 "bug00005_3.gif"};
+	int valid[4] = {0, 0, 0, 0};
 	char *exp[4] = {NULL, NULL, "bug00005_2_exp.png", NULL};
 	const int files_cnt = 4;
 	FILE *fp;
@@ -13,7 +13,7 @@ int main()
 	int error = 0;
 	char *path;
 
-	for (i=0; i < files_cnt; i++) {
+	for (i = 0; i < files_cnt; i++) {
 		fp = gdTestFileOpen2("gif", giffiles[i]);
 		im = gdImageCreateFromGif(fp);
 		fclose(fp);

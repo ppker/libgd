@@ -1,7 +1,6 @@
 #include "gd.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 
 	im = gdImageCreateFromJpeg(NULL);

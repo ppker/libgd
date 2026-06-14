@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 	char *path;
@@ -18,7 +17,8 @@ int main()
 	path = gdTestFilePath2("tiff", "tiff_read_bw_exp.png");
 	gdAssertImageEqualsToFile(path, im);
 	gdFree(path);
-	if (im) gdImageDestroy(im);
+	if (im)
+		gdImageDestroy(im);
 
 	return gdNumFailures();
 }

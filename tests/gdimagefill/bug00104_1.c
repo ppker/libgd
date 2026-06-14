@@ -1,10 +1,9 @@
 /* test case for outside of buffer reads/write bug in _gdImageFillTiled */
 #include "gd.h"
-#include <stdio.h>
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im, tile;
 	int tile_red, tile_blue;
 	int error = 0;

@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst = NULL;
 	gdRect area;
 	double affine[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
@@ -24,7 +23,8 @@ int main()
 	area.width = 2;
 	area.height = 2;
 
-	if (!gdTestAssert(gdTransformAffineGetImage(&dst, src, &area, affine) == GD_TRUE)) {
+	if (!gdTestAssert(gdTransformAffineGetImage(&dst, src, &area, affine) ==
+					  GD_TRUE)) {
 		gdImageDestroy(src);
 		return gdNumFailures();
 	}
@@ -35,11 +35,14 @@ int main()
 
 	px = gdImageGetTrueColorPixel(dst, 0, 0);
 	gdTestAssertMsg(gdTrueColorGetRed(px) > 0,
-	                "expected fractional affine sample to include red, got %x", px);
-	gdTestAssertMsg(gdTrueColorGetGreen(px) > 0,
-	                "expected fractional affine sample to include green, got %x", px);
+					"expected fractional affine sample to include red, got %x",
+					px);
+	gdTestAssertMsg(
+		gdTrueColorGetGreen(px) > 0,
+		"expected fractional affine sample to include green, got %x", px);
 	gdTestAssertMsg(gdTrueColorGetBlue(px) > 0,
-	                "expected fractional affine sample to include blue, got %x", px);
+					"expected fractional affine sample to include blue, got %x",
+					px);
 
 	gdImageDestroy(dst);
 	gdImageDestroy(src);

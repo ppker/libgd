@@ -1,9 +1,8 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 	int error = 0;

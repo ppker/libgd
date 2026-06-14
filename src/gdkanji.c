@@ -5,14 +5,14 @@
 #include "config.h"
 #endif
 
+#include "gd.h"
+#include "gd_errors.h"
+#include "gdhelpers.h"
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gd.h"
-#include "gdhelpers.h"
-#include "gd_errors.h"
-#include <errno.h>
-#include <stdarg.h>
 #if defined(HAVE_ICONV_H)
 #include <iconv.h>
 #endif
@@ -23,22 +23,18 @@ typedef void *iconv_t;
 
 #ifndef HAVE_ICONV
 #define ICONV_CONST /**/
-iconv_t iconv_open (const char *, const char *);
-size_t iconv (iconv_t, ICONV_CONST char **, size_t *, char **, size_t *);
-int iconv_close (iconv_t);
+iconv_t iconv_open(const char *, const char *);
+size_t iconv(iconv_t, ICONV_CONST char **, size_t *, char **, size_t *);
+int iconv_close(iconv_t);
 
-iconv_t
-iconv_open (const char *tocode, const char *fromcode)
-{
+iconv_t iconv_open(const char *tocode, const char *fromcode) {
 	(void)tocode;
 	(void)fromcode;
-	return (iconv_t) (-1);
+	return (iconv_t)(-1);
 }
 
-size_t
-iconv (iconv_t cd, ICONV_CONST char **inbuf, size_t * inbytesleft,
-       char **outbuf, size_t * outbytesleft)
-{
+size_t iconv(iconv_t cd, ICONV_CONST char **inbuf, size_t *inbytesleft,
+			 char **outbuf, size_t *outbytesleft) {
 	(void)cd;
 	(void)inbuf;
 	(void)inbytesleft;
@@ -47,9 +43,7 @@ iconv (iconv_t cd, ICONV_CONST char **inbuf, size_t * inbytesleft,
 	return 0;
 }
 
-int
-iconv_close (iconv_t cd)
-{
+int iconv_close(iconv_t cd) {
 	(void)cd;
 	return 0;
 }
@@ -58,7 +52,8 @@ iconv_close (iconv_t cd)
 
 #define LIBNAME "any2eucjp()"
 
-#if defined(__MSC__) || defined(__BORLANDC__) || defined(__TURBOC__) || defined(_Windows) || defined(MSDOS)
+#if defined(__MSC__) || defined(__BORLANDC__) || defined(__TURBOC__) ||        \
+	defined(_Windows) || defined(MSDOS)
 #ifndef SJISPRE
 #define SJISPRE 1
 #endif
@@ -71,7 +66,7 @@ iconv_close (iconv_t cd)
 #undef FALSE
 #endif
 
-#define TRUE  1
+#define TRUE 1
 #define FALSE 0
 
 #define NEW 1
@@ -85,17 +80,15 @@ iconv_close (iconv_t cd)
 
 #define NEWJISSTR "JIS7"
 #define OLDJISSTR "jis"
-#define EUCSTR    "eucJP"
-#define SJISSTR   "SJIS"
+#define EUCSTR "eucJP"
+#define SJISSTR "SJIS"
 
 #define ESC 27
 #define SS2 142
 
 /* DetectKanjiCode() derived from DetectCodeType() by Ken Lunde. */
 
-static int
-DetectKanjiCode (const unsigned char *str)
-{
+static int DetectKanjiCode(const unsigned char *str) {
 	static int whatcode = ASCII;
 	int oldcode = ASCII;
 	int c, i;
@@ -129,8 +122,8 @@ DetectKanjiCode (const unsigned char *str)
 				whatcode = SJIS;
 			else if (c == SS2) {
 				c = str[i++];
-				if ((c >= 64 && c <= 126) || (c >= 128 && c <= 160)
-				        || (c >= 224 && c <= 252))
+				if ((c >= 64 && c <= 126) || (c >= 128 && c <= 160) ||
+					(c >= 224 && c <= 252))
 					whatcode = SJIS;
 				else if (c >= 161 && c <= 223)
 					whatcode = EUCORSJIS;
@@ -180,22 +173,22 @@ DetectKanjiCode (const unsigned char *str)
 		whatcode = oldcode;
 
 	if (whatcode == EUCORSJIS) {
-		if (getenv ("LC_ALL"))
-			lang = getenv ("LC_ALL");
-		else if (getenv ("LC_CTYPE"))
-			lang = getenv ("LC_CTYPE");
-		else if (getenv ("LANG"))
-			lang = getenv ("LANG");
+		if (getenv("LC_ALL"))
+			lang = getenv("LC_ALL");
+		else if (getenv("LC_CTYPE"))
+			lang = getenv("LC_CTYPE");
+		else if (getenv("LANG"))
+			lang = getenv("LANG");
 
 		if (lang) {
-			if (strcmp (lang, "ja_JP.SJIS") == 0 ||
+			if (strcmp(lang, "ja_JP.SJIS") == 0 ||
 #ifdef hpux
-			        strcmp (lang, "japanese") == 0 ||
+				strcmp(lang, "japanese") == 0 ||
 #endif
-			        strcmp (lang, "ja_JP.mscode") == 0 ||
-			        strcmp (lang, "ja_JP.PCK") == 0)
+				strcmp(lang, "ja_JP.mscode") == 0 ||
+				strcmp(lang, "ja_JP.PCK") == 0)
 				whatcode = SJIS;
-			else if (strncmp (lang, "ja", 2) == 0)
+			else if (strncmp(lang, "ja", 2) == 0)
 #ifdef SJISPRE
 				whatcode = SJIS;
 #else
@@ -216,9 +209,7 @@ DetectKanjiCode (const unsigned char *str)
 
 /* SJIStoJIS() is sjis2jis() by Ken Lunde. */
 
-static void
-SJIStoJIS (int *p1, int *p2)
-{
+static void SJIStoJIS(int *p1, int *p2) {
 	register unsigned char c1 = *p1;
 	register unsigned char c2 = *p2;
 	register int adjust = c2 < 159;
@@ -231,85 +222,31 @@ SJIStoJIS (int *p1, int *p2)
 
 /* han2zen() was derived from han2zen() written by Ken Lunde. */
 
-#define IS_DAKU(c) ((c >= 182 && c <= 196) || (c >= 202 && c <= 206) || (c == 179))
+#define IS_DAKU(c)                                                             \
+	((c >= 182 && c <= 196) || (c >= 202 && c <= 206) || (c == 179))
 #define IS_HANDAKU(c) (c >= 202 && c <= 206)
 
-static void
-han2zen (int *p1, int *p2)
-{
+static void han2zen(int *p1, int *p2) {
 	int c = *p1;
 	int daku = FALSE;
 	int handaku = FALSE;
 	int mtable[][2] = {
-		{129, 66},
-		{129, 117},
-		{129, 118},
-		{129, 65},
-		{129, 69},
-		{131, 146},
-		{131, 64},
-		{131, 66},
-		{131, 68},
-		{131, 70},
-		{131, 72},
-		{131, 131},
-		{131, 133},
-		{131, 135},
-		{131, 98},
-		{129, 91},
-		{131, 65},
-		{131, 67},
-		{131, 69},
-		{131, 71},
-		{131, 73},
-		{131, 74},
-		{131, 76},
-		{131, 78},
-		{131, 80},
-		{131, 82},
-		{131, 84},
-		{131, 86},
-		{131, 88},
-		{131, 90},
-		{131, 92},
-		{131, 94},
-		{131, 96},
-		{131, 99},
-		{131, 101},
-		{131, 103},
-		{131, 105},
-		{131, 106},
-		{131, 107},
-		{131, 108},
-		{131, 109},
-		{131, 110},
-		{131, 113},
-		{131, 116},
-		{131, 119},
-		{131, 122},
-		{131, 125},
-		{131, 126},
-		{131, 128},
-		{131, 129},
-		{131, 130},
-		{131, 132},
-		{131, 134},
-		{131, 136},
-		{131, 137},
-		{131, 138},
-		{131, 139},
-		{131, 140},
-		{131, 141},
-		{131, 143},
-		{131, 147},
-		{129, 74},
-		{129, 75}
-	};
+		{129, 66},	{129, 117}, {129, 118}, {129, 65},	{129, 69},	{131, 146},
+		{131, 64},	{131, 66},	{131, 68},	{131, 70},	{131, 72},	{131, 131},
+		{131, 133}, {131, 135}, {131, 98},	{129, 91},	{131, 65},	{131, 67},
+		{131, 69},	{131, 71},	{131, 73},	{131, 74},	{131, 76},	{131, 78},
+		{131, 80},	{131, 82},	{131, 84},	{131, 86},	{131, 88},	{131, 90},
+		{131, 92},	{131, 94},	{131, 96},	{131, 99},	{131, 101}, {131, 103},
+		{131, 105}, {131, 106}, {131, 107}, {131, 108}, {131, 109}, {131, 110},
+		{131, 113}, {131, 116}, {131, 119}, {131, 122}, {131, 125}, {131, 126},
+		{131, 128}, {131, 129}, {131, 130}, {131, 132}, {131, 134}, {131, 136},
+		{131, 137}, {131, 138}, {131, 139}, {131, 140}, {131, 141}, {131, 143},
+		{131, 147}, {129, 74},	{129, 75}};
 
-	if (*p2 == 222 && IS_DAKU (*p1))
-		daku = TRUE;		/* Daku-ten */
-	else if (*p2 == 223 && IS_HANDAKU (*p1))
-		handaku = TRUE;		/* Han-daku-ten */
+	if (*p2 == 222 && IS_DAKU(*p1))
+		daku = TRUE; /* Daku-ten */
+	else if (*p2 == 223 && IS_HANDAKU(*p1))
+		handaku = TRUE; /* Han-daku-ten */
 
 	*p1 = mtable[c - 161][0];
 	*p2 = mtable[c - 161][1];
@@ -325,52 +262,53 @@ han2zen (int *p1, int *p2)
 
 /* Recast strcpy to handle unsigned chars used below. */
 
-#define ustrcpy(A,B) (strcpy((char*)(A),(const char*)(B)))
+#define ustrcpy(A, B) (strcpy((char *)(A), (const char *)(B)))
 
-#define ustrncpy(A,B, maxsize) (strncpy((char*)(A),(const char*)(B), maxsize))
+#define ustrncpy(A, B, maxsize)                                                \
+	(strncpy((char *)(A), (const char *)(B), maxsize))
 
-static void
-do_convert (unsigned char **to_p, const unsigned char **from_p, const char *code)
-{
+static void do_convert(unsigned char **to_p, const unsigned char **from_p,
+					   const char *code) {
 	unsigned char *to = *to_p;
 	const unsigned char *from = *from_p;
 #ifdef HAVE_ICONV
 	iconv_t cd;
 	size_t from_len, to_len;
 
-	if ((cd = iconv_open (EUCSTR, code)) == (iconv_t) - 1) {
-		gd_error ("iconv_open() error");
+	if ((cd = iconv_open(EUCSTR, code)) == (iconv_t)-1) {
+		gd_error("iconv_open() error");
 
 		if (errno == EINVAL)
-			gd_error ("invalid code specification: \"%s\" or \"%s\"", EUCSTR, code);
+			gd_error("invalid code specification: \"%s\" or \"%s\"", EUCSTR,
+					 code);
 
-		ustrcpy (to, from);
+		ustrcpy(to, from);
 		return;
 	}
 
-	from_len = strlen ((const char *)from) + 1;
+	from_len = strlen((const char *)from) + 1;
 	to_len = BUFSIZ;
 
-	if ((int) (iconv (cd, (char **)from_p, &from_len, (char **)to_p, &to_len))
-	        == -1) {
+	if ((int)(iconv(cd, (char **)from_p, &from_len, (char **)to_p, &to_len)) ==
+		-1) {
 
 		if (errno == EINVAL)
-			gd_error ("invalid end of input string");
+			gd_error("invalid end of input string");
 		else if (errno == EILSEQ)
-			gd_error ("invalid code in input string");
+			gd_error("invalid code in input string");
 		else if (errno == E2BIG)
-			gd_error ("output buffer overflow at do_convert()");
+			gd_error("output buffer overflow at do_convert()");
 		else
 
-			gd_error ("something happen");
-		ustrcpy (to, from);
-		if (iconv_close (cd) != 0)
-			gd_error ("iconv_close() error");
+			gd_error("something happen");
+		ustrcpy(to, from);
+		if (iconv_close(cd) != 0)
+			gd_error("iconv_close() error");
 		return;
 	}
 
-	if (iconv_close (cd) != 0) {
-		gd_error ("iconv_close() error");
+	if (iconv_close(cd) != 0) {
+		gd_error("iconv_close() error");
 	}
 #else
 	int p1, p2, i, j;
@@ -378,7 +316,7 @@ do_convert (unsigned char **to_p, const unsigned char **from_p, const char *code
 	int hankaku = FALSE;
 
 	j = 0;
-	if (strcmp (code, NEWJISSTR) == 0 || strcmp (code, OLDJISSTR) == 0) {
+	if (strcmp(code, NEWJISSTR) == 0 || strcmp(code, OLDJISSTR) == 0) {
 		for (i = 0; from[i] != '\0' && j < BUFSIZ; i++) {
 			if (from[i] == ESC) {
 				i++;
@@ -389,7 +327,7 @@ do_convert (unsigned char **to_p, const unsigned char **from_p, const char *code
 				} else if (from[i] == '(') {
 					jisx0208 = FALSE;
 					i++;
-					if (from[i] == 'I')	/* Hankaku Kana */
+					if (from[i] == 'I') /* Hankaku Kana */
 						hankaku = TRUE;
 					else
 						hankaku = FALSE;
@@ -404,7 +342,7 @@ do_convert (unsigned char **to_p, const unsigned char **from_p, const char *code
 					to[j++] = from[i];
 			}
 		}
-	} else if (strcmp (code, SJISSTR) == 0) {
+	} else if (strcmp(code, SJISSTR) == 0) {
 		for (i = 0; from[i] != '\0' && j < BUFSIZ; i++) {
 			p1 = from[i];
 			if (p1 < 127)
@@ -415,45 +353,44 @@ do_convert (unsigned char **to_p, const unsigned char **from_p, const char *code
 				to[j++] = p1;
 			} else {
 				p2 = from[++i];
-				SJIStoJIS (&p1, &p2);
+				SJIStoJIS(&p1, &p2);
 				to[j++] = p1 + 128;
 				to[j++] = p2 + 128;
 			}
 		}
 	} else {
-		gd_error ("invalid code specification: \"%s\"", code);
+		gd_error("invalid code specification: \"%s\"", code);
 		return;
 	}
 
 	if (j >= BUFSIZ) {
-		gd_error ("output buffer overflow at do_convert()");
-		ustrcpy (to, from);
+		gd_error("output buffer overflow at do_convert()");
+		ustrcpy(to, from);
 	} else
 		to[j] = '\0';
 #endif /* HAVE_ICONV */
 }
 
-static int
-do_check_and_conv (unsigned char *to, const unsigned char *from)
-{
+static int do_check_and_conv(unsigned char *to, const unsigned char *from) {
 	static unsigned char tmp[BUFSIZ];
 	unsigned char *tmp_p = &tmp[0];
 	int p1, p2, i, j;
 	int kanji = TRUE;
 	int copy_string = FALSE;
 
-	switch (DetectKanjiCode (from)) {
+	switch (DetectKanjiCode(from)) {
 	case NEW:
 		gd_error_ex(GD_DEBUG, "Kanji code is New JIS.");
-		do_convert (&tmp_p, &from, NEWJISSTR);
+		do_convert(&tmp_p, &from, NEWJISSTR);
 		break;
 	case OLD:
 		gd_error_ex(GD_DEBUG, "Kanji code is Old JIS.");
-		do_convert (&tmp_p, &from, OLDJISSTR);
+		do_convert(&tmp_p, &from, OLDJISSTR);
 		break;
 	case ESCI:
-		gd_error_ex(GD_DEBUG, "This string includes Hankaku-Kana (jisx0201) escape sequence [ESC] + ( + I.");
-		do_convert (&tmp_p, &from, NEWJISSTR);
+		gd_error_ex(GD_DEBUG, "This string includes Hankaku-Kana (jisx0201) "
+							  "escape sequence [ESC] + ( + I.");
+		do_convert(&tmp_p, &from, NEWJISSTR);
 		break;
 	case NEC:
 		gd_error_ex(GD_DEBUG, "Kanji code is NEC Kanji.");
@@ -467,7 +404,7 @@ do_check_and_conv (unsigned char *to, const unsigned char *from)
 		break;
 	case SJIS:
 		gd_error_ex(GD_DEBUG, "Kanji code is SJIS.");
-		do_convert (&tmp_p, &from, SJISSTR);
+		do_convert(&tmp_p, &from, SJISSTR);
 		break;
 	case EUCORSJIS:
 		gd_error_ex(GD_DEBUG, "Kanji code is EUC or SJIS.");
@@ -487,8 +424,8 @@ do_check_and_conv (unsigned char *to, const unsigned char *from)
 	}
 
 	if (copy_string) {
-		ustrncpy (tmp, from, BUFSIZ);
-		tmp[BUFSIZ-1] = '\0';
+		ustrncpy(tmp, from, BUFSIZ);
+		tmp[BUFSIZ - 1] = '\0';
 	}
 
 	/* Hankaku Kana ---> Zenkaku Kana */
@@ -505,8 +442,8 @@ do_check_and_conv (unsigned char *to, const unsigned char *from)
 						p2 = 0;
 				} else
 					p2 = 0;
-				han2zen (&p1, &p2);
-				SJIStoJIS (&p1, &p2);
+				han2zen(&p1, &p2);
+				SJIStoJIS(&p1, &p2);
 				to[j++] = p1 + 128;
 				to[j++] = p2 + 128;
 			} else
@@ -515,38 +452,37 @@ do_check_and_conv (unsigned char *to, const unsigned char *from)
 
 		if (j >= BUFSIZ) {
 			gd_error("output buffer overflow at Hankaku --> Zenkaku");
-			ustrcpy (to, tmp);
+			ustrcpy(to, tmp);
 		} else
 			to[j] = '\0';
 	} else
-		ustrcpy (to, tmp);
+		ustrcpy(to, tmp);
 
 	return kanji;
 }
 
-int
-any2eucjp (unsigned char *dest, const unsigned char *src, unsigned int dest_max)
-{
+int any2eucjp(unsigned char *dest, const unsigned char *src,
+			  unsigned int dest_max) {
 	static unsigned char tmp_dest[BUFSIZ];
 	int ret;
 
-	if (strlen ((const char *) src) >= BUFSIZ) {
+	if (strlen((const char *)src) >= BUFSIZ) {
 		gd_error("input string too large");
 		return -1;
 	}
 	if (dest_max > BUFSIZ) {
-		gd_error
-		("invalid maximum size of destination\nit should be less than %d.",
-		 BUFSIZ);
+		gd_error(
+			"invalid maximum size of destination\nit should be less than %d.",
+			BUFSIZ);
 		return -1;
 	}
-	ret = do_check_and_conv (tmp_dest, src);
-	if (strlen ((const char *) tmp_dest) >= dest_max) {
+	ret = do_check_and_conv(tmp_dest, src);
+	if (strlen((const char *)tmp_dest) >= dest_max) {
 		gd_error("output buffer overflow");
-		ustrcpy (dest, src);
+		ustrcpy(dest, src);
 		return -1;
 	}
-	ustrcpy (dest, tmp_dest);
+	ustrcpy(dest, tmp_dest);
 	return ret;
 }
 

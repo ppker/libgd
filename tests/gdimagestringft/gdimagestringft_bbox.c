@@ -1,16 +1,15 @@
 #include "gd.h"
+#include "gdtest.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include "gdtest.h"
 
 #define PI 3.141592
-#define DELTA (PI/8)
+#define DELTA (PI / 8)
 #define PERCEPTUAL_THRESHOLD 0.05
 #define MAX_PERCEPTUAL_PIXELS_CHANGED 1500
 
-int main()
-{
+int main() {
 	char *path = NULL;
 	gdImagePtr ref = NULL;
 	gdImagePtr im = NULL;
@@ -27,16 +26,17 @@ int main()
 
 	path = gdTestFilePath("freetype/DejaVuSans.ttf");
 	im = gdImageCreate(800, 800);
-	gdImageColorAllocate(im, 0xFF, 0xFF, 0xFF); /* allocate white for background color */
+	gdImageColorAllocate(im, 0xFF, 0xFF,
+						 0xFF); /* allocate white for background color */
 	black = gdImageColorAllocate(im, 0, 0, 0);
 	cos_t = cos(DELTA);
 	sin_t = sin(DELTA);
 	x = 100;
 	y = 0;
 
-
 	for (i = 0; i < 16; i++) {
-		if (gdImageStringFT(im, brect, black, path, 24, DELTA*i, 400+x, 400+y, "ABCDEF")) {
+		if (gdImageStringFT(im, brect, black, path, 24, DELTA * i, 400 + x,
+							400 + y, "ABCDEF")) {
 			error = 1;
 			goto done;
 		}
@@ -62,8 +62,10 @@ int main()
 			gdImagePng(buf_diff, fp);
 			fclose(fp);
 		}
-		gdTestErrorMsg("perceptual diff changed %u pixels (allowed=%u, threshold=%.2f)\n",
-			result.pixels_changed, MAX_PERCEPTUAL_PIXELS_CHANGED, PERCEPTUAL_THRESHOLD);
+		gdTestErrorMsg(
+			"perceptual diff changed %u pixels (allowed=%u, threshold=%.2f)\n",
+			result.pixels_changed, MAX_PERCEPTUAL_PIXELS_CHANGED,
+			PERCEPTUAL_THRESHOLD);
 		error = 1;
 		FILE *f;
 		f = fopen("/tmp/gd_test_diff.png", "wb");
@@ -77,13 +79,11 @@ int main()
 		f = fopen("/tmp/gd_test_out.png", "wb");
 		gdImagePng(im, f);
 		fclose(f);
-
-
 	}
-		FILE *f;
-		f = fopen("gdimagestringft_bbox.png", "wb");
-		gdImagePng(im, f);
-		fclose(f);
+	FILE *f;
+	f = fopen("gdimagestringft_bbox.png", "wb");
+	gdImagePng(im, f);
+	fclose(f);
 done:
 	if (buf_diff) {
 		gdImageDestroy(buf_diff);

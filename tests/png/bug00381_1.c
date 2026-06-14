@@ -8,24 +8,21 @@
  * See also <https://github.com/libgd/libgd/issues/381>
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr im;
+	void *data;
+	int size = 0;
 
-int main()
-{
-    gdImagePtr im;
-    void *data;
-    int size = 0;
+	im = gdImageCreate(100, 100);
+	gdTestAssert(im != NULL);
 
-    im = gdImageCreate(100, 100);
-    gdTestAssert(im != NULL);
+	data = gdImagePngPtr(im, &size);
+	gdTestAssert(data == NULL);
 
-    data = gdImagePngPtr(im, &size);
-    gdTestAssert(data == NULL);
+	gdImageDestroy(im);
 
-    gdImageDestroy(im);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

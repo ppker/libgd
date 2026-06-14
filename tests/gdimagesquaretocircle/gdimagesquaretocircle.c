@@ -5,8 +5,7 @@
 #include "gdfx.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im1, im2;
 	int white;
 	int black;
@@ -23,7 +22,8 @@ int main()
 	gdImageLine(im1, 63, 0, 63, 127, black);
 	im2 = gdImageSquareToCircle(im1, 64);
 
-	gdAssertImageEqualsToFile("gdimagesquaretocircle/gdimagesquaretocircle_exp.png", im2);
+	gdAssertImageEqualsToFile(
+		"gdimagesquaretocircle/gdimagesquaretocircle_exp.png", im2);
 
 	gdImageDestroy(im1);
 	gdImageDestroy(im2);

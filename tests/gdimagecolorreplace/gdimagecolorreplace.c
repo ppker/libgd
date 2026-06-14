@@ -1,10 +1,9 @@
-#include <stdio.h>
-#include <limits.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <limits.h>
+#include <stdio.h>
 
-static int callback(gdImagePtr im, int src)
-{
+static int callback(gdImagePtr im, int src) {
 	int r, g, b;
 
 	r = gdImageRed(im, src);
@@ -17,22 +16,14 @@ static int callback(gdImagePtr im, int src)
 	}
 }
 
-static void run_tests(gdImagePtr im, int *error)
-{
-	int black,									\
-	white,									\
-	cosmic_latte,							\
-	cream,									\
-	ivory,									\
-	magnolia,								\
-	old_lace,								\
-	seashell,								\
-	yellow,									\
-	c, d;
+static void run_tests(gdImagePtr im, int *error) {
+	int black, white, cosmic_latte, cream, ivory, magnolia, old_lace, seashell,
+		yellow, c, d;
 	int src[2], dst[2];
 	int n;
 
-#define COLOR(name, r, g, b) name = gdImageColorAllocateAlpha(im, r, g, b, gdAlphaOpaque)
+#define COLOR(name, r, g, b)                                                   \
+	name = gdImageColorAllocateAlpha(im, r, g, b, gdAlphaOpaque)
 	COLOR(black, 0, 0, 0);
 	COLOR(white, 0xFF, 0xFF, 0xFF);
 	COLOR(cosmic_latte, 0xFF, 0xF8, 0xE7);
@@ -44,22 +35,23 @@ static void run_tests(gdImagePtr im, int *error)
 	COLOR(yellow, 0xFF, 0xFF, 0);
 #undef COLOR
 
-#define CHECK_VALUE(n, expected) do {								\
-		if (gdTestAssert((n) == (expected)) != 1) {					\
-			gdTestErrorMsg("%d is expected, but %d\n", expected, n);\
-			*error = -1;											\
-		}															\
+#define CHECK_VALUE(n, expected)                                               \
+	do {                                                                       \
+		if (gdTestAssert((n) == (expected)) != 1) {                            \
+			gdTestErrorMsg("%d is expected, but %d\n", expected, n);           \
+			*error = -1;                                                       \
+		}                                                                      \
 	} while (0)
 
-#define CHECK_PIXEL(x, y, expected) \
-	do {																\
-		int pix;														\
-		gdImageSetClip(im, 0, 0, 4, 4);									\
-		pix = gdImageGetPixel(im, (x), (y));							\
-		if (gdTestAssert(pix == (expected)) != 1) {						\
-			gdTestErrorMsg("%d is expected, but %d\n", expected, pix);	\
-			*error = -1;												\
-		}																\
+#define CHECK_PIXEL(x, y, expected)                                            \
+	do {                                                                       \
+		int pix;                                                               \
+		gdImageSetClip(im, 0, 0, 4, 4);                                        \
+		pix = gdImageGetPixel(im, (x), (y));                                   \
+		if (gdTestAssert(pix == (expected)) != 1) {                            \
+			gdTestErrorMsg("%d is expected, but %d\n", expected, pix);         \
+			*error = -1;                                                       \
+		}                                                                      \
 	} while (0)
 
 	c = gdImageColorAllocate(im, 0xFF, 0, 0xFF);
@@ -107,15 +99,15 @@ static void run_tests(gdImagePtr im, int *error)
 	CHECK_PIXEL(2, 3, d);
 	CHECK_PIXEL(4, 4, d);
 
-#define INITIALIZE_IMAGE()							\
-	gdImageSetClip(im, 0, 0, 4, 4);					\
-	gdImageFilledRectangle(im, 0, 0, 4, 4, black);	\
-	gdImageFilledRectangle(im, 1, 1, 3, 3, white);	\
-	gdImageSetPixel(im, 1, 1, cosmic_latte);		\
-	gdImageSetPixel(im, 1, 2, cream);				\
-	gdImageSetPixel(im, 2, 1, ivory);				\
-	gdImageSetPixel(im, 2, 2, magnolia);			\
-	gdImageSetPixel(im, 3, 1, old_lace);			\
+#define INITIALIZE_IMAGE()                                                     \
+	gdImageSetClip(im, 0, 0, 4, 4);                                            \
+	gdImageFilledRectangle(im, 0, 0, 4, 4, black);                             \
+	gdImageFilledRectangle(im, 1, 1, 3, 3, white);                             \
+	gdImageSetPixel(im, 1, 1, cosmic_latte);                                   \
+	gdImageSetPixel(im, 1, 2, cream);                                          \
+	gdImageSetPixel(im, 2, 1, ivory);                                          \
+	gdImageSetPixel(im, 2, 2, magnolia);                                       \
+	gdImageSetPixel(im, 3, 1, old_lace);                                       \
 	gdImageSetPixel(im, 3, 2, seashell)
 
 	INITIALIZE_IMAGE();
@@ -131,8 +123,7 @@ static void run_tests(gdImagePtr im, int *error)
 #undef CHECK_PIXEL
 }
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int error = 0;
 	FILE *fp;

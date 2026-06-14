@@ -18,14 +18,13 @@
  *   (end code)
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
 #include "gd.h"
 #include "gd_color.h"
+#include <stdlib.h>
 
 static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color);
 
@@ -45,8 +44,7 @@ static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color);
  *   - <gdImageCropAuto>
  *   - <gdImageCropThreshold>
  */
-BGD_DECLARE(gdImagePtr) gdImageCrop(gdImagePtr src, const gdRect *crop)
-{
+BGD_DECLARE(gdImagePtr) gdImageCrop(gdImagePtr src, const gdRect *crop) {
 	gdImagePtr dst;
 	int alphaBlendingFlag;
 
@@ -55,7 +53,8 @@ BGD_DECLARE(gdImagePtr) gdImageCrop(gdImagePtr src, const gdRect *crop)
 	} else {
 		dst = gdImageCreate(crop->width, crop->height);
 	}
-	if (!dst) return NULL;
+	if (!dst)
+		return NULL;
 	alphaBlendingFlag = dst->alphaBlendingFlag;
 	gdImageAlphaBlending(dst, gdEffectReplace);
 	gdImageCopy(dst, src, 0, 0, crop->x, crop->y, crop->width, crop->height);
@@ -82,8 +81,8 @@ BGD_DECLARE(gdImagePtr) gdImageCrop(gdImagePtr src, const gdRect *crop)
  *   - <gdImageCrop>
  *   - <gdImageCropThreshold>
  */
-BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCropAuto(gdImagePtr im, const unsigned int mode) {
 	const int width = gdImageSX(im);
 	const int height = gdImageSY(im);
 
@@ -126,7 +125,7 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
 			}
 		}
 	}
-	break1:
+break1:
 
 	/* Whole image would be cropped > bye */
 	if (y == height && x == width) {
@@ -142,7 +141,7 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
 			}
 		}
 	}
-	break2:
+break2:
 
 	crop.height = y - crop.y + 1;
 
@@ -153,7 +152,7 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
 			}
 		}
 	}
-	break3:
+break3:
 
 	crop.x = x;
 
@@ -164,7 +163,7 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
 			}
 		}
 	}
-	break4:
+break4:
 
 	crop.width = x - crop.x + 1;
 
@@ -192,8 +191,9 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode)
  *   - <gdImageCrop>
  *   - <gdImageCropAuto>
  */
-BGD_DECLARE(gdImagePtr) gdImageCropThreshold(gdImagePtr im, const unsigned int color, const float threshold)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCropThreshold(gdImagePtr im, const unsigned int color,
+					 const float threshold) {
 	const int width = gdImageSX(im);
 	const int height = gdImageSY(im);
 
@@ -210,18 +210,20 @@ BGD_DECLARE(gdImagePtr) gdImageCropThreshold(gdImagePtr im, const unsigned int c
 		return NULL;
 	}
 
-	if (!gdImageTrueColor(im) && color >= (unsigned int)gdImageColorsTotal(im)) {
+	if (!gdImageTrueColor(im) &&
+		color >= (unsigned int)gdImageColorsTotal(im)) {
 		return NULL;
 	}
 
 	for (x = 0, y = 0; y < height; y++) {
 		for (x = 0; x < width; x++) {
-			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y), threshold)) {
+			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y),
+							  threshold)) {
 				goto break1;
 			}
 		}
 	}
-	break1:
+break1:
 
 	/* Whole image would be cropped > bye */
 	if (y == height && x == width) {
@@ -232,34 +234,37 @@ BGD_DECLARE(gdImagePtr) gdImageCropThreshold(gdImagePtr im, const unsigned int c
 
 	for (y = height - 1; y >= 0; y--) {
 		for (x = 0; x < width; x++) {
-			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y), threshold)) {
+			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y),
+							  threshold)) {
 				goto break2;
 			}
 		}
 	}
-	break2:
+break2:
 
 	crop.height = y - crop.y + 1;
 
 	for (x = 0; x < width; x++) {
 		for (y = crop.y; y < crop.y + crop.height; y++) {
-			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y), threshold)) {
+			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y),
+							  threshold)) {
 				goto break3;
 			}
 		}
 	}
-	break3:
+break3:
 
 	crop.x = x;
 
 	for (x = width - 1; x >= 0; x--) {
 		for (y = crop.y; y < crop.y + crop.height; y++) {
-			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y), threshold)) {
+			if (!gdColorMatch(im, color, gdImageGetPixel(im, x, y),
+							  threshold)) {
 				goto break4;
 			}
 		}
 	}
-	break4:
+break4:
 
 	crop.width = x - crop.x + 1;
 
@@ -272,12 +277,11 @@ BGD_DECLARE(gdImagePtr) gdImageCropThreshold(gdImagePtr im, const unsigned int c
  *  - if two are equal.
  *  - Last solution: average the colors
  */
-static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color)
-{
+static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color) {
 	const int tl = gdImageGetPixel(im, 0, 0);
 	const int tr = gdImageGetPixel(im, gdImageSX(im) - 1, 0);
-	const int bl = gdImageGetPixel(im, 0, gdImageSY(im) -1);
-	const int br = gdImageGetPixel(im, gdImageSX(im) - 1, gdImageSY(im) -1);
+	const int bl = gdImageGetPixel(im, 0, gdImageSY(im) - 1);
+	const int br = gdImageGetPixel(im, gdImageSX(im) - 1, gdImageSY(im) - 1);
 
 	if (tr == bl && tr == br) {
 		*color = tr;
@@ -285,13 +289,13 @@ static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color)
 	} else if (tl == bl && tl == br) {
 		*color = tl;
 		return 3;
-	} else if (tl == tr &&  tl == br) {
+	} else if (tl == tr && tl == br) {
 		*color = tl;
 		return 3;
-	} else if (tl == tr &&  tl == bl) {
+	} else if (tl == tr && tl == bl) {
 		*color = tl;
 		return 3;
-	} else if (tl == tr  || tl == bl || tl == br) {
+	} else if (tl == tr || tl == bl || tl == br) {
 		*color = tl;
 		return 2;
 	} else if (tr == bl || tr == br) {
@@ -301,12 +305,20 @@ static int gdGuessBackgroundColorFromCorners(gdImagePtr im, int *color)
 		*color = bl;
 		return 2;
 	} else {
-		register int r,b,g,a;
+		register int r, b, g, a;
 
-		r = (2 + gdImageRed(im, tl) + gdImageRed(im, tr) + gdImageRed(im, bl) + gdImageRed(im, br)) / 4;
-		g = (2 + gdImageGreen(im, tl) + gdImageGreen(im, tr) + gdImageGreen(im, bl) + gdImageGreen(im, br)) / 4;
-		b = (2 + gdImageBlue(im, tl) + gdImageBlue(im, tr) + gdImageBlue(im, bl) + gdImageBlue(im, br)) / 4;
-		a = (2 + gdImageAlpha(im, tl) + gdImageAlpha(im, tr) + gdImageAlpha(im, bl) + gdImageAlpha(im, br)) / 4;
+		r = (2 + gdImageRed(im, tl) + gdImageRed(im, tr) + gdImageRed(im, bl) +
+			 gdImageRed(im, br)) /
+			4;
+		g = (2 + gdImageGreen(im, tl) + gdImageGreen(im, tr) +
+			 gdImageGreen(im, bl) + gdImageGreen(im, br)) /
+			4;
+		b = (2 + gdImageBlue(im, tl) + gdImageBlue(im, tr) +
+			 gdImageBlue(im, bl) + gdImageBlue(im, br)) /
+			4;
+		a = (2 + gdImageAlpha(im, tl) + gdImageAlpha(im, tr) +
+			 gdImageAlpha(im, bl) + gdImageAlpha(im, br)) /
+			4;
 		*color = gdImageColorClosestAlpha(im, r, g, b, a);
 		return 0;
 	}

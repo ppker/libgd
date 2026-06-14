@@ -1,21 +1,20 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <string.h>
 #include "gd.h"
 #include "gdhelpers.h"
+#include <string.h>
 
 /*
 	Function: gdImageColorMatch
 
 	Bring the palette colors in im2 to be closer to im1.
  */
-BGD_DECLARE(int) gdImageColorMatch (gdImagePtr im1, gdImagePtr im2)
-{
+BGD_DECLARE(int) gdImageColorMatch(gdImagePtr im1, gdImagePtr im2) {
 	unsigned long *buf; /* stores our calculations */
-	unsigned long *bp; /* buf ptr */
+	unsigned long *bp;	/* buf ptr */
 	int color, rgb;
-	int x,y;
+	int x, y;
 	int count;
 
 	if (!im1->trueColor) {
@@ -32,9 +31,9 @@ BGD_DECLARE(int) gdImageColorMatch (gdImagePtr im1, gdImagePtr im2)
 	}
 
 	buf = (unsigned long *)gdMalloc(sizeof(unsigned long) * 5 * gdMaxColors);
-	memset (buf, 0, sizeof(unsigned long) * 5 * gdMaxColors );
-	for (x=0; x < im1->sx; x++) {
-		for( y=0; y<im1->sy; y++ ) {
+	memset(buf, 0, sizeof(unsigned long) * 5 * gdMaxColors);
+	for (x = 0; x < im1->sx; x++) {
+		for (y = 0; y < im1->sy; y++) {
 			color = im2->pixels[y][x];
 			rgb = im1->tpixels[y][x];
 			bp = buf + (color * 5);
@@ -46,13 +45,13 @@ BGD_DECLARE(int) gdImageColorMatch (gdImagePtr im1, gdImagePtr im2)
 		}
 	}
 	bp = buf;
-	for (color=0; color < im2->colorsTotal; color++) {
+	for (color = 0; color < im2->colorsTotal; color++) {
 		count = *(bp++);
-		if( count > 0 ) {
-			im2->red[color]		= *(bp++) / count;
-			im2->green[color]	= *(bp++) / count;
-			im2->blue[color]	= *(bp++) / count;
-			im2->alpha[color]	= *(bp++) / count;
+		if (count > 0) {
+			im2->red[color] = *(bp++) / count;
+			im2->green[color] = *(bp++) / count;
+			im2->blue[color] = *(bp++) / count;
+			im2->alpha[color] = *(bp++) / count;
 		} else {
 			bp += 4;
 		}

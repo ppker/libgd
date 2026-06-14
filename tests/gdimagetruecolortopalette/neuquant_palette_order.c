@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static gdImagePtr create_gray_bands(void)
-{
+static gdImagePtr create_gray_bands(void) {
 	gdImagePtr im;
 	int x, y;
 
@@ -21,8 +20,7 @@ static gdImagePtr create_gray_bands(void)
 	return im;
 }
 
-int main(void)
-{
+int main(void) {
 	gdImagePtr im;
 	gdImagePtr pal;
 	int i;
@@ -45,14 +43,16 @@ int main(void)
 
 	for (i = 1; i < pal->colorsTotal; i++) {
 		gdTestAssertMsg(pal->green[i - 1] <= pal->green[i],
-			"palette green channel must remain ordered at entries %d and %d (%d > %d)",
-			i - 1, i, pal->green[i - 1], pal->green[i]);
+						"palette green channel must remain ordered at entries "
+						"%d and %d (%d > %d)",
+						i - 1, i, pal->green[i - 1], pal->green[i]);
 	}
 
 	for (i = 1; i < gdImageSX(pal); i++) {
 		int prev = gdImageGetPixel(pal, i - 1, 0);
 		int current = gdImageGetPixel(pal, i, 0);
-		gdTestAssertMsg(prev <= current,
+		gdTestAssertMsg(
+			prev <= current,
 			"pixel indexes must remain ordered at x=%d and x=%d (%d > %d)",
 			i - 1, i, prev, current);
 	}

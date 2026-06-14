@@ -8,12 +8,11 @@
 #include "gdtest.h"
 #include "string.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	FILE *fp;
 	char *path, buf[128];
-	const int squareAngles[] = { 0, 90, 180, 270 };
+	const int squareAngles[] = {0, 90, 180, 270};
 	unsigned int i;
 
 	fp = gdTestFileOpen2("gdimagerotate", "php_gh10614.png");
@@ -21,7 +20,8 @@ int main()
 	fclose(fp);
 
 	for (i = 0; i < sizeof(squareAngles) / sizeof(squareAngles[0]); i++) {
-		snprintf(buf, sizeof(buf) - 1, "php_gh10614_%03d_exp.png", squareAngles[i]);
+		snprintf(buf, sizeof(buf) - 1, "php_gh10614_%03d_exp.png",
+				 squareAngles[i]);
 		path = gdTestFilePath2("gdimagerotate", buf);
 		dst = gdImageRotateInterpolated(src, squareAngles[i], 0);
 		gdAssertImageEqualsToFile(path, dst);

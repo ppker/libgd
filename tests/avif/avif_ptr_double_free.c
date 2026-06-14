@@ -11,15 +11,14 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int size;
 
 	src = gdImageCreateTrueColor(1, 10);
 	gdTestAssert(src != NULL);
 
-	src->sx = 0;  // making the width 0 should cause gdImageAvifPtr() to fail
+	src->sx = 0; // making the width 0 should cause gdImageAvifPtr() to fail
 
 	dst = gdImageAvifPtr(src, &size);
 	gdTestAssert(dst == NULL);

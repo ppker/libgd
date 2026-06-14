@@ -1,10 +1,9 @@
 #include "gd.h"
+#include "gdtest.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	void *data;
 	int size, red;
@@ -19,8 +18,11 @@ int main()
 	im = gdImageCreateFromPngPtr(size, data);
 	gdFree(data);
 
-	if (!gdTestAssert(gdImageResolutionX(im) == 72) || !gdTestAssert(gdImageResolutionY(im) == 300)) {
-		gdTestErrorMsg("failed image resolution X (%d != 72) or Y (%d != 300)\n", gdImageResolutionX(im), gdImageResolutionY(im));
+	if (!gdTestAssert(gdImageResolutionX(im) == 72) ||
+		!gdTestAssert(gdImageResolutionY(im) == 300)) {
+		gdTestErrorMsg(
+			"failed image resolution X (%d != 72) or Y (%d != 300)\n",
+			gdImageResolutionX(im), gdImageResolutionY(im));
 		gdImageDestroy(im);
 		return 1;
 	}

@@ -10,33 +10,32 @@
  * which had been sent to security@libgd.org.
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr im;
+	FILE *fp;
+	int i, j, col;
 
-int main()
-{
-    gdImagePtr im;
-    FILE *fp;
-    int i, j, col;
+	fp = gdTestFileOpen2("gif", "unitialized_memory_read.gif");
+	gdTestAssert(fp != NULL);
+	im = gdImageCreateFromGif(fp);
+	gdTestAssert(im != NULL);
+	fclose(fp);
 
-    fp = gdTestFileOpen2("gif", "unitialized_memory_read.gif");
-    gdTestAssert(fp != NULL);
-    im = gdImageCreateFromGif(fp);
-    gdTestAssert(im != NULL);
-    fclose(fp);
+	for (i = 0; i < gdImageSX(im); i += 16) {
+		for (j = 0; j < gdImageSY(im); j += 16) {
+			if (gdImageGetPixel(im, i, j) >= 2) {
+				col = gdImageGetTrueColorPixel(im, i, j);
+				gdTestAssertMsg(col == 0,
+								"(%d,%d): expected color 0, but got %d\n", i, j,
+								col);
+			}
+		}
+	}
 
-    for (i = 0; i < gdImageSX(im); i += 16) {
-        for (j = 0; j < gdImageSY(im); j += 16) {
-            if (gdImageGetPixel(im, i, j) >= 2) {
-                col = gdImageGetTrueColorPixel(im, i, j);
-                gdTestAssertMsg(col == 0, "(%d,%d): expected color 0, but got %d\n", i, j, col);
-            }
-        }
-    }
+	gdImageDestroy(im);
 
-    gdImageDestroy(im);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

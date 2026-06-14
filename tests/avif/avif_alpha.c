@@ -6,9 +6,9 @@
  * and verifies that every pixel's alpha value matches the original PNG.
  */
 
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
 int main() {
 	FILE *fp;
@@ -27,7 +27,8 @@ int main() {
 	fclose(fp);
 	fp = NULL;
 
-	gdTestAssertMsg(imFromPng != NULL, "gdImageCreateFromPng failed for dice_with_alpha.png\n");
+	gdTestAssertMsg(imFromPng != NULL,
+					"gdImageCreateFromPng failed for dice_with_alpha.png\n");
 	if (!imFromPng)
 		goto cleanup;
 
@@ -45,15 +46,15 @@ int main() {
 	h = gdImageSY(imFromPng);
 
 	gdTestAssertMsg(gdImageSX(imFromAvif) == w && gdImageSY(imFromAvif) == h,
-	                "AVIF image dimensions differ from PNG\n");
+					"AVIF image dimensions differ from PNG\n");
 	if (gdImageSX(imFromAvif) != w || gdImageSY(imFromAvif) != h)
 		goto cleanup;
 
 	for (y = 0; y < h; y++) {
 		for (x = 0; x < w; x++) {
-			int pngPixel  = gdImageGetPixel(imFromPng,  x, y);
+			int pngPixel = gdImageGetPixel(imFromPng, x, y);
 			int avifPixel = gdImageGetPixel(imFromAvif, x, y);
-			int pngAlpha  = gdTrueColorGetAlpha(pngPixel);
+			int pngAlpha = gdTrueColorGetAlpha(pngPixel);
 			int avifAlpha = gdTrueColorGetAlpha(avifPixel);
 
 			if (pngAlpha != avifAlpha) {
@@ -61,8 +62,9 @@ int main() {
 					/* Report only the first mismatch to keep output short */
 					char msg[256];
 					sprintf(msg,
-					        "Alpha mismatch at (%d, %d): PNG alpha=%d, AVIF alpha=%d\n",
-					        x, y, pngAlpha, avifAlpha);
+							"Alpha mismatch at (%d, %d): PNG alpha=%d, AVIF "
+							"alpha=%d\n",
+							x, y, pngAlpha, avifAlpha);
 					gdTestAssertMsg(0, msg);
 				}
 				failures++;
@@ -77,9 +79,12 @@ int main() {
 	}
 
 cleanup:
-	if (imFromPng)    gdImageDestroy(imFromPng);
-	if (imFromAvif)   gdImageDestroy(imFromAvif);
-	if (avifImDataPtr) gdFree(avifImDataPtr);
+	if (imFromPng)
+		gdImageDestroy(imFromPng);
+	if (imFromAvif)
+		gdImageDestroy(imFromAvif);
+	if (avifImDataPtr)
+		gdFree(avifImDataPtr);
 
 	return gdNumFailures();
 }

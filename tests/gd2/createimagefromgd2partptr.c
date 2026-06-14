@@ -5,8 +5,7 @@
 #include "gdtest.h"
 #include <stdio.h>
 
-int main()
-{
+int main() {
 	FILE *p;
 	gdImagePtr im, partim;
 	void *pg;
@@ -29,7 +28,8 @@ int main()
 		return 1;
 	}
 
-	pg = gdImageGd2Ptr(im, (GD2_CHUNKSIZE_MIN + GD2_CHUNKSIZE_MAX) / 2, GD2_FMT_COMPRESSED, &size);
+	pg = gdImageGd2Ptr(im, (GD2_CHUNKSIZE_MIN + GD2_CHUNKSIZE_MAX) / 2,
+					   GD2_FMT_COMPRESSED, &size);
 	if (!pg) {
 		status = 1;
 		goto done1;
@@ -40,7 +40,7 @@ int main()
 		goto done0;
 	}
 
-	partim =  gdImageCreateFromGd2PartPtr(size, pg, 3, 3, 3, 3);
+	partim = gdImageCreateFromGd2PartPtr(size, pg, 3, 3, 3, 3);
 	if (!partim) {
 		status = 1;
 		goto done0;

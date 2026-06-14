@@ -8,45 +8,42 @@
  * See also <https://github.com/libgd/libgd/issues/499>.
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr im;
+	int black;
+	int size;
+	void *res;
 
-int main()
-{
-    gdImagePtr im;
-    int black;
-    int size;
-    void * res;
+	im = gdImageCreate(100, 100);
+	black = gdImageColorAllocate(im, 0, 0, 0);
+	gdImageRectangle(im, 0, 0, 10, 10, black);
 
-    im = gdImageCreate(100, 100);
-    black = gdImageColorAllocate(im, 0, 0, 0);
-    gdImageRectangle(im, 0, 0, 10, 10, black);
+	res = gdImageGifAnimBeginPtr(im, &size, 1, 3);
+	if (res != NULL) {
+		gdFree(res);
+	}
 
-    res = gdImageGifAnimBeginPtr(im, &size, 1, 3);
-    if (res != NULL) {
-        gdFree(res);
-    }
+	res = gdImageGifAnimAddPtr(im, &size, 0, 0, 0, 100, gdDisposalNone, NULL);
+	if (res != NULL) {
+		gdFree(res);
+	}
 
-    res = gdImageGifAnimAddPtr(im, &size, 0, 0, 0, 100, gdDisposalNone, NULL);
-    if (res != NULL) {
-        gdFree(res);
-    }
+	res = gdImageGifAnimAddPtr(im, &size, 0, 0, 0, 100, gdDisposalNone, im);
+	gdTestAssert(res != NULL);
+	gdTestAssert(size > 0);
+	if (res != NULL) {
+		gdFree(res);
+	}
 
-    res = gdImageGifAnimAddPtr(im, &size, 0, 0, 0, 100, gdDisposalNone, im);
-    gdTestAssert(res != NULL);
-    gdTestAssert(size > 0);
-    if (res != NULL) {
-         gdFree(res);
-    }
+	res = gdImageGifAnimEndPtr(&size);
+	if (res != NULL) {
+		gdFree(res);
+	}
 
-    res = gdImageGifAnimEndPtr(&size);
-    if (res != NULL) {
-        gdFree(res);
-    }
+	gdImageDestroy(im);
 
-    gdImageDestroy(im);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

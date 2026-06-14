@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int b;
 	void *p;
@@ -15,15 +14,17 @@ int main()
 		gdTestErrorMsg("could not create src\n");
 		return 1;
 	}
-	gdImageColorAllocate(src, 0xFF, 0xFF, 0xFF); /* allocate white for background color */
+	gdImageColorAllocate(src, 0xFF, 0xFF,
+						 0xFF); /* allocate white for background color */
 	b = gdImageColorAllocate(src, 0, 0, 0);
 	gdImageRectangle(src, 20, 20, 79, 79, b);
 	gdImageEllipse(src, 70, 25, 30, 20, b);
 
-#define OUTPUT_WBMP(name) do {							\
-		FILE *fp = gdTestTempFp();						\
-		gdImageWBMP(name, 1, fp);						\
-		fclose(fp);										\
+#define OUTPUT_WBMP(name)                                                      \
+	do {                                                                       \
+		FILE *fp = gdTestTempFp();                                             \
+		gdImageWBMP(name, 1, fp);                                              \
+		fclose(fp);                                                            \
 	} while (0)
 
 	OUTPUT_WBMP(src);

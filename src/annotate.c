@@ -1,11 +1,11 @@
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
+#include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gd.h"
 
 /* A neat little utility which adds freetype text to
  * existing JPEG images. Type annotate -h for instructions.
@@ -14,8 +14,7 @@
 
 enum { left, center, right };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	gdImagePtr im;
 	char *iin, *iout;
 	FILE *in, *out;
@@ -32,7 +31,7 @@ int main(int argc, char *argv[])
 
 	font = strdup("times");
 
-	if(argc != 3) {
+	if (argc != 3) {
 		fprintf(stderr, "Usage: annotate imagein.jpg imageout.jpg\n\n");
 		fprintf(stderr, "Standard input should consist of\n");
 		fprintf(stderr, "lines in the following formats:\n");
@@ -42,12 +41,12 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "align (left|right|center)\n");
 		fprintf(stderr, "move x y\n");
 		fprintf(stderr, "text actual-output-text\n\n");
-		fprintf(stderr,
-		        "If the file 'paris.ttf' exists in /usr/share/fonts/truetype or in a\n");
-		fprintf(stderr,
-		        "location specified in the GDFONTPATH environment variable, 'font paris' is\n");
-		fprintf(stderr,
-		        "sufficient. You may also specify the full, rooted path of a font file.\n");
+		fprintf(stderr, "If the file 'paris.ttf' exists in "
+						"/usr/share/fonts/truetype or in a\n");
+		fprintf(stderr, "location specified in the GDFONTPATH environment "
+						"variable, 'font paris' is\n");
+		fprintf(stderr, "sufficient. You may also specify the full, rooted "
+						"path of a font file.\n");
 		exit(1);
 	}
 
@@ -55,7 +54,7 @@ int main(int argc, char *argv[])
 	iout = argv[2];
 
 	in = fopen(iin, "rb");
-	if(!in) {
+	if (!in) {
 		fprintf(stderr, "Couldn't open %s\n", iin);
 		exit(2);
 	}
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
 
 	fclose(in);
 
-	if(!im) {
+	if (!im) {
 		fprintf(stderr, "%s did not load properly\n", iin);
 		exit(3);
 	}
@@ -76,14 +75,14 @@ int main(int argc, char *argv[])
 		char *text;
 
 		st = strtok(s, " \t\r\n");
-		if(!st) {
+		if (!st) {
 			/* Be nice about blank lines */
 			continue;
 		}
 
-		if(!strcmp(st, "font")) {
+		if (!strcmp(st, "font")) {
 			char *st = strtok(0, " \t\r\n");
-			if(!st) {
+			if (!st) {
 				goto badLine;
 			} else {
 				free(font);
@@ -93,64 +92,64 @@ int main(int argc, char *argv[])
 					goto badLine;
 				}
 			}
-		} else if(!strcmp(st, "align")) {
+		} else if (!strcmp(st, "align")) {
 			char *st = strtok(0, " \t\r\n");
 
-			if(!st) {
+			if (!st) {
 				goto badLine;
 			}
 
-			if(!strcmp(st, "left")) {
+			if (!strcmp(st, "left")) {
 				align = 0;
-			} else if(!strcmp(st, "center")) {
+			} else if (!strcmp(st, "center")) {
 				align = 1;
-			} else if(!strcmp(st, "right")) {
+			} else if (!strcmp(st, "right")) {
 				align = 2;
 			}
-		} else if(!strcmp(st, "size")) {
+		} else if (!strcmp(st, "size")) {
 			char *st = strtok(0, " \t\r\n");
 
-			if(!st) {
+			if (!st) {
 				goto badLine;
 			}
 
 			size = atoi(st);
-		} else if(!strcmp(st, "color")) {
+		} else if (!strcmp(st, "color")) {
 			char *st = strtok(0, "\r\n");
 			int r, g, b, a = 0;
 
-			if(!st) {
+			if (!st) {
 				goto badLine;
 			}
 
-			if(sscanf(st, "%d %d %d %d", &r, &g, &b, &a) < 3) {
+			if (sscanf(st, "%d %d %d %d", &r, &g, &b, &a) < 3) {
 				fprintf(stderr, "Bad color at line %d\n", lines);
 				exit(2);
 			}
 
 			color = gdTrueColorAlpha(r, g, b, a);
-		} else if(!strcmp(st, "move")) {
+		} else if (!strcmp(st, "move")) {
 			char *st = strtok(0, "\r\n");
 
-			if(!st) {
+			if (!st) {
 				goto badLine;
 			}
 
-			if(sscanf(st, "%d %d", &x, &y) != 2) {
+			if (sscanf(st, "%d %d", &x, &y) != 2) {
 				fprintf(stderr, "Missing coordinates at line %d\n", lines);
 				exit(3);
 			}
-		} else if(!strcmp(st, "text")) {
+		} else if (!strcmp(st, "text")) {
 			int rx = x;
 
 			text = strtok(0, "\r\n");
-			if(!text) {
+			if (!text) {
 				text = "";
 			}
 
 			gdImageStringFT(0, bounds, color, font, size, 0, x, y, text);
 
-			switch(align) {
+			switch (align) {
 			case left:
 				break;
 
@@ -163,9 +162,11 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			fontError = gdImageStringFT(im, 0, color, font, size, 0, rx, y, text);
-			if(fontError) {
-				fprintf(stderr, "Font error at line %d: %s\n", lines, fontError);
+			fontError =
+				gdImageStringFT(im, 0, color, font, size, 0, rx, y, text);
+			if (fontError) {
+				fprintf(stderr, "Font error at line %d: %s\n", lines,
+						fontError);
 				exit(7);
 			}
 
@@ -177,7 +178,7 @@ int main(int argc, char *argv[])
 		lines++;
 		continue;
 
-badLine:
+	badLine:
 		fprintf(stderr, "Bad syntax, line %d\n", lines);
 		exit(4);
 	}
@@ -185,7 +186,7 @@ badLine:
 	free(s);
 
 	out = fopen(iout, "wb");
-	if(!out) {
+	if (!out) {
 		fprintf(stderr, "Cannot create %s\n", iout);
 		exit(5);
 	}

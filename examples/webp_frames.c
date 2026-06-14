@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int write_png(gdImagePtr im, const char *prefix, int frame)
-{
+static int write_png(gdImagePtr im, const char *prefix, int frame) {
 	char filename[1024];
 	FILE *out;
 
-	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, frame) >= (int) sizeof(filename)) {
+	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, frame) >=
+		(int)sizeof(filename)) {
 		fprintf(stderr, "output filename is too long\n");
 		return 0;
 	}
@@ -21,8 +21,7 @@ static int write_png(gdImagePtr im, const char *prefix, int frame)
 	return 1;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	FILE *in;
 	gdWebpReadPtr webp;
 	gdWebpInfo info;
@@ -47,14 +46,15 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	if (gdWebpReadGetInfo(webp, &info)) {
-		printf("canvas: %dx%d, frames: %d, loop count: %d\n",
-		       info.width, info.height, info.frameCount, info.loopCount);
+		printf("canvas: %dx%d, frames: %d, loop count: %d\n", info.width,
+			   info.height, info.frameCount, info.loopCount);
 	}
 	while (gdWebpReadNextImage(webp, &frameInfo, &image) == 1) {
-		printf("frame %d: rect=%d,%d %dx%d duration=%dms dispose=%d blend=%d alpha=%d\n",
-		       frameInfo.frameIndex, frameInfo.x, frameInfo.y,
-		       frameInfo.width, frameInfo.height, frameInfo.duration,
-		       frameInfo.dispose, frameInfo.blend, frameInfo.hasAlpha);
+		printf("frame %d: rect=%d,%d %dx%d duration=%dms dispose=%d blend=%d "
+			   "alpha=%d\n",
+			   frameInfo.frameIndex, frameInfo.x, frameInfo.y, frameInfo.width,
+			   frameInfo.height, frameInfo.duration, frameInfo.dispose,
+			   frameInfo.blend, frameInfo.hasAlpha);
 		if (!write_png(image, argv[2], frameCount++)) {
 			gdWebpReadClose(webp);
 			return 1;

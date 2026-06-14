@@ -1,12 +1,11 @@
 #include "gd.h"
 #include "gdtest.h"
 
-/* 
- using gradient here so it can be easily verified so repeated row scaling can be caught easily
+/*
+ using gradient here so it can be easily verified so repeated row scaling can be
+ caught easily
 */
-static gdImagePtr
-make_vertical_gradient(int width, int height)
-{
+static gdImagePtr make_vertical_gradient(int width, int height) {
 	gdImagePtr im = gdImageCreateTrueColor(width, height);
 	int x, y;
 	int red;
@@ -25,8 +24,7 @@ make_vertical_gradient(int width, int height)
 	return im;
 }
 
-int main()
-{
+int main() {
 	gdImagePtr src = make_vertical_gradient(4, 4);
 	gdImagePtr dst;
 	int top;
@@ -39,7 +37,8 @@ int main()
 
 	top = gdTrueColorGetRed(gdImageGetTrueColorPixel(dst, 0, 0));
 	between = gdTrueColorGetRed(gdImageGetTrueColorPixel(dst, 0, 1));
-	gdTestAssertMsg(between > top,
+	gdTestAssertMsg(
+		between > top,
 		"bicubic fixed scaling should interpolate between source rows");
 
 	gdImageDestroy(dst);

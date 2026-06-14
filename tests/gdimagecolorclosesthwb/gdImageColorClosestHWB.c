@@ -1,11 +1,10 @@
 /**
-  * Basic test for gdImageColorClosestHWB()
-  **/
+ * Basic test for gdImageColorClosestHWB()
+ **/
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 
@@ -15,8 +14,7 @@ int main()
 
 	int result = gdImageColorClosestHWB(im, 255, 0, 255);
 
-	if (gdTestAssert(result <= 0))
-	{
+	if (gdTestAssert(result <= 0)) {
 		gdImageDestroy(im);
 		return 1;
 	}

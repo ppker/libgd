@@ -1,11 +1,10 @@
+#include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gd.h"
 
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 
 	im = gdImageCreate(50, 50);

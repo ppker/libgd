@@ -1,9 +1,8 @@
 #include "gd.h"
-#include <stdio.h>
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 	char *file;
@@ -29,7 +28,7 @@ int main()
 		return 1;
 	}
 	free(file);
-	gdImagePng(im,fp);
+	gdImagePng(im, fp);
 	fclose(fp);
 
 	if (!gdAssertImageEqualsToFile("gdimagefill/bug00002_1_exp.png", im))

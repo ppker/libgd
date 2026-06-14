@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void save_png(gdImagePtr im, const char *filename)
-{
+void save_png(gdImagePtr im, const char *filename) {
 	FILE *fp;
 	fp = fopen(filename, "wb");
 	if (!fp) {
@@ -14,12 +13,11 @@ void save_png(gdImagePtr im, const char *filename)
 	fclose(fp);
 }
 
-int main()
-{
+int main() {
 	gdImagePtr im, im2;
 	FILE *fp;
 
-	fp=fopen("resampledbug.jpeg", "rb");
+	fp = fopen("resampledbug.jpeg", "rb");
 	if (!fp) {
 		fprintf(stderr, "Can't load resampledbug.jpeg\n");
 		return 1;

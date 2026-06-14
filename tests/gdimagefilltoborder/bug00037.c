@@ -1,9 +1,8 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int bordercolor, color;
 
@@ -19,11 +18,10 @@ int main()
 	color = gdImageGetPixel(im, 5, 5);
 
 	gdImageDestroy(im);
-	if (gdTestAssert(color==0x1000000)) {
+	if (gdTestAssert(color == 0x1000000)) {
 		return 0;
 	} else {
 		gdTestErrorMsg("c: %X, expected %X\n", color, 0x1000000);
 		return -1;
 	}
-
 }

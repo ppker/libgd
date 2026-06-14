@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	FILE *fp;
 	gdImagePtr in, out;
 	int w, h;
 
 	/* Help */
-	if (argc<=4) {
+	if (argc <= 4) {
 		printf("%s  input.jpg  output.jpg  width  height\n", argv[0]);
 		return 1;
 	}
@@ -16,7 +16,7 @@ int main (int argc, char *argv[]) {
 	/* Size */
 	w = atoi(argv[3]);
 	h = atoi(argv[4]);
-	if (w<=0 || h<=0) {
+	if (w <= 0 || h <= 0) {
 		fprintf(stderr, "Bad size %dx%d\n", h, w);
 		return 2;
 	}

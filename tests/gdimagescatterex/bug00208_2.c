@@ -1,13 +1,12 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im, ex;
 	FILE *fp;
 	gdScatter s;
 	int colors[] = {0xFF0000, 0x00FF00};
-	CuTestImageResult r = {0,0};
+	CuTestImageResult r = {0, 0};
 
 	fp = gdTestFileOpen("gdimagescatterex/bug00208.png");
 	im = gdImageCreateFromPng(fp);
@@ -17,7 +16,7 @@ int main()
 		return 1;
 	}
 
-	s.sub  = 1;
+	s.sub = 1;
 	s.plus = 3;
 	s.seed = 0;
 	s.num_colors = 2;

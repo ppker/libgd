@@ -8,12 +8,11 @@ gdImageCreateFromTga().
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
-    gdImagePtr im;
-    FILE *fp = gdTestFileOpen("tga/bug00247a.tga");
-    im = gdImageCreateFromTga(fp);
-    gdTestAssert(im == NULL);
-    fclose(fp);
-    return gdNumFailures();
+int main() {
+	gdImagePtr im;
+	FILE *fp = gdTestFileOpen("tga/bug00247a.tga");
+	im = gdImageCreateFromTga(fp);
+	gdTestAssert(im == NULL);
+	fclose(fp);
+	return gdNumFailures();
 }

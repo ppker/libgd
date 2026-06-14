@@ -7,16 +7,15 @@ in this case.
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
-    gdImagePtr im;
-    FILE *fp;
+int main() {
+	gdImagePtr im;
+	FILE *fp;
 
-    fp = gdTestFileOpen2("gd2", "too_few_image_data.gd2");
-    gdTestAssert(fp != NULL);
-    im = gdImageCreateFromGd2(fp);
-    gdTestAssert(im == NULL);
-    fclose(fp);
+	fp = gdTestFileOpen2("gd2", "too_few_image_data.gd2");
+	gdTestAssert(fp != NULL);
+	im = gdImageCreateFromGd2(fp);
+	gdTestAssert(im == NULL);
+	fclose(fp);
 
-    return gdNumFailures();
+	return gdNumFailures();
 }

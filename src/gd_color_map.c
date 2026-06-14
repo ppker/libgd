@@ -763,21 +763,20 @@ static const gdColorMapEntry GD_COLOR_MAP_X11_ENTRIES[] = {
 };
 
 BGD_EXPORT_DATA_PROT gdColorMap GD_COLOR_MAP_X11 = {
-	sizeof(GD_COLOR_MAP_X11_ENTRIES)/sizeof(gdColorMapEntry),
-	(gdColorMapEntry *)GD_COLOR_MAP_X11_ENTRIES
-};
+	sizeof(GD_COLOR_MAP_X11_ENTRIES) / sizeof(gdColorMapEntry),
+	(gdColorMapEntry *)GD_COLOR_MAP_X11_ENTRIES};
 
 /*
 	Function: gdColorMapLookup
 */
 BGD_DECLARE(int)
-gdColorMapLookup(const gdColorMap color_map, const char *color_name, int *r, int *g, int *b)
-{
+gdColorMapLookup(const gdColorMap color_map, const char *color_name, int *r,
+				 int *g, int *b) {
 	gdColorMapEntry *entries = color_map.entries;
 	int low = 0;
 	int high = color_map.num_entries - 1;
 	while (low <= high) {
-		int i = (low+high)/2;
+		int i = (low + high) / 2;
 		int result = strcmp(color_name, entries[i].color_name);
 		if (result == 0) {
 			*r = entries[i].red;

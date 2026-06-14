@@ -9,23 +9,23 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "wbmp.h"
 #include "gd.h"
 #include "gdhelpers.h"
+#include "wbmp.h"
 
 #ifdef NOTDEF
-#	define __TEST	/* Compile with main function */
-#	define __DEBUG	/* Extra verbose when with __TEST */
-#	define __WRITE	/* readwbmp and writewbmp(stdout) */
-#	define __VIEW	/* view the wbmp on stdout */
+#define __TEST	/* Compile with main function */
+#define __DEBUG /* Extra verbose when with __TEST */
+#define __WRITE /* readwbmp and writewbmp(stdout) */
+#define __VIEW	/* view the wbmp on stdout */
 #endif
 
 /* getmbi
@@ -36,18 +36,17 @@
  * This way you gain a lot of flexibility about how this package
  * reads a wbmp file.
  */
-int getmbi(int (*getin) (void *in), void *in)
-{
+int getmbi(int (*getin)(void *in), void *in) {
 	unsigned int mbi = 0;
 	int i;
 
 	do {
 		i = getin(in);
-		if(i < 0) {
+		if (i < 0) {
 			return (-1);
 		}
 		mbi = (mbi << 7) | (i & 0x7f);
-	} while(i & 0x80);
+	} while (i & 0x80);
 
 	return mbi;
 }
@@ -60,18 +59,17 @@ int getmbi(int (*getin) (void *in), void *in)
  * mbi integers it spits out.
  *
  */
-void putmbi(int i, void (*putout)(int c, void *out), void *out)
-{
+void putmbi(int i, void (*putout)(int c, void *out), void *out) {
 	int cnt, l, accu;
 
 	/* Get number of septets */
 	accu = cnt = 0;
-	while(accu != i) {
+	while (accu != i) {
 		accu += i & 0x7f << 7 * cnt++;
 	}
 
 	/* Produce the multibyte output */
-	for(l = cnt - 1; l > 0; l--) {
+	for (l = cnt - 1; l > 0; l--) {
 		putout(0x80 | (i & 0x7f << 7 * l) >> 7 * l, out);
 	}
 
@@ -82,16 +80,15 @@ void putmbi(int i, void (*putout)(int c, void *out), void *out)
  * ----------
  * Skips the ExtHeader. Not needed for the moment
  */
-int skipheader(int (*getin)(void *in), void *in)
-{
+int skipheader(int (*getin)(void *in), void *in) {
 	int i;
 
 	do {
 		i = getin(in);
-		if(i < 0) {
+		if (i < 0) {
 			return (-1);
 		}
-	} while(i & 0x80);
+	} while (i & 0x80);
 
 	return 0;
 }
@@ -100,26 +97,26 @@ int skipheader(int (*getin)(void *in), void *in)
  * -----------
  * create an empty wbmp
  */
-Wbmp *createwbmp(int width, int height, int color)
-{
+Wbmp *createwbmp(int width, int height, int color) {
 	int i;
 	Wbmp *wbmp;
 
-	if((wbmp = (Wbmp *)gdMalloc(sizeof (Wbmp))) == NULL) {
+	if ((wbmp = (Wbmp *)gdMalloc(sizeof(Wbmp))) == NULL) {
 		return (NULL);
 	}
 
-	if(overflow2(sizeof(int), width)) {
+	if (overflow2(sizeof(int), width)) {
 		gdFree(wbmp);
 		return NULL;
 	}
 
-	if(overflow2(sizeof(int) * width, height)) {
+	if (overflow2(sizeof(int) * width, height)) {
 		gdFree(wbmp);
 		return NULL;
 	}
 
-	if((wbmp->bitmap = (int *)gdMalloc(sizeof(int) * width * height)) == NULL) {
+	if ((wbmp->bitmap = (int *)gdMalloc(sizeof(int) * width * height)) ==
+		NULL) {
 		gdFree(wbmp);
 		return NULL;
 	}
@@ -127,7 +124,8 @@ Wbmp *createwbmp(int width, int height, int color)
 	wbmp->width = width;
 	wbmp->height = height;
 
-	for(i = 0; i < width * height; wbmp->bitmap[i++] = color);
+	for (i = 0; i < width * height; wbmp->bitmap[i++] = color)
+		;
 
 	return wbmp;
 }
@@ -137,34 +135,33 @@ Wbmp *createwbmp(int width, int height, int color)
  * Actually reads the WBMP format from an open file descriptor
  * It goes along by returning a pointer to a WBMP struct.
  */
-int readwbmp(int (*getin) (void *in), void *in, Wbmp **return_wbmp)
-{
+int readwbmp(int (*getin)(void *in), void *in, Wbmp **return_wbmp) {
 	int row, col, byte, pel, pos;
 	Wbmp *wbmp;
 
-	if((wbmp = (Wbmp *)gdMalloc(sizeof(Wbmp))) == NULL) {
+	if ((wbmp = (Wbmp *)gdMalloc(sizeof(Wbmp))) == NULL) {
 		return -1;
 	}
 
 	wbmp->type = getin(in);
-	if(wbmp->type != 0) {
+	if (wbmp->type != 0) {
 		gdFree(wbmp);
 		return -1;
 	}
 
-	if(skipheader(getin, in)) {
+	if (skipheader(getin, in)) {
 		gdFree(wbmp);
 		return -1;
 	}
 
 	wbmp->width = getmbi(getin, in);
-	if(wbmp->width == -1) {
+	if (wbmp->width == -1) {
 		gdFree(wbmp);
 		return -1;
 	}
 
 	wbmp->height = getmbi(getin, in);
-	if(wbmp->height == -1) {
+	if (wbmp->height == -1) {
 		gdFree(wbmp);
 		return -1;
 	}
@@ -173,13 +170,14 @@ int readwbmp(int (*getin) (void *in), void *in, Wbmp **return_wbmp)
 	printf("W: %d, H: %d\n", wbmp->width, wbmp->height);
 #endif
 
-	if(	overflow2(sizeof(int), wbmp->width) ||
+	if (overflow2(sizeof(int), wbmp->width) ||
 		overflow2(sizeof(int) * wbmp->width, wbmp->height)) {
 		gdFree(wbmp);
 		return -1;
 	}
 
-	if((wbmp->bitmap = (int *)gdMalloc(sizeof(int) * wbmp->width * wbmp->height)) == NULL) {
+	if ((wbmp->bitmap = (int *)gdMalloc(sizeof(int) * wbmp->width *
+										wbmp->height)) == NULL) {
 		gdFree(wbmp);
 		return -1;
 	}
@@ -189,13 +187,13 @@ int readwbmp(int (*getin) (void *in), void *in, Wbmp **return_wbmp)
 #endif
 
 	pos = 0;
-	for(row = 0; row < wbmp->height; row++) {
-		for(col = 0; col < wbmp->width;) {
+	for (row = 0; row < wbmp->height; row++) {
+		for (col = 0; col < wbmp->width;) {
 			byte = getin(in);
 
-			for(pel = 7; pel >= 0; pel--) {
-				if(col++ < wbmp->width) {
-					if(byte & 1 << pel) {
+			for (pel = 7; pel >= 0; pel--) {
+				if (col++ < wbmp->width) {
+					if (byte & 1 << pel) {
 						wbmp->bitmap[pos] = WBMP_WHITE;
 					} else {
 						wbmp->bitmap[pos] = WBMP_BLACK;
@@ -221,8 +219,7 @@ int readwbmp(int (*getin) (void *in), void *in, Wbmp **return_wbmp)
  * their own io functions, so the passing of a function seemed to be
  * a logic(?) decision ...
  */
-int writewbmp(Wbmp *wbmp, void (*putout)(int c, void *out), void *out)
-{
+int writewbmp(Wbmp *wbmp, void (*putout)(int c, void *out), void *out) {
 	int row, col;
 	int bitpos, octet;
 
@@ -231,25 +228,26 @@ int writewbmp(Wbmp *wbmp, void (*putout)(int c, void *out), void *out)
 	putout(0, out); /* FixHeaderField */
 
 	/* Size of the image */
-	putmbi(wbmp->width, putout, out);	/* width */
-	putmbi(wbmp->height, putout, out);	/* height */
-
+	putmbi(wbmp->width, putout, out);  /* width */
+	putmbi(wbmp->height, putout, out); /* height */
 
 	/* Image data */
-	for(row = 0; row < wbmp->height; row++) {
+	for (row = 0; row < wbmp->height; row++) {
 		bitpos = 8;
 		octet = 0;
 
-		for(col = 0; col < wbmp->width; col++) {
-			octet |= ((wbmp->bitmap[row * wbmp->width + col] == 1) ? WBMP_WHITE : WBMP_BLACK) << --bitpos;
-			if(bitpos == 0) {
+		for (col = 0; col < wbmp->width; col++) {
+			octet |= ((wbmp->bitmap[row * wbmp->width + col] == 1) ? WBMP_WHITE
+																   : WBMP_BLACK)
+					 << --bitpos;
+			if (bitpos == 0) {
 				bitpos = 8;
 				putout(octet, out);
 				octet = 0;
 			}
 		}
 
-		if(bitpos != 8) {
+		if (bitpos != 8) {
 			putout(octet, out);
 		}
 	}
@@ -261,8 +259,7 @@ int writewbmp(Wbmp *wbmp, void (*putout)(int c, void *out), void *out)
  * --------
  * gdFrees up memory occupied by a WBMP structure
  */
-void freewbmp(Wbmp *wbmp)
-{
+void freewbmp(Wbmp *wbmp) {
 	gdFree(wbmp->bitmap);
 	gdFree(wbmp);
 }
@@ -271,13 +268,12 @@ void freewbmp(Wbmp *wbmp)
  * ---------
  * print a WBMP to stdout for visualisation
  */
-void printwbmp(Wbmp *wbmp)
-{
+void printwbmp(Wbmp *wbmp) {
 	int row, col;
 
-	for(row = 0; row < wbmp->height; row++) {
-		for(col = 0; col < wbmp->width; col++) {
-			if(wbmp->bitmap[wbmp->width * row + col] == WBMP_BLACK) {
+	for (row = 0; row < wbmp->height; row++) {
+		for (col = 0; col < wbmp->width; col++) {
+			if (wbmp->bitmap[wbmp->width * row + col] == WBMP_BLACK) {
 				putchar('#');
 			} else {
 				putchar(' ');
@@ -292,29 +288,22 @@ void printwbmp(Wbmp *wbmp)
 /* putout to file descriptor
  * -------------------------
  */
-int putout(int c, void *out)
-{
-	return (putc(c, (FILE *)out));
-}
+int putout(int c, void *out) { return (putc(c, (FILE *)out)); }
 
 /* getin from file descriptor
  * --------------------------
  */
-int getin(void *in)
-{
-	return (getc((FILE *)in));
-}
+int getin(void *in) { return (getc((FILE *)in)); }
 
 /* Main function
  * -------------
  */
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	FILE *wbmp_file;
 	Wbmp *wbmp;
 
 	wbmp_file = fopen(argv[1], "rb");
-	if(wbmp_file) {
+	if (wbmp_file) {
 		readwbmp(&getin, wbmp_file, &wbmp);
 #ifdef __VIEW
 #ifdef __DEBUG

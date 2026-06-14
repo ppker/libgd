@@ -2,8 +2,7 @@
 #include "gdtest.h"
 #include <string.h>
 
-static gdImagePtr make_frame(int color)
-{
+static gdImagePtr make_frame(int color) {
 	gdImagePtr im = gdImageCreateTrueColor(4, 4);
 	int x, y;
 
@@ -20,8 +19,7 @@ static gdImagePtr make_frame(int color)
 	return im;
 }
 
-int main()
-{
+int main() {
 	gdWebpWriteOptions options;
 	gdWebpWritePtr writer;
 	gdWebpReadPtr reader;

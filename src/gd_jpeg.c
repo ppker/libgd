@@ -28,12 +28,12 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <setjmp.h>
 #include <limits.h>
+#include <setjmp.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "gd.h"
@@ -45,41 +45,40 @@
 #include "gdhelpers.h"
 
 #if defined(_WIN32) && defined(__MINGW32__)
-# define HAVE_BOOLEAN
+#define HAVE_BOOLEAN
 #endif
 
 /* 1.8.1: remove dependency on jinclude.h */
-#include "jpeglib.h"
 #include "jerror.h"
+#include "jpeglib.h"
 
 static const char *const GD_JPEG_VERSION = "1.0";
 
 typedef struct _jmpbuf_wrapper {
 	jmp_buf jmpbuf;
-        int ignore_warning;
-}
-jmpbuf_wrapper;
+	int ignore_warning;
+} jmpbuf_wrapper;
 
-static void jpeg_emit_message(j_common_ptr jpeg_info, int level)
-{
+static void jpeg_emit_message(j_common_ptr jpeg_info, int level) {
 	char message[JMSG_LENGTH_MAX];
 	jmpbuf_wrapper *jmpbufw;
 	int ignore_warning = 0;
 
-	jmpbufw = (jmpbuf_wrapper *) jpeg_info->client_data;
+	jmpbufw = (jmpbuf_wrapper *)jpeg_info->client_data;
 
 	if (jmpbufw != 0) {
 		ignore_warning = jmpbufw->ignore_warning;
 	}
 
-	(jpeg_info->err->format_message)(jpeg_info,message);
+	(jpeg_info->err->format_message)(jpeg_info, message);
 
 	/* It is a warning message */
 	if (level < 0) {
 		/* display only the 1st warning, as would do a default libjpeg
 		 * unless strace_level >= 3
 		 */
-		if ((jpeg_info->err->num_warnings == 0) || (jpeg_info->err->trace_level >= 3)) {
+		if ((jpeg_info->err->num_warnings == 0) ||
+			(jpeg_info->err->trace_level >= 3)) {
 			if (!ignore_warning) {
 				gd_error("gd-jpeg, libjpeg: recoverable error: %s\n", message);
 			}
@@ -97,28 +96,33 @@ static void jpeg_emit_message(j_common_ptr jpeg_info, int level)
 }
 
 /* Called by the IJG JPEG library upon encountering a fatal error */
-static void fatal_jpeg_error(j_common_ptr cinfo)
-{
+static void fatal_jpeg_error(j_common_ptr cinfo) {
 	jmpbuf_wrapper *jmpbufw;
 	char buffer[JMSG_LENGTH_MAX];
 
 	(*cinfo->err->format_message)(cinfo, buffer);
-	gd_error_ex(GD_WARNING, "gd-jpeg: JPEG library reports unrecoverable error: %s", buffer);
+	gd_error_ex(GD_WARNING,
+				"gd-jpeg: JPEG library reports unrecoverable error: %s",
+				buffer);
 
 	jmpbufw = (jmpbuf_wrapper *)cinfo->client_data;
 	jpeg_destroy(cinfo);
 
-	if(jmpbufw != 0) {
+	if (jmpbufw != 0) {
 		longjmp(jmpbufw->jmpbuf, 1);
-		gd_error_ex(GD_ERROR, "gd-jpeg: EXTREMELY fatal error: longjmp returned control; terminating\n");
+		gd_error_ex(GD_ERROR, "gd-jpeg: EXTREMELY fatal error: longjmp "
+							  "returned control; terminating\n");
 	} else {
-		gd_error_ex(GD_ERROR, "gd-jpeg: EXTREMELY fatal error: jmpbuf unrecoverable; terminating\n");
+		gd_error_ex(GD_ERROR, "gd-jpeg: EXTREMELY fatal error: jmpbuf "
+							  "unrecoverable; terminating\n");
 	}
 
 	exit(99);
 }
 
-static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const gdImageMetadata *metadata, int force_no_subsampling);
+static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality,
+						   const gdImageMetadata *metadata,
+						   int force_no_subsampling);
 
 /*
  * Write IM to OUTFILE as a JFIF-formatted JPEG image, using quality
@@ -129,77 +133,76 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
  * library documentation for more details.
  */
 
-
 /*
   Function: gdImageJpeg
 
-    <gdImageJpeg> outputs the specified image to the specified file in
-    JPEG format. The file must be open for writing. Under MSDOS and
-    all versions of Windows, it is important to use "wb" as opposed to
-    simply "w" as the mode when opening the file, and under Unix there
-    is no penalty for doing so. <gdImageJpeg> does not close the file;
-    your code must do so.
+	<gdImageJpeg> outputs the specified image to the specified file in
+	JPEG format. The file must be open for writing. Under MSDOS and
+	all versions of Windows, it is important to use "wb" as opposed to
+	simply "w" as the mode when opening the file, and under Unix there
+	is no penalty for doing so. <gdImageJpeg> does not close the file;
+	your code must do so.
 
-    If _quality_ is negative, the default IJG JPEG quality value (which
-    should yield a good general quality / size tradeoff for most
-    situations) is used. Otherwise, for practical purposes, _quality_
-    should be a value in the range 0-95, higher quality values usually
-    implying both higher quality and larger image sizes.
+	If _quality_ is negative, the default IJG JPEG quality value (which
+	should yield a good general quality / size tradeoff for most
+	situations) is used. Otherwise, for practical purposes, _quality_
+	should be a value in the range 0-95, higher quality values usually
+	implying both higher quality and larger image sizes.
 
-    If you have set image interlacing using <gdImageInterlace>, this
-    function will interpret that to mean you wish to output a
-    progressive JPEG. Some programs (e.g., Web browsers) can display
-    progressive JPEGs incrementally; this can be useful when browsing
-    over a relatively slow communications link, for
-    example. Progressive JPEGs can also be slightly smaller than
-    sequential (non-progressive) JPEGs.
+	If you have set image interlacing using <gdImageInterlace>, this
+	function will interpret that to mean you wish to output a
+	progressive JPEG. Some programs (e.g., Web browsers) can display
+	progressive JPEGs incrementally; this can be useful when browsing
+	over a relatively slow communications link, for
+	example. Progressive JPEGs can also be slightly smaller than
+	sequential (non-progressive) JPEGs.
 
   Variants:
 
-    <gdImageJpegCtx> stores the image using a <gdIOCtx> struct.
+	<gdImageJpegCtx> stores the image using a <gdIOCtx> struct.
 
-    <gdImageJpegPtr> stores the image to RAM.
+	<gdImageJpegPtr> stores the image to RAM.
 
   Parameters:
 
-    im      - The image to save
-    outFile - The FILE pointer to write to.
-    quality - Compression quality (0-95, 0 means use the default).
+	im      - The image to save
+	outFile - The FILE pointer to write to.
+	quality - Compression quality (0-95, 0 means use the default).
 
   Returns:
 
-    Nothing.
+	Nothing.
 
   Example:
-    (start code)
+	(start code)
 
-    gdImagePtr im;
-    int black, white;
-    FILE *out;
-    // Create the image
-    im = gdImageCreate(100, 100);
-    // Allocate background
-    white = gdImageColorAllocate(im, 255, 255, 255);
-    // Allocate drawing color
-    black = gdImageColorAllocate(im, 0, 0, 0);
-    // Draw rectangle
-    gdImageRectangle(im, 0, 0, 99, 99, black);
-    // Open output file in binary mode
-    out = fopen("rect.jpg", "wb");
-    // Write JPEG using default quality
-    gdImageJpeg(im, out, -1);
-    // Close file
-    fclose(out);
-    // Destroy image
-    gdImageDestroy(im);
+	gdImagePtr im;
+	int black, white;
+	FILE *out;
+	// Create the image
+	im = gdImageCreate(100, 100);
+	// Allocate background
+	white = gdImageColorAllocate(im, 255, 255, 255);
+	// Allocate drawing color
+	black = gdImageColorAllocate(im, 0, 0, 0);
+	// Draw rectangle
+	gdImageRectangle(im, 0, 0, 99, 99, black);
+	// Open output file in binary mode
+	out = fopen("rect.jpg", "wb");
+	// Write JPEG using default quality
+	gdImageJpeg(im, out, -1);
+	// Close file
+	fclose(out);
+	// Destroy image
+	gdImageDestroy(im);
 
-    (end code)
+	(end code)
 */
 
-BGD_DECLARE(void) gdImageJpeg(gdImagePtr im, FILE *outFile, int quality)
-{
+BGD_DECLARE(void) gdImageJpeg(gdImagePtr im, FILE *outFile, int quality) {
 	gdIOCtx *out = gdNewFileCtx(outFile);
-	if (out == NULL) return;
+	if (out == NULL)
+		return;
 	gdImageJpegCtx(im, out, quality);
 	out->gd_free(out);
 }
@@ -207,33 +210,33 @@ BGD_DECLARE(void) gdImageJpeg(gdImagePtr im, FILE *outFile, int quality)
 /*
   Function: gdImageJpegPtr
 
-    Identical to <gdImageJpeg> except that it returns a pointer to a
-    memory area with the JPEG data. This memory must be freed by the
-    caller when it is no longer needed.
+	Identical to <gdImageJpeg> except that it returns a pointer to a
+	memory area with the JPEG data. This memory must be freed by the
+	caller when it is no longer needed.
 
-    The caller *must* invoke <gdFree>, not free().  This is because it
-    is not guaranteed that libgd will use the same implementation of
-    malloc, free, etc. as your proggram.
+	The caller *must* invoke <gdFree>, not free().  This is because it
+	is not guaranteed that libgd will use the same implementation of
+	malloc, free, etc. as your proggram.
 
-    The 'size' parameter receives the total size of the block of
-    memory.
+	The 'size' parameter receives the total size of the block of
+	memory.
 
   Parameters:
 
-    im      - The image to write
-    size    - Output: the size of the resulting image.
-    quality - Compression quality.
+	im      - The image to write
+	size    - Output: the size of the resulting image.
+	quality - Compression quality.
 
   Returns:
 
-    A pointer to the JPEG data or NULL if an error occurred.
+	A pointer to the JPEG data or NULL if an error occurred.
 
 */
-BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality)
-{
+BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality) {
 	void *rv;
 	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
-	if (out == NULL) return NULL;
+	if (out == NULL)
+		return NULL;
 	if (!_gdImageJpegCtx(im, out, quality, NULL, 0)) {
 		rv = gdDPExtractData(out, size);
 	} else {
@@ -243,11 +246,13 @@ BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality)
 	return rv;
 }
 
-BGD_DECLARE(void *) gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int quality, const gdImageMetadata *metadata)
-{
+BGD_DECLARE(void *)
+gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int quality,
+						   const gdImageMetadata *metadata) {
 	void *rv;
 	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
-	if (out == NULL) return NULL;
+	if (out == NULL)
+		return NULL;
 	if (!_gdImageJpegCtx(im, out, quality, metadata, 0)) {
 		rv = gdDPExtractData(out, size);
 	} else {
@@ -257,11 +262,13 @@ BGD_DECLARE(void *) gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int qua
 	return rv;
 }
 
-void *gdImageJpegPtrWithMetadataNoSubsampling(gdImagePtr im, int *size, int quality, const gdImageMetadata *metadata)
-{
+void *gdImageJpegPtrWithMetadataNoSubsampling(gdImagePtr im, int *size,
+											  int quality,
+											  const gdImageMetadata *metadata) {
 	void *rv;
 	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
-	if (out == NULL) return NULL;
+	if (out == NULL)
+		return NULL;
 	if (!_gdImageJpegCtx(im, out, quality, metadata, 1)) {
 		rv = gdDPExtractData(out, size);
 	} else {
@@ -276,29 +283,29 @@ static void jpeg_gdIOCtx_dest(j_compress_ptr cinfo, gdIOCtx *outfile);
 /*
   Function: gdImageJpegCtx
 
-    Write the image as JPEG data via a <gdIOCtx>. See <gdImageJpeg>
-    for more details.
+	Write the image as JPEG data via a <gdIOCtx>. See <gdImageJpeg>
+	for more details.
 
   Parameters:
 
-    im      - The image to write.
-    outfile - The output sink.
-    quality - Image quality.
+	im      - The image to write.
+	outfile - The output sink.
+	quality - Image quality.
 
 */
-BGD_DECLARE(void) gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality)
-{
+BGD_DECLARE(void) gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality) {
 	_gdImageJpegCtx(im, outfile, quality, NULL, 0);
 }
 
-BGD_DECLARE(void) gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtx *outfile, int quality, const gdImageMetadata *metadata)
-{
+BGD_DECLARE(void)
+gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtx *outfile, int quality,
+						   const gdImageMetadata *metadata) {
 	_gdImageJpegCtx(im, outfile, quality, metadata, 0);
 }
 
 /* returns 0 on success, 1 on failure */
-static int gdJpegWriteAppMarker(j_compress_ptr cinfo, int marker, const unsigned char *data, size_t size)
-{
+static int gdJpegWriteAppMarker(j_compress_ptr cinfo, int marker,
+								const unsigned char *data, size_t size) {
 	if (data == NULL && size != 0) {
 		return 1;
 	}
@@ -309,8 +316,8 @@ static int gdJpegWriteAppMarker(j_compress_ptr cinfo, int marker, const unsigned
 	return 0;
 }
 
-static int gdJpegWriteIccProfile(j_compress_ptr cinfo, const unsigned char *data, size_t size)
-{
+static int gdJpegWriteIccProfile(j_compress_ptr cinfo,
+								 const unsigned char *data, size_t size) {
 	static const unsigned char icc_signature[] = "ICC_PROFILE";
 	unsigned char *segment;
 	size_t offset = 0;
@@ -343,7 +350,8 @@ static int gdJpegWriteIccProfile(j_compress_ptr cinfo, const unsigned char *data
 		segment[12] = (unsigned char)segment_index;
 		segment[13] = (unsigned char)segment_count;
 		memcpy(segment + 14, data + offset, chunk_size);
-		jpeg_write_marker(cinfo, JPEG_APP0 + 2, segment, (unsigned int)(chunk_size + 14));
+		jpeg_write_marker(cinfo, JPEG_APP0 + 2, segment,
+						  (unsigned int)(chunk_size + 14));
 		offset += chunk_size;
 	}
 
@@ -351,8 +359,8 @@ static int gdJpegWriteIccProfile(j_compress_ptr cinfo, const unsigned char *data
 	return 0;
 }
 
-static int gdJpegWriteMetadata(j_compress_ptr cinfo, const gdImageMetadata *metadata)
-{
+static int gdJpegWriteMetadata(j_compress_ptr cinfo,
+							   const gdImageMetadata *metadata) {
 	const unsigned char *data;
 	size_t size;
 
@@ -361,11 +369,13 @@ static int gdJpegWriteMetadata(j_compress_ptr cinfo, const gdImageMetadata *meta
 	}
 
 	data = gdImageMetadataGetProfile(metadata, "exif", &size);
-	if (data != NULL && gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 1, data, size)) {
+	if (data != NULL &&
+		gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 1, data, size)) {
 		return 1;
 	}
 	data = gdImageMetadataGetProfile(metadata, "xmp", &size);
-	if (data != NULL && gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 1, data, size)) {
+	if (data != NULL &&
+		gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 1, data, size)) {
 		return 1;
 	}
 	data = gdImageMetadataGetProfile(metadata, "icc", &size);
@@ -373,15 +383,17 @@ static int gdJpegWriteMetadata(j_compress_ptr cinfo, const gdImageMetadata *meta
 		return 1;
 	}
 	data = gdImageMetadataGetProfile(metadata, "iptc", &size);
-	if (data != NULL && gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 13, data, size)) {
+	if (data != NULL &&
+		gdJpegWriteAppMarker(cinfo, JPEG_APP0 + 13, data, size)) {
 		return 1;
 	}
 
 	return 0;
 }
 
-static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const gdImageMetadata *metadata, int force_no_subsampling)
-{
+static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality,
+						   const gdImageMetadata *metadata,
+						   int force_no_subsampling) {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	int i, j, jidx;
@@ -394,11 +406,15 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 
 #ifdef JPEG_DEBUG
 	gd_error_ex(GD_DEBUG, "gd-jpeg: gd JPEG version %s\n", GD_JPEG_VERSION);
-	gd_error_ex(GD_DEBUG, "gd-jpeg: JPEG library version %d, %d-bit sample values\n", JPEG_LIB_VERSION, BITS_IN_JSAMPLE);
+	gd_error_ex(GD_DEBUG,
+				"gd-jpeg: JPEG library version %d, %d-bit sample values\n",
+				JPEG_LIB_VERSION, BITS_IN_JSAMPLE);
 	if (!im->trueColor) {
-		for(i = 0; i < im->colorsTotal; i++) {
-			if(!im->open[i]) {
-				gd_error_ex(GD_DEBUG, "gd-jpeg: gd colormap index %d: (%d, %d, %d)\n", i, im->red[i], im->green[i], im->blue[i]);
+		for (i = 0; i < im->colorsTotal; i++) {
+			if (!im->open[i]) {
+				gd_error_ex(GD_DEBUG,
+							"gd-jpeg: gd colormap index %d: (%d, %d, %d)\n", i,
+							im->red[i], im->green[i], im->blue[i]);
 			}
 		}
 	}
@@ -410,9 +426,9 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 	cinfo.err = jpeg_std_error(&jerr);
 	cinfo.client_data = &jmpbufw;
 
-	if(setjmp(jmpbufw.jmpbuf) != 0) {
+	if (setjmp(jmpbufw.jmpbuf) != 0) {
 		/* we're here courtesy of longjmp */
-		if(row) {
+		if (row) {
 			gdFree(row);
 		}
 		return 1;
@@ -425,7 +441,7 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 
 	cinfo.image_width = im->sx;
 	cinfo.image_height = im->sy;
-	cinfo.input_components = 3; /* # of color components per pixel */
+	cinfo.input_components = 3;		/* # of color components per pixel */
 	cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
 
 	jpeg_set_defaults(&cinfo);
@@ -434,7 +450,7 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 	cinfo.X_density = im->res_x;
 	cinfo.Y_density = im->res_y;
 
-	if(quality >= 0) {
+	if (quality >= 0) {
 		jpeg_set_quality(&cinfo, quality, TRUE);
 	}
 	if (force_no_subsampling || quality >= 90) {
@@ -445,18 +461,22 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 	}
 
 	/* If user requests interlace, translate that to progressive JPEG */
-	if(gdImageGetInterlaced(im)) {
+	if (gdImageGetInterlaced(im)) {
 #ifdef JPEG_DEBUG
-		gd_error_ex(GD_DEBUG, "gd-jpeg: interlace set, outputting progressive JPEG image\n");
+		gd_error_ex(
+			GD_DEBUG,
+			"gd-jpeg: interlace set, outputting progressive JPEG image\n");
 #endif
 		jpeg_simple_progression(&cinfo);
 	}
 
 	jpeg_gdIOCtx_dest(&cinfo, outfile);
 
-	row = (JSAMPROW)gdCalloc(1, cinfo.image_width * cinfo.input_components * sizeof(JSAMPLE));
-	if(row == 0) {
-		gd_error("gd-jpeg: error: unable to allocate JPEG row structure: gdCalloc returns NULL\n");
+	row = (JSAMPROW)gdCalloc(1, cinfo.image_width * cinfo.input_components *
+									sizeof(JSAMPLE));
+	if (row == 0) {
+		gd_error("gd-jpeg: error: unable to allocate JPEG row structure: "
+				 "gdCalloc returns NULL\n");
 		jpeg_destroy_compress(&cinfo);
 		return 1;
 	}
@@ -470,30 +490,31 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 		goto error;
 	}
 
-	sprintf(comment, "CREATOR: gd-jpeg v%s (using IJG JPEG v%d),", GD_JPEG_VERSION, JPEG_LIB_VERSION);
+	sprintf(comment, "CREATOR: gd-jpeg v%s (using IJG JPEG v%d),",
+			GD_JPEG_VERSION, JPEG_LIB_VERSION);
 
-	if(quality >= 0) {
-		sprintf (comment + strlen(comment), " quality = %d\n", quality);
+	if (quality >= 0) {
+		sprintf(comment + strlen(comment), " quality = %d\n", quality);
 	} else {
 		strcat(comment + strlen(comment), " default quality\n");
 	}
 
-	jpeg_write_marker(&cinfo, JPEG_COM, (unsigned char *) comment, (unsigned int)strlen(comment));
+	jpeg_write_marker(&cinfo, JPEG_COM, (unsigned char *)comment,
+					  (unsigned int)strlen(comment));
 
-	if(im->trueColor) {
+	if (im->trueColor) {
 #if BITS_IN_JSAMPLE == 12
 		gd_error(
-		        "gd-jpeg: error: jpeg library was compiled for 12-bit\n"
-		        "precision. This is mostly useless, because JPEGs on the web are\n"
-		        "8-bit and such versions of the jpeg library won't read or write\n"
-		        "them. GD doesn't support these unusual images. Edit your\n"
-		        "jmorecfg.h file to specify the correct precision and completely\n"
-		        "'make clean' and 'make install' libjpeg again. Sorry.\n"
-		       );
+			"gd-jpeg: error: jpeg library was compiled for 12-bit\n"
+			"precision. This is mostly useless, because JPEGs on the web are\n"
+			"8-bit and such versions of the jpeg library won't read or write\n"
+			"them. GD doesn't support these unusual images. Edit your\n"
+			"jmorecfg.h file to specify the correct precision and completely\n"
+			"'make clean' and 'make install' libjpeg again. Sorry.\n");
 		goto error;
 #endif /* BITS_IN_JSAMPLE == 12 */
-		for(i = 0; i < im->sy; i++) {
-			for(jidx = 0, j = 0; j < im->sx; j++) {
+		for (i = 0; i < im->sy; i++) {
+			for (jidx = 0, j = 0; j < im->sx; j++) {
 				int val = im->tpixels[i][j];
 				row[jidx++] = gdTrueColorGetRed(val);
 				row[jidx++] = gdTrueColorGetGreen(val);
@@ -502,13 +523,15 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 
 			nlines = jpeg_write_scanlines(&cinfo, rowptr, 1);
 
-			if(nlines != 1) {
-				gd_error("gd_jpeg: warning: jpeg_write_scanlines returns %u -- expected 1\n", nlines);
+			if (nlines != 1) {
+				gd_error("gd_jpeg: warning: jpeg_write_scanlines returns %u -- "
+						 "expected 1\n",
+						 nlines);
 			}
 		}
 	} else {
-		for(i = 0; i < im->sy; i++) {
-			for(jidx = 0, j = 0; j < im->sx; j++) {
+		for (i = 0; i < im->sy; i++) {
+			for (jidx = 0, j = 0; j < im->sx; j++) {
 				int idx = im->pixels[i][j];
 
 				/*
@@ -530,9 +553,10 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 			}
 
 			nlines = jpeg_write_scanlines(&cinfo, rowptr, 1);
-			if(nlines != 1) {
+			if (nlines != 1) {
 				gd_error("gd_jpeg: warning: jpeg_write_scanlines"
-				         " returns %u -- expected 1\n", nlines);
+						 " returns %u -- expected 1\n",
+						 nlines);
 			}
 		}
 	}
@@ -544,86 +568,82 @@ static int _gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality, const g
 
 error:
 	jpeg_destroy_compress(&cinfo);
-	if(row) {
+	if (row) {
 		gdFree(row);
 	}
 	return 1;
 }
-
-
-
 
 /*
   Function: gdImageCreateFromJpeg
 
   See <gdImageCreateFromJpegEx>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpeg(FILE *inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpeg(FILE *inFile) {
 	return gdImageCreateFromJpegEx(inFile, 1);
 }
-
 
 /*
   Function: gdImageCreateFromJpegEx
 
-    <gdImageCreateFromJpegEx> is called to load truecolor images from
-    JPEG format files. Invoke <gdImageCreateFromJpegEx> with an
-    already opened pointer to a file containing the desired
-    image. <gdImageCreateFromJpegEx> returns a <gdImagePtr> to the new
-    truecolor image, or NULL if unable to load the image (most often
-    because the file is corrupt or does not contain a JPEG
-    image). <gdImageCreateFromJpegEx> does not close the file.
+	<gdImageCreateFromJpegEx> is called to load truecolor images from
+	JPEG format files. Invoke <gdImageCreateFromJpegEx> with an
+	already opened pointer to a file containing the desired
+	image. <gdImageCreateFromJpegEx> returns a <gdImagePtr> to the new
+	truecolor image, or NULL if unable to load the image (most often
+	because the file is corrupt or does not contain a JPEG
+	image). <gdImageCreateFromJpegEx> does not close the file.
 
-    You can inspect the sx and sy members of the image to determine
-    its size. The image must eventually be destroyed using
-    <gdImageDestroy>.
+	You can inspect the sx and sy members of the image to determine
+	its size. The image must eventually be destroyed using
+	<gdImageDestroy>.
 
-    *The returned image is always a truecolor image.*
+	*The returned image is always a truecolor image.*
 
   Variants:
 
-    <gdImageCreateFromJpegPtrEx> creates an image from JPEG data
-    already in memory.
+	<gdImageCreateFromJpegPtrEx> creates an image from JPEG data
+	already in memory.
 
-    <gdImageCreateFromJpegCtxEx> reads its data via the function
-    pointers in a <gdIOCtx> structure.
+	<gdImageCreateFromJpegCtxEx> reads its data via the function
+	pointers in a <gdIOCtx> structure.
 
-    <gdImageCreateFromJpeg>, <gdImageCreateFromJpegPtr> and
-    <gdImageCreateFromJpegCtx> are equivalent to calling their
-    _Ex_-named counterparts with an ignore_warning set to 1
-    (i.e. TRUE).
+	<gdImageCreateFromJpeg>, <gdImageCreateFromJpegPtr> and
+	<gdImageCreateFromJpegCtx> are equivalent to calling their
+	_Ex_-named counterparts with an ignore_warning set to 1
+	(i.e. TRUE).
 
   Parameters:
 
-    infile          - The input FILE pointer.
-    ignore_warning  - Flag.  If true, ignores recoverable warnings.
+	infile          - The input FILE pointer.
+	ignore_warning  - Flag.  If true, ignores recoverable warnings.
 
   Returns:
 
-    A pointer to the new *truecolor* image.  This will need to be
-    destroyed with <gdImageDestroy> once it is no longer needed.
+	A pointer to the new *truecolor* image.  This will need to be
+	destroyed with <gdImageDestroy> once it is no longer needed.
 
-    On error, returns NULL.
+	On error, returns NULL.
 
   Example:
-    (start code)
+	(start code)
 
-    gdImagePtr im;
-    FILE *in;
-    in = fopen("myjpeg.jpg", "rb");
-    im = gdImageCreateFromJpegEx(in, GD_TRUE);
-    fclose(in);
-    // ... Use the image ...
-    gdImageDestroy(im);
+	gdImagePtr im;
+	FILE *in;
+	in = fopen("myjpeg.jpg", "rb");
+	im = gdImageCreateFromJpegEx(in, GD_TRUE);
+	fclose(in);
+	// ... Use the image ...
+	gdImageDestroy(im);
 
-    (end code)
+	(end code)
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegEx(FILE *inFile, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegEx(FILE *inFile, int ignore_warning) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewFileCtx(inFile);
-	if (in == NULL) return NULL;
+	if (in == NULL)
+		return NULL;
 	im = gdImageCreateFromJpegCtxEx(in, ignore_warning);
 	in->gd_free(in);
 	return im;
@@ -634,13 +654,12 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegEx(FILE *inFile, int ignore_warning
 
   Parameters:
 
-    size    - size of JPEG data in bytes.
-    data    - pointer to JPEG data.
+	size    - size of JPEG data in bytes.
+	data    - pointer to JPEG data.
 
   See <gdImageCreateFromJpegEx>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data) {
 	return gdImageCreateFromJpegPtrEx(size, data, 1);
 }
 
@@ -649,17 +668,17 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data)
 
   Parameters:
 
-    size            - size of JPEG data in bytes.
-    data            - pointer to JPEG data.
-    ignore_warning  - if true, ignore recoverable warnings
+	size            - size of JPEG data in bytes.
+	data            - pointer to JPEG data.
+	ignore_warning  - if true, ignore recoverable warnings
 
   See <gdImageCreateFromJpegEx>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrEx(int size, void *data, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrEx(int size, void *data, int ignore_warning) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
-	if(!in) {
+	if (!in) {
 		return 0;
 	}
 	im = gdImageCreateFromJpegCtxEx(in, ignore_warning);
@@ -667,16 +686,18 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrEx(int size, void *data, int ign
 	return im;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrWithMetadata(int size, void *data, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrWithMetadata(int size, void *data,
+									 gdImageMetadata *metadata) {
 	return gdImageCreateFromJpegPtrExWithMetadata(size, data, 1, metadata);
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrExWithMetadata(int size, void *data, int ignore_warning, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrExWithMetadata(int size, void *data, int ignore_warning,
+									   gdImageMetadata *metadata) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
-	if(!in) {
+	if (!in) {
 		return 0;
 	}
 	im = gdImageCreateFromJpegCtxExWithMetadata(in, ignore_warning, metadata);
@@ -688,13 +709,15 @@ static void jpeg_gdIOCtx_src(j_decompress_ptr cinfo, gdIOCtx *infile);
 
 static int CMYKToRGB(int c, int m, int y, int k, int inverted);
 
-static int gdJpegMarkerStartsWith(jpeg_saved_marker_ptr marker, const unsigned char *prefix, size_t prefix_size)
-{
-	return marker->data_length >= prefix_size && memcmp(marker->data, prefix, prefix_size) == 0;
+static int gdJpegMarkerStartsWith(jpeg_saved_marker_ptr marker,
+								  const unsigned char *prefix,
+								  size_t prefix_size) {
+	return marker->data_length >= prefix_size &&
+		   memcmp(marker->data, prefix, prefix_size) == 0;
 }
 
-static int gdJpegCollectIccProfile(j_decompress_ptr cinfo, gdImageMetadata *metadata)
-{
+static int gdJpegCollectIccProfile(j_decompress_ptr cinfo,
+								   gdImageMetadata *metadata) {
 	static const unsigned char icc_signature[] = "ICC_PROFILE";
 	jpeg_saved_marker_ptr marker;
 	jpeg_saved_marker_ptr segments[256];
@@ -713,7 +736,9 @@ static int gdJpegCollectIccProfile(j_decompress_ptr cinfo, gdImageMetadata *meta
 		unsigned int sequence;
 		unsigned int count;
 
-		if (marker->marker != JPEG_APP0 + 2 || !gdJpegMarkerStartsWith(marker, icc_signature, 12) || marker->data_length < 14) {
+		if (marker->marker != JPEG_APP0 + 2 ||
+			!gdJpegMarkerStartsWith(marker, icc_signature, 12) ||
+			marker->data_length < 14) {
 			continue;
 		}
 
@@ -767,9 +792,10 @@ static int gdJpegCollectIccProfile(j_decompress_ptr cinfo, gdImageMetadata *meta
 	return status;
 }
 
-static int gdJpegCollectMetadata(j_decompress_ptr cinfo, gdImageMetadata *metadata)
-{
-	static const unsigned char exif_signature[] = { 'E', 'x', 'i', 'f', '\0', '\0' };
+static int gdJpegCollectMetadata(j_decompress_ptr cinfo,
+								 gdImageMetadata *metadata) {
+	static const unsigned char exif_signature[] = {'E', 'x',  'i',
+												   'f', '\0', '\0'};
 	static const unsigned char xmp_signature[] = "http://ns.adobe.com/xap/1.0/";
 	static const unsigned char iptc_signature[] = "Photoshop 3.0";
 	jpeg_saved_marker_ptr marker;
@@ -780,18 +806,27 @@ static int gdJpegCollectMetadata(j_decompress_ptr cinfo, gdImageMetadata *metada
 	}
 
 	for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
-		if (marker->marker == JPEG_APP0 + 1 && gdJpegMarkerStartsWith(marker, exif_signature, sizeof(exif_signature))) {
-			status = gdImageMetadataSetProfile(metadata, "exif", marker->data, marker->data_length);
+		if (marker->marker == JPEG_APP0 + 1 &&
+			gdJpegMarkerStartsWith(marker, exif_signature,
+								   sizeof(exif_signature))) {
+			status = gdImageMetadataSetProfile(metadata, "exif", marker->data,
+											   marker->data_length);
 			if (status != GD_META_OK) {
 				return status;
 			}
-		} else if (marker->marker == JPEG_APP0 + 1 && gdJpegMarkerStartsWith(marker, xmp_signature, sizeof(xmp_signature))) {
-			status = gdImageMetadataSetProfile(metadata, "xmp", marker->data, marker->data_length);
+		} else if (marker->marker == JPEG_APP0 + 1 &&
+				   gdJpegMarkerStartsWith(marker, xmp_signature,
+										  sizeof(xmp_signature))) {
+			status = gdImageMetadataSetProfile(metadata, "xmp", marker->data,
+											   marker->data_length);
 			if (status != GD_META_OK) {
 				return status;
 			}
-		} else if (marker->marker == JPEG_APP0 + 13 && gdJpegMarkerStartsWith(marker, iptc_signature, sizeof(iptc_signature))) {
-			status = gdImageMetadataSetProfile(metadata, "iptc", marker->data, marker->data_length);
+		} else if (marker->marker == JPEG_APP0 + 13 &&
+				   gdJpegMarkerStartsWith(marker, iptc_signature,
+										  sizeof(iptc_signature))) {
+			status = gdImageMetadataSetProfile(metadata, "iptc", marker->data,
+											   marker->data_length);
 			if (status != GD_META_OK) {
 				return status;
 			}
@@ -806,13 +841,13 @@ static int gdJpegCollectMetadata(j_decompress_ptr cinfo, gdImageMetadata *metada
 
   See <gdImageCreateFromJpeg>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtx(gdIOCtx *infile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtx(gdIOCtx *infile) {
 	return gdImageCreateFromJpegCtxEx(infile, 1);
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxWithMetadata(gdIOCtx *infile, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxWithMetadata(gdIOCtx *infile,
+									 gdImageMetadata *metadata) {
 	return gdImageCreateFromJpegCtxExWithMetadata(infile, 1, metadata);
 }
 
@@ -821,13 +856,14 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxWithMetadata(gdIOCtx *infile, gd
 
   See <gdImageCreateFromJpeg>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxEx(gdIOCtx *infile, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxEx(gdIOCtx *infile, int ignore_warning) {
 	return gdImageCreateFromJpegCtxExWithMetadata(infile, ignore_warning, NULL);
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, int ignore_warning, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, int ignore_warning,
+									   gdImageMetadata *metadata) {
 	struct jpeg_decompress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	jmpbuf_wrapper jmpbufw;
@@ -843,8 +879,11 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 
 #ifdef JPEG_DEBUG
 	gd_error_ex(GD_DEBUG, "gd-jpeg: gd JPEG version %s\n", GD_JPEG_VERSION);
-	gd_error_ex(GD_DEBUG, "gd-jpeg: JPEG library version %d, %d-bit sample values\n", JPEG_LIB_VERSION, BITS_IN_JSAMPLE);
-	gd_error_ex(GD_DEBUG, "sizeof: %d\n", sizeof(struct jpeg_decompress_struct));
+	gd_error_ex(GD_DEBUG,
+				"gd-jpeg: JPEG library version %d, %d-bit sample values\n",
+				JPEG_LIB_VERSION, BITS_IN_JSAMPLE);
+	gd_error_ex(GD_DEBUG, "sizeof: %d\n",
+				sizeof(struct jpeg_decompress_struct));
 #endif
 
 	memset(&cinfo, 0, sizeof(cinfo));
@@ -857,12 +896,12 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 
 	cinfo.err->emit_message = jpeg_emit_message;
 
-	if(setjmp(jmpbufw.jmpbuf) != 0) {
+	if (setjmp(jmpbufw.jmpbuf) != 0) {
 		/* we're here courtesy of longjmp */
-		if(row) {
+		if (row) {
 			gdFree(row);
 		}
-		if(im) {
+		if (im) {
 			gdImageDestroy(im);
 		}
 		return 0;
@@ -885,31 +924,35 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 	}
 
 	retval = jpeg_read_header(&cinfo, TRUE);
-	if(retval != JPEG_HEADER_OK) {
+	if (retval != JPEG_HEADER_OK) {
 		gd_error("gd-jpeg: warning: jpeg_read_header returns"
-		         " %d, expected %d\n", retval, JPEG_HEADER_OK);
+				 " %d, expected %d\n",
+				 retval, JPEG_HEADER_OK);
 	}
 
 	retval = gdJpegCollectMetadata(&cinfo, metadata);
-	if(retval != GD_META_OK) {
+	if (retval != GD_META_OK) {
 		gd_error("gd-jpeg: error: unable to read metadata\n");
 		goto error;
 	}
 
-	if(cinfo.image_height > INT_MAX) {
+	if (cinfo.image_height > INT_MAX) {
 		gd_error("gd-jpeg: warning: JPEG image height (%u) is"
-		         " greater than INT_MAX (%d) (and thus greater than"
-		         " gd can handle)", cinfo.image_height, INT_MAX);
+				 " greater than INT_MAX (%d) (and thus greater than"
+				 " gd can handle)",
+				 cinfo.image_height, INT_MAX);
 	}
 
-	if(cinfo.image_width > INT_MAX) {
+	if (cinfo.image_width > INT_MAX) {
 		gd_error("gd-jpeg: warning: JPEG image width (%u) is"
-		         " greater than INT_MAX (%d) (and thus greater than"
-		         " gd can handle)\n", cinfo.image_width, INT_MAX);
+				 " greater than INT_MAX (%d) (and thus greater than"
+				 " gd can handle)\n",
+				 cinfo.image_width, INT_MAX);
 	}
 
-	im = gdImageCreateTrueColor((int)cinfo.image_width, (int)cinfo.image_height);
-	if(im == 0) {
+	im =
+		gdImageCreateTrueColor((int)cinfo.image_width, (int)cinfo.image_height);
+	if (im == 0) {
 		gd_error("gd-jpeg error: cannot allocate gdImage struct\n");
 		goto error;
 	}
@@ -930,35 +973,39 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 	 * thumbnails but there's no support for fussy adjustment of the
 	 * assumed properties of inks and paper.
 	 */
-	if((cinfo.jpeg_color_space == JCS_CMYK) || (cinfo.jpeg_color_space == JCS_YCCK)) {
+	if ((cinfo.jpeg_color_space == JCS_CMYK) ||
+		(cinfo.jpeg_color_space == JCS_YCCK)) {
 		cinfo.out_color_space = JCS_CMYK;
 	} else {
 		cinfo.out_color_space = JCS_RGB;
 	}
 
-	if(jpeg_start_decompress(&cinfo) != TRUE) {
+	if (jpeg_start_decompress(&cinfo) != TRUE) {
 		gd_error("gd-jpeg: warning: jpeg_start_decompress"
-		        " reports suspended data source\n");
+				 " reports suspended data source\n");
 	}
 
 #ifdef JPEG_DEBUG
 	gd_error_ex(GD_DEBUG, "gd-jpeg: JPEG image information:");
-	if(cinfo.saw_JFIF_marker) {
-		gd_error_ex(GD_DEBUG, " JFIF version %d.%.2d", (int)cinfo.JFIF_major_version, (int)cinfo.JFIF_minor_version);
-	} else if(cinfo.saw_Adobe_marker) {
+	if (cinfo.saw_JFIF_marker) {
+		gd_error_ex(GD_DEBUG, " JFIF version %d.%.2d",
+					(int)cinfo.JFIF_major_version,
+					(int)cinfo.JFIF_minor_version);
+	} else if (cinfo.saw_Adobe_marker) {
 		gd_error_ex(GD_DEBUG, " Adobe format");
 	} else {
 		gd_error_ex(GD_DEBUG, " UNKNOWN format");
 	}
 
-	gd_error_ex(GD_DEBUG, " %ux%u (raw) / %ux%u (scaled) %d-bit", cinfo.image_width,
-		    cinfo.image_height, cinfo.output_width,
-		    cinfo.output_height, cinfo.data_precision
-		);
-	gd_error_ex(GD_DEBUG, " %s", (cinfo.progressive_mode ? "progressive" : "baseline"));
-	gd_error_ex(GD_DEBUG, " image, %d quantized colors, ", cinfo.actual_number_of_colors);
+	gd_error_ex(GD_DEBUG, " %ux%u (raw) / %ux%u (scaled) %d-bit",
+				cinfo.image_width, cinfo.image_height, cinfo.output_width,
+				cinfo.output_height, cinfo.data_precision);
+	gd_error_ex(GD_DEBUG, " %s",
+				(cinfo.progressive_mode ? "progressive" : "baseline"));
+	gd_error_ex(GD_DEBUG, " image, %d quantized colors, ",
+				cinfo.actual_number_of_colors);
 
-	switch(cinfo.jpeg_color_space) {
+	switch (cinfo.jpeg_color_space) {
 	case JCS_GRAYSCALE:
 		gd_error_ex(GD_DEBUG, "grayscale");
 		break;
@@ -980,7 +1027,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 		break;
 
 	default:
-		gd_error_ex(GD_DEBUG, "UNKNOWN (value: %d)", (int)cinfo.jpeg_color_space);
+		gd_error_ex(GD_DEBUG, "UNKNOWN (value: %d)",
+					(int)cinfo.jpeg_color_space);
 		break;
 	}
 
@@ -999,29 +1047,31 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 #if 0
 	gdImageInterlace (im, cinfo.progressive_mode != 0);
 #endif
-	if(cinfo.out_color_space == JCS_RGB) {
-		if(cinfo.output_components != 3) {
+	if (cinfo.out_color_space == JCS_RGB) {
+		if (cinfo.output_components != 3) {
 			gd_error("gd-jpeg: error: JPEG color quantization"
-			         " request resulted in output_components == %d"
-			         " (expected 3 for RGB)\n", cinfo.output_components);
+					 " request resulted in output_components == %d"
+					 " (expected 3 for RGB)\n",
+					 cinfo.output_components);
 			goto error;
 		}
 		channels = 3;
-	} else if(cinfo.out_color_space == JCS_CMYK) {
+	} else if (cinfo.out_color_space == JCS_CMYK) {
 		jpeg_saved_marker_ptr marker;
-		if(cinfo.output_components != 4) {
+		if (cinfo.output_components != 4) {
 			gd_error("gd-jpeg: error: JPEG color quantization"
-			         " request resulted in output_components == %d"
-			         " (expected 4 for CMYK)\n", cinfo.output_components);
+					 " request resulted in output_components == %d"
+					 " (expected 4 for CMYK)\n",
+					 cinfo.output_components);
 			goto error;
 		}
 		channels = 4;
 
 		marker = cinfo.marker_list;
-		while(marker) {
-			if(	(marker->marker == (JPEG_APP0 + 14)) &&
-			        (marker->data_length >= 12) &&
-			        (!strncmp((const char *)marker->data, "Adobe", 5))) {
+		while (marker) {
+			if ((marker->marker == (JPEG_APP0 + 14)) &&
+				(marker->data_length >= 12) &&
+				(!strncmp((const char *)marker->data, "Adobe", 5))) {
 				inverted = 1;
 				break;
 			}
@@ -1032,56 +1082,60 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 		goto error;
 	}
 #if BITS_IN_JSAMPLE == 12
-	gd_error_ex(GD_ERROR,
-		    "gd-jpeg: error: jpeg library was compiled for 12-bit\n"
-		    "precision. This is mostly useless, because JPEGs on the web are\n"
-		    "8-bit and such versions of the jpeg library won't read or write\n"
-		    "them. GD doesn't support these unusual images. Edit your\n"
-		    "jmorecfg.h file to specify the correct precision and completely\n"
-		    "'make clean' and 'make install' libjpeg again. Sorry.\n");
+	gd_error_ex(
+		GD_ERROR,
+		"gd-jpeg: error: jpeg library was compiled for 12-bit\n"
+		"precision. This is mostly useless, because JPEGs on the web are\n"
+		"8-bit and such versions of the jpeg library won't read or write\n"
+		"them. GD doesn't support these unusual images. Edit your\n"
+		"jmorecfg.h file to specify the correct precision and completely\n"
+		"'make clean' and 'make install' libjpeg again. Sorry.\n");
 	goto error;
 #endif /* BITS_IN_JSAMPLE == 12 */
 
-	row = gdCalloc(cinfo.output_width *channels, sizeof(JSAMPLE));
-	if(row == 0) {
+	row = gdCalloc(cinfo.output_width * channels, sizeof(JSAMPLE));
+	if (row == 0) {
 		gd_error("gd-jpeg: error: unable to allocate row for"
-		         " JPEG scanline: gdCalloc returns NULL\n");
+				 " JPEG scanline: gdCalloc returns NULL\n");
 		goto error;
 	}
 	rowptr[0] = row;
-	if(cinfo.out_color_space == JCS_CMYK) {
-		for(i = 0; i < cinfo.output_height; i++) {
+	if (cinfo.out_color_space == JCS_CMYK) {
+		for (i = 0; i < cinfo.output_height; i++) {
 			register JSAMPROW currow = row;
 			register int *tpix = im->tpixels[i];
 			nrows = jpeg_read_scanlines(&cinfo, rowptr, 1);
-			if(nrows != 1) {
+			if (nrows != 1) {
 				gd_error("gd-jpeg: error: jpeg_read_scanlines"
-				         " returns %u, expected 1\n", nrows);
+						 " returns %u, expected 1\n",
+						 nrows);
 				goto error;
 			}
-			for(j = 0; j < cinfo.output_width; j++, currow += 4, tpix++) {
-				*tpix = CMYKToRGB(currow[0], currow[1], currow[2], currow[3], inverted);
+			for (j = 0; j < cinfo.output_width; j++, currow += 4, tpix++) {
+				*tpix = CMYKToRGB(currow[0], currow[1], currow[2], currow[3],
+								  inverted);
 			}
 		}
 	} else {
-		for(i = 0; i < cinfo.output_height; i++) {
+		for (i = 0; i < cinfo.output_height; i++) {
 			register JSAMPROW currow = row;
 			register int *tpix = im->tpixels[i];
 			nrows = jpeg_read_scanlines(&cinfo, rowptr, 1);
-			if(nrows != 1) {
+			if (nrows != 1) {
 				gd_error("gd-jpeg: error: jpeg_read_scanlines"
-				         " returns %u, expected 1\n", nrows);
+						 " returns %u, expected 1\n",
+						 nrows);
 				goto error;
 			}
-			for(j = 0; j < cinfo.output_width; j++, currow += 3, tpix++) {
+			for (j = 0; j < cinfo.output_width; j++, currow += 3, tpix++) {
 				*tpix = gdTrueColor(currow[0], currow[1], currow[2]);
 			}
 		}
 	}
 
-	if(jpeg_finish_decompress (&cinfo) != TRUE) {
+	if (jpeg_finish_decompress(&cinfo) != TRUE) {
 		gd_error("gd-jpeg: warning: jpeg_finish_decompress"
-		         " reports suspended data source\n");
+				 " reports suspended data source\n");
 	}
 	/* TBB 2.0.29: we should do our best to read whatever we can read, and a
 	 * warning is a warning. A fatal error on warnings doesn't make sense. */
@@ -1098,10 +1152,10 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, 
 error:
 	jpeg_destroy_decompress(&cinfo);
 
-	if(row) {
+	if (row) {
 		gdFree(row);
 	}
-	if(im) {
+	if (im) {
 		gdImageDestroy(im);
 	}
 
@@ -1110,20 +1164,16 @@ error:
 
 /* A very basic conversion approach, TBB */
 
-static int CMYKToRGB(int c, int m, int y, int k, int inverted)
-{
-	if(inverted) {
+static int CMYKToRGB(int c, int m, int y, int k, int inverted) {
+	if (inverted) {
 		c = 255 - c;
 		m = 255 - m;
 		y = 255 - y;
 		k = 255 - k;
 	}
 
-	return gdTrueColor(
-	           (255 - c) * (255 - k) / 255,
-	           (255 - m) * (255 - k) / 255,
-	           (255 - y) * (255 - k) / 255
-	       );
+	return gdTrueColor((255 - c) * (255 - k) / 255, (255 - m) * (255 - k) / 255,
+					   (255 - y) * (255 - k) / 255);
 #if 0
 	if (inverted) {
 		c = 255 - c;
@@ -1166,24 +1216,22 @@ static int CMYKToRGB(int c, int m, int y, int k, int inverted)
 
 /* Expanded data source object for gdIOCtx input */
 typedef struct {
-	struct jpeg_source_mgr pub;	/* public fields */
+	struct jpeg_source_mgr pub; /* public fields */
 	gdIOCtx *infile;			/* source stream */
 	unsigned char *buffer;		/* start of buffer */
-	boolean start_of_file;	/* have we gotten any data yet? */
-}
-my_source_mgr;
+	boolean start_of_file;		/* have we gotten any data yet? */
+} my_source_mgr;
 
 typedef my_source_mgr *my_src_ptr;
 
-#define INPUT_BUF_SIZE	4096 /* choose an efficiently fread'able size */
+#define INPUT_BUF_SIZE 4096 /* choose an efficiently fread'able size */
 
 /*
  * Initialize source --- called by jpeg_read_header
  * before any data is actually read.
  */
 
-static void init_source(j_decompress_ptr cinfo)
-{
+static void init_source(j_decompress_ptr cinfo) {
 	my_src_ptr src = (my_src_ptr)cinfo->src;
 
 	/* We reset the empty-input-file flag for each image,
@@ -1192,7 +1240,6 @@ static void init_source(j_decompress_ptr cinfo)
 	 */
 	src->start_of_file = TRUE;
 }
-
 
 /*
  * Fill the input buffer --- called whenever buffer is emptied.
@@ -1229,8 +1276,7 @@ static void init_source(j_decompress_ptr cinfo)
 
 #define END_JPEG_SEQUENCE "\r\n[*]--:END JPEG:--[*]\r\n"
 
-static boolean fill_input_buffer(j_decompress_ptr cinfo)
-{
+static boolean fill_input_buffer(j_decompress_ptr cinfo) {
 	my_src_ptr src = (my_src_ptr)cinfo->src;
 	/* 2.0.12: signed size. Thanks to Geert Jansen */
 	/* 2.0.14: some platforms (mingw-msys) don't have ssize_t. Call
@@ -1239,13 +1285,14 @@ static boolean fill_input_buffer(j_decompress_ptr cinfo)
 	int nbytes = 0;
 	memset(src->buffer, 0, INPUT_BUF_SIZE);
 
-	while(nbytes < INPUT_BUF_SIZE) {
-		int got = gdGetBuf(src->buffer + nbytes, INPUT_BUF_SIZE - nbytes, src->infile);
+	while (nbytes < INPUT_BUF_SIZE) {
+		int got = gdGetBuf(src->buffer + nbytes, INPUT_BUF_SIZE - nbytes,
+						   src->infile);
 
-		if((got == EOF) || (got == 0)) {
+		if ((got == EOF) || (got == 0)) {
 			/* EOF or error. If we got any data, don't worry about it.
 			 * If we didn't, then this is unexpected. */
-			if(!nbytes) {
+			if (!nbytes) {
 				nbytes = -1;
 			}
 			break;
@@ -1253,8 +1300,8 @@ static boolean fill_input_buffer(j_decompress_ptr cinfo)
 		nbytes += got;
 	}
 
-	if(nbytes <= 0) {
-		if(src->start_of_file) {
+	if (nbytes <= 0) {
+		if (src->start_of_file) {
 			/* Treat empty input file as fatal error */
 			ERREXIT(cinfo, JERR_INPUT_EMPTY);
 		}
@@ -1284,15 +1331,14 @@ static boolean fill_input_buffer(j_decompress_ptr cinfo)
  * buffer is the application writer's problem.
  */
 
-static void skip_input_data(j_decompress_ptr cinfo, long num_bytes)
-{
+static void skip_input_data(j_decompress_ptr cinfo, long num_bytes) {
 	my_src_ptr src = (my_src_ptr)cinfo->src;
 
 	/* Just a dumb implementation for now. Not clear that being smart is worth
 	 * any trouble anyway --- large skips are infrequent.
 	 */
-	if(num_bytes > 0) {
-		while(num_bytes > (long)src->pub.bytes_in_buffer) {
+	if (num_bytes > 0) {
+		while (num_bytes > (long)src->pub.bytes_in_buffer) {
 			num_bytes -= (long)src->pub.bytes_in_buffer;
 			(void)fill_input_buffer(cinfo);
 			/* note we assume that fill_input_buffer will never return FALSE,
@@ -1320,11 +1366,7 @@ static void skip_input_data(j_decompress_ptr cinfo, long num_bytes)
  * application must deal with any cleanup that should happen even
  * for error exit.
  */
-static void term_source(j_decompress_ptr cinfo)
-{
-	(void)cinfo;
-}
-
+static void term_source(j_decompress_ptr cinfo) { (void)cinfo; }
 
 /*
  * Prepare for input from a gdIOCtx stream.
@@ -1332,8 +1374,7 @@ static void term_source(j_decompress_ptr cinfo)
  * for closing it after finishing decompression.
  */
 
-static void jpeg_gdIOCtx_src(j_decompress_ptr cinfo, gdIOCtx *infile)
-{
+static void jpeg_gdIOCtx_src(j_decompress_ptr cinfo, gdIOCtx *infile) {
 	my_src_ptr src;
 
 	/* The source object and input buffer are made permanent so that a series
@@ -1343,22 +1384,22 @@ static void jpeg_gdIOCtx_src(j_decompress_ptr cinfo, gdIOCtx *infile)
 	 * This makes it unsafe to use this manager and a different source
 	 * manager serially with the same JPEG object.  Caveat programmer.
 	 */
-	if(cinfo->src == NULL) {
+	if (cinfo->src == NULL) {
 		/* first time for this JPEG object? */
-		cinfo->src = (struct jpeg_source_mgr *)
-		             (*cinfo->mem->alloc_small)((j_common_ptr)cinfo, JPOOL_PERMANENT,
-		                                        sizeof(my_source_mgr));
+		cinfo->src = (struct jpeg_source_mgr *)(*cinfo->mem->alloc_small)(
+			(j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_source_mgr));
 		src = (my_src_ptr)cinfo->src;
-		src->buffer = (unsigned char *)
-		              (*cinfo->mem->alloc_small)((j_common_ptr)cinfo, JPOOL_PERMANENT,
-		                      INPUT_BUF_SIZE * sizeof(unsigned char));
+		src->buffer = (unsigned char *)(*cinfo->mem->alloc_small)(
+			(j_common_ptr)cinfo, JPOOL_PERMANENT,
+			INPUT_BUF_SIZE * sizeof(unsigned char));
 	}
 
 	src = (my_src_ptr)cinfo->src;
 	src->pub.init_source = init_source;
 	src->pub.fill_input_buffer = fill_input_buffer;
 	src->pub.skip_input_data = skip_input_data;
-	src->pub.resync_to_restart = jpeg_resync_to_restart; /* use default method */
+	src->pub.resync_to_restart =
+		jpeg_resync_to_restart; /* use default method */
 	src->pub.term_source = term_source;
 	src->infile = infile;
 	src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
@@ -1368,33 +1409,31 @@ static void jpeg_gdIOCtx_src(j_decompress_ptr cinfo, gdIOCtx *infile)
 /* Expanded data destination object for stdio output */
 typedef struct {
 	struct jpeg_destination_mgr pub; /* public fields */
-	gdIOCtx *outfile; /* target stream */
-	unsigned char *buffer; /* start of buffer */
-}
-my_destination_mgr;
+	gdIOCtx *outfile;				 /* target stream */
+	unsigned char *buffer;			 /* start of buffer */
+} my_destination_mgr;
 
 typedef my_destination_mgr *my_dest_ptr;
 
-#define OUTPUT_BUF_SIZE	4096 /* choose an efficiently fwrite'able size */
+#define OUTPUT_BUF_SIZE 4096 /* choose an efficiently fwrite'able size */
 
 /*
  * Initialize destination --- called by jpeg_start_compress
  * before any data is actually written.
  */
 
-static void init_destination(j_compress_ptr cinfo)
-{
+static void init_destination(j_compress_ptr cinfo) {
 	my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
 
-	/* Allocate the output buffer --- it will be released when done with image */
-	dest->buffer = (unsigned char *)
-	               (*cinfo->mem->alloc_small)((j_common_ptr)cinfo, JPOOL_IMAGE,
-	                       OUTPUT_BUF_SIZE * sizeof(unsigned char));
+	/* Allocate the output buffer --- it will be released when done with image
+	 */
+	dest->buffer = (unsigned char *)(*cinfo->mem->alloc_small)(
+		(j_common_ptr)cinfo, JPOOL_IMAGE,
+		OUTPUT_BUF_SIZE * sizeof(unsigned char));
 
 	dest->pub.next_output_byte = dest->buffer;
 	dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
-
 
 /*
  * Empty the output buffer --- called whenever buffer fills up.
@@ -1419,11 +1458,11 @@ static void init_destination(j_compress_ptr cinfo)
  * write it out when emptying the buffer externally.
  */
 
-static boolean empty_output_buffer(j_compress_ptr cinfo)
-{
+static boolean empty_output_buffer(j_compress_ptr cinfo) {
 	my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
 
-	if(gdPutBuf(dest->buffer, OUTPUT_BUF_SIZE, dest->outfile) != (size_t)OUTPUT_BUF_SIZE) {
+	if (gdPutBuf(dest->buffer, OUTPUT_BUF_SIZE, dest->outfile) !=
+		(size_t)OUTPUT_BUF_SIZE) {
 		ERREXIT(cinfo, JERR_FILE_WRITE);
 	}
 
@@ -1432,7 +1471,6 @@ static boolean empty_output_buffer(j_compress_ptr cinfo)
 
 	return TRUE;
 }
-
 
 /*
  * Terminate destination --- called by jpeg_finish_compress
@@ -1443,14 +1481,13 @@ static boolean empty_output_buffer(j_compress_ptr cinfo)
  * for error exit.
  */
 
-static void term_destination(j_compress_ptr cinfo)
-{
-	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+static void term_destination(j_compress_ptr cinfo) {
+	my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
 	int datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
 
 	/* Write any data remaining in the buffer */
-	if(datacount > 0) {
-		if(gdPutBuf(dest->buffer, datacount, dest->outfile) != datacount) {
+	if (datacount > 0) {
+		if (gdPutBuf(dest->buffer, datacount, dest->outfile) != datacount) {
 			ERREXIT(cinfo, JERR_FILE_WRITE);
 		}
 	}
@@ -1462,8 +1499,7 @@ static void term_destination(j_compress_ptr cinfo)
  * for closing it after finishing compression.
  */
 
-static void jpeg_gdIOCtx_dest(j_compress_ptr cinfo, gdIOCtx *outfile)
-{
+static void jpeg_gdIOCtx_dest(j_compress_ptr cinfo, gdIOCtx *outfile) {
 	my_dest_ptr dest;
 
 	/* The destination object is made permanent so that multiple JPEG images
@@ -1472,11 +1508,10 @@ static void jpeg_gdIOCtx_dest(j_compress_ptr cinfo, gdIOCtx *outfile)
 	 * manager serially with the same JPEG object, because their private object
 	 * sizes may be different.  Caveat programmer.
 	 */
-	if(cinfo->dest == NULL) {
+	if (cinfo->dest == NULL) {
 		/* first time for this JPEG object? */
-		cinfo->dest = (struct jpeg_destination_mgr *)
-		              (*cinfo->mem->alloc_small)((j_common_ptr)cinfo, JPOOL_PERMANENT,
-		                      sizeof(my_destination_mgr));
+		cinfo->dest = (struct jpeg_destination_mgr *)(*cinfo->mem->alloc_small)(
+			(j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_destination_mgr));
 	}
 
 	dest = (my_dest_ptr)cinfo->dest;
@@ -1488,21 +1523,18 @@ static void jpeg_gdIOCtx_dest(j_compress_ptr cinfo, gdIOCtx *outfile)
 
 #else /* !HAVE_LIBJPEG */
 
-static void _noJpegError(void)
-{
+static void _noJpegError(void) {
 	gd_error("JPEG image support has been disabled\n");
 }
 
-BGD_DECLARE(void) gdImageJpeg(gdImagePtr im, FILE *outFile, int quality)
-{
+BGD_DECLARE(void) gdImageJpeg(gdImagePtr im, FILE *outFile, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outFile);
 	ARG_NOT_USED(quality);
 	_noJpegError();
 }
 
-BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality)
-{
+BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(quality);
@@ -1510,18 +1542,9 @@ BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality)
 	return NULL;
 }
 
-BGD_DECLARE(void *) gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int quality, const gdImageMetadata *metadata)
-{
-	ARG_NOT_USED(im);
-	ARG_NOT_USED(size);
-	ARG_NOT_USED(quality);
-	ARG_NOT_USED(metadata);
-	_noJpegError();
-	return NULL;
-}
-
-void *gdImageJpegPtrWithMetadataNoSubsampling(gdImagePtr im, int *size, int quality, const gdImageMetadata *metadata)
-{
+BGD_DECLARE(void *)
+gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int quality,
+						   const gdImageMetadata *metadata) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(quality);
@@ -1530,16 +1553,27 @@ void *gdImageJpegPtrWithMetadataNoSubsampling(gdImagePtr im, int *size, int qual
 	return NULL;
 }
 
-BGD_DECLARE(void) gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality)
-{
+void *gdImageJpegPtrWithMetadataNoSubsampling(gdImagePtr im, int *size,
+											  int quality,
+											  const gdImageMetadata *metadata) {
+	ARG_NOT_USED(im);
+	ARG_NOT_USED(size);
+	ARG_NOT_USED(quality);
+	ARG_NOT_USED(metadata);
+	_noJpegError();
+	return NULL;
+}
+
+BGD_DECLARE(void) gdImageJpegCtx(gdImagePtr im, gdIOCtx *outfile, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outfile);
 	ARG_NOT_USED(quality);
 	_noJpegError();
 }
 
-BGD_DECLARE(void) gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtx *outfile, int quality, const gdImageMetadata *metadata)
-{
+BGD_DECLARE(void)
+gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtx *outfile, int quality,
+						   const gdImageMetadata *metadata) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outfile);
 	ARG_NOT_USED(quality);
@@ -1547,31 +1581,29 @@ BGD_DECLARE(void) gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtx *outfile, in
 	_noJpegError();
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpeg(FILE *inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpeg(FILE *inFile) {
 	ARG_NOT_USED(inFile);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegEx(FILE *inFile, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegEx(FILE *inFile, int ignore_warning) {
 	ARG_NOT_USED(inFile);
 	ARG_NOT_USED(ignore_warning);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrEx(int size, void *data, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrEx(int size, void *data, int ignore_warning) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	ARG_NOT_USED(ignore_warning);
@@ -1579,8 +1611,9 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrEx(int size, void *data, int ign
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrWithMetadata(int size, void *data, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrWithMetadata(int size, void *data,
+									 gdImageMetadata *metadata) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	ARG_NOT_USED(metadata);
@@ -1588,8 +1621,9 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrWithMetadata(int size, void *dat
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrExWithMetadata(int size, void *data, int ignore_warning, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrExWithMetadata(int size, void *data, int ignore_warning,
+									   gdImageMetadata *metadata) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	ARG_NOT_USED(ignore_warning);
@@ -1598,31 +1632,32 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtrExWithMetadata(int size, void *d
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtx(gdIOCtx *infile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtx(gdIOCtx *infile) {
 	ARG_NOT_USED(infile);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxEx(gdIOCtx *infile, int ignore_warning)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxEx(gdIOCtx *infile, int ignore_warning) {
 	ARG_NOT_USED(infile);
 	ARG_NOT_USED(ignore_warning);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxWithMetadata(gdIOCtx *infile, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxWithMetadata(gdIOCtx *infile,
+									 gdImageMetadata *metadata) {
 	ARG_NOT_USED(infile);
 	ARG_NOT_USED(metadata);
 	_noJpegError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, int ignore_warning, gdImageMetadata *metadata)
-{
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxExWithMetadata(gdIOCtx *infile, int ignore_warning,
+									   gdImageMetadata *metadata) {
 	ARG_NOT_USED(infile);
 	ARG_NOT_USED(ignore_warning);
 	ARG_NOT_USED(metadata);

@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im, ex;
 	FILE *fp;
 	gdScatter s;
@@ -16,7 +15,7 @@ int main()
 		return 1;
 	}
 
-	s.sub  = 1;
+	s.sub = 1;
 	s.plus = 3;
 	s.seed = 0;
 	s.num_colors = 0;

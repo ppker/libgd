@@ -21,14 +21,14 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gdhelpers.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* this is used for creating images in main memory */
 
@@ -36,8 +36,7 @@ typedef struct ssIOCtx {
 	gdIOCtx ctx;
 	gdSourcePtr src;
 	gdSinkPtr snk;
-}
-ssIOCtx;
+} ssIOCtx;
 
 typedef struct ssIOCtx *ssIOCtxPtr;
 
@@ -52,11 +51,10 @@ static void gdFreeSsCtx(gdIOCtx *ctx);
 
 	Return data as a dynamic pointer.
 */
-BGD_DECLARE(gdIOCtx *) gdNewSSCtx(gdSourcePtr src, gdSinkPtr snk)
-{
+BGD_DECLARE(gdIOCtx *) gdNewSSCtx(gdSourcePtr src, gdSinkPtr snk) {
 	ssIOCtxPtr ctx;
 
-	ctx = (ssIOCtxPtr)gdMalloc(sizeof (ssIOCtx));
+	ctx = (ssIOCtxPtr)gdMalloc(sizeof(ssIOCtx));
 	if (ctx == NULL) {
 		return NULL;
 	}
@@ -78,13 +76,9 @@ BGD_DECLARE(gdIOCtx *) gdNewSSCtx(gdSourcePtr src, gdSinkPtr snk)
 	return (gdIOCtx *)ctx;
 }
 
-static void gdFreeSsCtx(gdIOCtx *ctx)
-{
-	gdFree(ctx);
-}
+static void gdFreeSsCtx(gdIOCtx *ctx) { gdFree(ctx); }
 
-static int sourceGetbuf(gdIOCtx *ctx, void *buf, int size)
-{
+static int sourceGetbuf(gdIOCtx *ctx, void *buf, int size) {
 	ssIOCtx *lctx;
 	int res;
 
@@ -106,8 +100,7 @@ static int sourceGetbuf(gdIOCtx *ctx, void *buf, int size)
 	}
 }
 
-static int sourceGetchar(gdIOCtx *ctx)
-{
+static int sourceGetchar(gdIOCtx *ctx) {
 	int res;
 	unsigned char buf;
 
@@ -120,8 +113,7 @@ static int sourceGetchar(gdIOCtx *ctx)
 	}
 }
 
-static int sinkPutbuf(gdIOCtx *ctx, const void *buf, int size)
-{
+static int sinkPutbuf(gdIOCtx *ctx, const void *buf, int size) {
 	ssIOCtxPtr lctx;
 	int res;
 
@@ -136,8 +128,7 @@ static int sinkPutbuf(gdIOCtx *ctx, const void *buf, int size)
 	}
 }
 
-static void sinkPutchar(gdIOCtx *ctx, int a)
-{
+static void sinkPutchar(gdIOCtx *ctx, int a) {
 	unsigned char b;
 
 	b = a;

@@ -34,30 +34,28 @@
 #include <stdlib.h>
 #include <string.h>
 #ifndef _WIN32
-# include <unistd.h>
+#include <unistd.h>
 #endif
 
-int	opterr = 1,		/* if error message should be printed */
-	optind = 1,		/* index into parent argv vector */
-	optopt,			/* character checked for validity */
-	optreset;		/* reset getopt */
-char	*optarg;		/* argument associated with option */
+int opterr = 1, /* if error message should be printed */
+	optind = 1, /* index into parent argv vector */
+	optopt,		/* character checked for validity */
+	optreset;	/* reset getopt */
+char *optarg;	/* argument associated with option */
 
-#define	BADCH	(int)'?'
-#define	BADARG	(int)':'
-#define	EMSG	""
+#define BADCH (int)'?'
+#define BADARG (int)':'
+#define EMSG ""
 
 /*
  * getopt --
  *	Parse argc/argv argument vector.
  */
-int
-getopt(int nargc, char * const nargv[], const char *ostr)
-{
-	static const char *place = EMSG;	/* option letter processing */
-	char *oli;				/* option letter list index */
+int getopt(int nargc, char *const nargv[], const char *ostr) {
+	static const char *place = EMSG; /* option letter processing */
+	char *oli;						 /* option letter list index */
 
-	if (optreset || *place == 0) {		/* update scanning pointer */
+	if (optreset || *place == 0) { /* update scanning pointer */
 		optreset = 0;
 		place = nargv[optind];
 		if (optind >= nargc || *place++ != '-') {
@@ -88,9 +86,8 @@ getopt(int nargc, char * const nargv[], const char *ostr)
 		if (*place == 0)
 			++optind;
 		if (opterr && *ostr != ':')
-			(void)fprintf(stderr,
-			    "%s: unknown option -- %c\n", nargv[0],
-			    optopt);
+			(void)fprintf(stderr, "%s: unknown option -- %c\n", nargv[0],
+						  optopt);
 		return (BADCH);
 	}
 
@@ -119,13 +116,12 @@ getopt(int nargc, char * const nargv[], const char *ostr)
 			if (*ostr == ':')
 				return (BADARG);
 			if (opterr)
-				(void)fprintf(stderr,
-				    "%s: option requires an argument -- %c\n",
-				    nargv[0], optopt);
+				(void)fprintf(stderr, "%s: option requires an argument -- %c\n",
+							  nargv[0], optopt);
 			return (BADCH);
 		}
 		place = EMSG;
 		++optind;
 	}
-	return (optopt);			/* return option letter */
+	return (optopt); /* return option letter */
 }

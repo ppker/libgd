@@ -2,38 +2,36 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <stdio.h>
 #include "gd.h"
+#include <stdio.h>
 
 #define FALSE 0
 #define TRUE (!FALSE)
 
-int
-main(void)
-{
+int main(void) {
 	int transparent, green, black;
 	gdImagePtr im;
 
-	im = gdImageCreateTrueColor(100,100);
+	im = gdImageCreateTrueColor(100, 100);
 
-	black =  gdImageColorResolveAlpha(im, 0, 0, 0, gdAlphaOpaque);
-	green =  gdImageColorResolveAlpha(im, 0, gdGreenMax, 0, gdAlphaOpaque);
-	transparent = gdImageColorResolveAlpha(im,
-					       gdRedMax-1, gdGreenMax, gdBlueMax, gdAlphaTransparent);
+	black = gdImageColorResolveAlpha(im, 0, 0, 0, gdAlphaOpaque);
+	green = gdImageColorResolveAlpha(im, 0, gdGreenMax, 0, gdAlphaOpaque);
+	transparent = gdImageColorResolveAlpha(im, gdRedMax - 1, gdGreenMax,
+										   gdBlueMax, gdAlphaTransparent);
 	gdImageColorTransparent(im, transparent);
 
 	/* Blending must be off to lay a transparent basecolor.
-		    Nothing to blend with anyway. */
+			Nothing to blend with anyway. */
 	gdImageAlphaBlending(im, FALSE);
-	gdImageFill (im, im->sx/2, im->sy/2, transparent);
+	gdImageFill(im, im->sx / 2, im->sy / 2, transparent);
 	/* Blend everything else together,
 		especially fonts over non-transparent backgrounds */
 	gdImageAlphaBlending(im, TRUE);
 
-	gdImageFilledRectangle (im, 30, 30, 70, 70, green);
-	gdImageStringFT (im, NULL, black, "Times", 18, 0, 50, 50, "Hello");
+	gdImageFilledRectangle(im, 30, 30, 70, 70, green);
+	gdImageStringFT(im, NULL, black, "Times", 18, 0, 50, 50, "Hello");
 
-	gdImageSaveAlpha (im, TRUE);
+	gdImageSaveAlpha(im, TRUE);
 #ifdef HAVE_LIBPNG
 	{
 		FILE *out = fopen("testtr.png", "wb");
@@ -43,7 +41,7 @@ main(void)
 #else
 	fprintf(stderr, "Compiled without libpng support\n");
 #endif /* HAVE_LIBPNG */
-	gdImageDestroy (im);
+	gdImageDestroy(im);
 
 	return 0;
 }

@@ -8,8 +8,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int color;
 
@@ -20,8 +19,8 @@ int main()
 	dst = gdImageScale(src, 200, 200);
 
 	color = gdImageGetPixel(dst, 99, 99);
-	gdTestAssertMsg(color == 0xffffff,
-	                "expected color ffffff, but got %x\n", color);
+	gdTestAssertMsg(color == 0xffffff, "expected color ffffff, but got %x\n",
+					color);
 
 	gdImageDestroy(src);
 	gdImageDestroy(dst);

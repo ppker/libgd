@@ -11,36 +11,34 @@
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr im, im2;
+	void *png_data;
+	int png_size = 0;
+	int white;
 
-int main()
-{
-    gdImagePtr im, im2;
-    void *png_data;
-    int png_size = 0;
-    int white;
+	im = gdImageCreateTrueColor(100001, 1);
+	gdTestAssert(im != NULL);
 
-    im = gdImageCreateTrueColor(100001, 1);
-    gdTestAssert(im != NULL);
+	white = gdImageColorAllocate(im, 255, 255, 255);
+	gdImageSetPixel(im, 50000, 0, white);
 
-    white = gdImageColorAllocate(im, 255, 255, 255);
-    gdImageSetPixel(im, 50000, 0, white);
+	png_data = gdImagePngPtr(im, &png_size);
+	gdTestAssert(png_data != NULL);
+	gdTestAssertMsg(png_size > 0, "Expected non-zero PNG data size");
 
-    png_data = gdImagePngPtr(im, &png_size);
-    gdTestAssert(png_data != NULL);
-    gdTestAssertMsg(png_size > 0, "Expected non-zero PNG data size");
+	im2 = gdImageCreateFromPngPtr(png_size, png_data);
+	gdTestAssertMsg(im2 != NULL, "Expected to read back the large PNG");
+	if (im2 != NULL) {
+		gdTestAssertMsg(im2->sx == 100001, "Width mismatch");
+		gdTestAssertMsg(im2->sy == 1, "Height mismatch");
+		gdTestAssertMsg(gdImageTrueColorPixel(im2, 50000, 0) == 0xFFFFFF,
+						"Expected white pixel at (50000,0)");
+		gdImageDestroy(im2);
+	}
 
-    im2 = gdImageCreateFromPngPtr(png_size, png_data);
-    gdTestAssertMsg(im2 != NULL, "Expected to read back the large PNG");
-    if (im2 != NULL) {
-        gdTestAssertMsg(im2->sx == 100001, "Width mismatch");
-        gdTestAssertMsg(im2->sy == 1, "Height mismatch");
-        gdTestAssertMsg(gdImageTrueColorPixel(im2, 50000, 0) == 0xFFFFFF,
-                        "Expected white pixel at (50000,0)");
-        gdImageDestroy(im2);
-    }
+	gdFree(png_data);
+	gdImageDestroy(im);
 
-    gdFree(png_data);
-    gdImageDestroy(im);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

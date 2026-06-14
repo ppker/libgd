@@ -16,17 +16,17 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gdhelpers.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE 1
+#define FALSE 0
 
 /* this is used for creating images in main memory */
 typedef struct dpStruct {
@@ -36,14 +36,12 @@ typedef struct dpStruct {
 	int dataGood;
 	int pos;
 	int freeOK;
-}
-dynamicPtr;
+} dynamicPtr;
 
 typedef struct dpIOCtx {
 	gdIOCtx ctx;
 	dynamicPtr *dp;
-}
-dpIOCtx;
+} dpIOCtx;
 
 typedef struct dpIOCtx *dpIOCtxPtr;
 
@@ -69,8 +67,7 @@ static long dynamicTell(gdIOCtxPtr);
 
 	Return data as a dynamic pointer.
 */
-BGD_DECLARE(gdIOCtx *) gdNewDynamicCtx(int initialSize, void *data)
-{
+BGD_DECLARE(gdIOCtx *) gdNewDynamicCtx(int initialSize, void *data) {
 	/* 2.0.23: Phil Moore: 'return' keyword was missing! */
 	return gdNewDynamicCtxEx(initialSize, data, 1);
 }
@@ -78,19 +75,19 @@ BGD_DECLARE(gdIOCtx *) gdNewDynamicCtx(int initialSize, void *data)
 /*
 	Function: gdNewDynamicCtxEx
 */
-BGD_DECLARE(gdIOCtx *) gdNewDynamicCtxEx(int initialSize, void *data, int freeOKFlag)
-{
+BGD_DECLARE(gdIOCtx *)
+gdNewDynamicCtxEx(int initialSize, void *data, int freeOKFlag) {
 	dpIOCtx *ctx;
 	dynamicPtr *dp;
 
-	ctx = (dpIOCtx *)gdMalloc(sizeof (dpIOCtx));
-	if(ctx == NULL) {
+	ctx = (dpIOCtx *)gdMalloc(sizeof(dpIOCtx));
+	if (ctx == NULL) {
 		return NULL;
 	}
 
 	dp = newDynamic(initialSize, data, freeOKFlag);
-	if(!dp) {
-		gdFree (ctx);
+	if (!dp) {
+		gdFree(ctx);
 		return NULL;
 	};
 
@@ -113,8 +110,7 @@ BGD_DECLARE(gdIOCtx *) gdNewDynamicCtxEx(int initialSize, void *data, int freeOK
 /*
 	Function: gdDPExtractData
 */
-BGD_DECLARE(void *) gdDPExtractData(gdIOCtxPtr ctx, int *size)
-{
+BGD_DECLARE(void *) gdDPExtractData(gdIOCtxPtr ctx, int *size) {
 	dynamicPtr *dp;
 	dpIOCtx *dctx;
 	void *data;
@@ -123,7 +119,7 @@ BGD_DECLARE(void *) gdDPExtractData(gdIOCtxPtr ctx, int *size)
 	dp = dctx->dp;
 
 	/* clean up the data block and return it */
-	if(dp->dataGood) {
+	if (dp->dataGood) {
 		trimDynamic(dp);
 		*size = dp->logicalSize;
 		data = dp->data;
@@ -131,7 +127,7 @@ BGD_DECLARE(void *) gdDPExtractData(gdIOCtxPtr ctx, int *size)
 		*size = 0;
 		data = NULL;
 		/* 2.0.21: never free memory we don't own */
-		if((dp->data != NULL) && (dp->freeOK)) {
+		if ((dp->data != NULL) && (dp->freeOK)) {
 			gdFree(dp->data);
 		}
 	}
@@ -143,8 +139,7 @@ BGD_DECLARE(void *) gdDPExtractData(gdIOCtxPtr ctx, int *size)
 	return data;
 }
 
-static void gdFreeDynamicCtx(gdIOCtxPtr ctx)
-{
+static void gdFreeDynamicCtx(gdIOCtxPtr ctx) {
 	dynamicPtr *dp;
 	dpIOCtx *dctx;
 
@@ -155,7 +150,7 @@ static void gdFreeDynamicCtx(gdIOCtxPtr ctx)
 
 	/* clean up the data block and return it */
 	/* 2.0.21: never free memory we don't own */
-	if((dp->data != NULL) && (dp->freeOK)) {
+	if ((dp->data != NULL) && (dp->freeOK)) {
 		gdFree(dp->data);
 		dp->data = NULL;
 	}
@@ -166,16 +161,14 @@ static void gdFreeDynamicCtx(gdIOCtxPtr ctx)
 	gdFree(dp);
 }
 
-static long dynamicTell(gdIOCtxPtr ctx)
-{
+static long dynamicTell(gdIOCtxPtr ctx) {
 	dpIOCtx *dctx;
 
 	dctx = (dpIOCtx *)ctx;
 	return (dctx->dp->pos);
 }
 
-static int dynamicSeek(gdIOCtxPtr ctx, const int pos)
-{
+static int dynamicSeek(gdIOCtxPtr ctx, const int pos) {
 	int bytesNeeded;
 	dynamicPtr *dp;
 	dpIOCtx *dctx;
@@ -186,22 +179,22 @@ static int dynamicSeek(gdIOCtxPtr ctx, const int pos)
 	dctx = (dpIOCtx *)ctx;
 	dp = dctx->dp;
 
-	if(!dp->dataGood) {
+	if (!dp->dataGood) {
 		return FALSE;
 	}
 
 	bytesNeeded = pos;
-	if(bytesNeeded > dp->realSize) {
+	if (bytesNeeded > dp->realSize) {
 		/* 2.0.21 */
-		if(!dp->freeOK) {
+		if (!dp->freeOK) {
 			return FALSE;
 		}
 
-		if(overflow2(dp->realSize, 2)) {
+		if (overflow2(dp->realSize, 2)) {
 			return FALSE;
 		}
 
-		if(!gdReallocDynamic(dp, dp->realSize * 2)) {
+		if (!gdReallocDynamic(dp, dp->realSize * 2)) {
 			dp->dataGood = FALSE;
 			return FALSE;
 		}
@@ -211,7 +204,7 @@ static int dynamicSeek(gdIOCtxPtr ctx, const int pos)
 	 * to copy safely */
 
 	/* Extend the logical size if we seek beyond EOF. */
-	if(pos > dp->logicalSize) {
+	if (pos > dp->logicalSize) {
 		dp->logicalSize = pos;
 	};
 
@@ -221,16 +214,15 @@ static int dynamicSeek(gdIOCtxPtr ctx, const int pos)
 }
 
 /* return data as a dynamic pointer */
-static dynamicPtr *newDynamic(int initialSize, void *data, int freeOKFlag)
-{
+static dynamicPtr *newDynamic(int initialSize, void *data, int freeOKFlag) {
 	dynamicPtr *dp;
 
-	dp = (dynamicPtr *) gdMalloc(sizeof (dynamicPtr));
-	if(dp == NULL) {
+	dp = (dynamicPtr *)gdMalloc(sizeof(dynamicPtr));
+	if (dp == NULL) {
 		return NULL;
 	}
 
-	if(!allocDynamic(dp, initialSize, data)) {
+	if (!allocDynamic(dp, initialSize, data)) {
 		gdFree(dp);
 		return NULL;
 	}
@@ -241,39 +233,36 @@ static dynamicPtr *newDynamic(int initialSize, void *data, int freeOKFlag)
 	return dp;
 }
 
-static int dynamicPutbuf(gdIOCtxPtr ctx, const void *buf, int size)
-{
+static int dynamicPutbuf(gdIOCtxPtr ctx, const void *buf, int size) {
 	dpIOCtx *dctx;
 	dctx = (dpIOCtx *)ctx;
 
 	appendDynamic(dctx->dp, buf, size);
 
-	if(dctx->dp->dataGood) {
+	if (dctx->dp->dataGood) {
 		return size;
 	} else {
 		return -1;
 	};
 }
 
-static void dynamicPutchar(gdIOCtxPtr ctx, int a)
-{
+static void dynamicPutchar(gdIOCtxPtr ctx, int a) {
 	unsigned char b;
 	dpIOCtxPtr dctx;
 
 	b = a;
-	dctx = (dpIOCtxPtr) ctx;
+	dctx = (dpIOCtxPtr)ctx;
 
 	appendDynamic(dctx->dp, &b, 1);
 }
 
 /* returns the number of bytes actually read; 0 on EOF and error */
-static int dynamicGetbuf(gdIOCtxPtr ctx, void *buf, int len)
-{
+static int dynamicGetbuf(gdIOCtxPtr ctx, void *buf, int len) {
 	int rlen, remain;
 	dpIOCtxPtr dctx;
 	dynamicPtr *dp;
 
-	dctx = (dpIOCtxPtr) ctx;
+	dctx = (dpIOCtxPtr)ctx;
 	dp = dctx->dp;
 
 	if (dp->pos < 0 || dp->pos >= dp->realSize) {
@@ -281,10 +270,10 @@ static int dynamicGetbuf(gdIOCtxPtr ctx, void *buf, int len)
 	}
 
 	remain = dp->logicalSize - dp->pos;
-	if(remain >= len) {
+	if (remain >= len) {
 		rlen = len;
 	} else {
-		if(remain <= 0) {
+		if (remain <= 0) {
 			return 0;
 		}
 
@@ -299,20 +288,19 @@ static int dynamicGetbuf(gdIOCtxPtr ctx, void *buf, int len)
 		return 0;
 	}
 
-	memcpy(buf, (void *) ((char *)dp->data + dp->pos), rlen);
+	memcpy(buf, (void *)((char *)dp->data + dp->pos), rlen);
 	dp->pos += rlen;
 
 	return rlen;
 }
 
-static int dynamicGetchar(gdIOCtxPtr ctx)
-{
+static int dynamicGetchar(gdIOCtxPtr ctx) {
 	unsigned char b;
 	int rv;
 
 	rv = dynamicGetbuf(ctx, &b, 1);
 
-	if(rv != 1) {
+	if (rv != 1) {
 		return EOF;
 	} else {
 		return b; /* (b & 0xff); */
@@ -322,9 +310,8 @@ static int dynamicGetchar(gdIOCtxPtr ctx)
 /**********************************************************************
  * InitDynamic - Return a dynamically resizable void*
  **********************************************************************/
-static int allocDynamic(dynamicPtr *dp, int initialSize, void *data)
-{
-	if(data == NULL) {
+static int allocDynamic(dynamicPtr *dp, int initialSize, void *data) {
+	if (data == NULL) {
 		dp->logicalSize = 0;
 		dp->dataGood = FALSE;
 		dp->data = gdMalloc(initialSize);
@@ -334,7 +321,7 @@ static int allocDynamic(dynamicPtr *dp, int initialSize, void *data)
 		dp->data = data;
 	}
 
-	if(dp->data != NULL) {
+	if (dp->data != NULL) {
 		dp->realSize = initialSize;
 		dp->dataGood = TRUE;
 		dp->pos = 0;
@@ -346,29 +333,28 @@ static int allocDynamic(dynamicPtr *dp, int initialSize, void *data)
 }
 
 /* append bytes to the end of a dynamic pointer */
-static int appendDynamic(dynamicPtr * dp, const void *src, int size)
-{
+static int appendDynamic(dynamicPtr *dp, const void *src, int size) {
 	int bytesNeeded;
 	char *tmp;
 
-	if(!dp->dataGood) {
+	if (!dp->dataGood) {
 		return FALSE;
 	}
 
 	/* bytesNeeded = dp->logicalSize + size; */
 	bytesNeeded = dp->pos + size;
 
-	if(bytesNeeded > dp->realSize) {
+	if (bytesNeeded > dp->realSize) {
 		/* 2.0.21 */
-		if(!dp->freeOK) {
+		if (!dp->freeOK) {
 			return FALSE;
 		}
 
-		if(overflow2(dp->realSize, 2)) {
+		if (overflow2(dp->realSize, 2)) {
 			return FALSE;
 		}
 
-		if(!gdReallocDynamic(dp, bytesNeeded * 2)) {
+		if (!gdReallocDynamic(dp, bytesNeeded * 2)) {
 			dp->dataGood = FALSE;
 			return FALSE;
 		}
@@ -380,10 +366,10 @@ static int appendDynamic(dynamicPtr * dp, const void *src, int size)
 	/*printf("Mem OK Size: %d, Pos: %d\n", dp->realSize, dp->pos); */
 
 	tmp = (char *)dp->data;
-	memcpy ((void *)(tmp + (dp->pos)), src, size);
+	memcpy((void *)(tmp + (dp->pos)), src, size);
 	dp->pos += size;
 
-	if(dp->pos > dp->logicalSize) {
+	if (dp->pos > dp->logicalSize) {
 		dp->logicalSize = dp->pos;
 	};
 
@@ -391,13 +377,12 @@ static int appendDynamic(dynamicPtr * dp, const void *src, int size)
 }
 
 /* grow (or shrink) dynamic pointer */
-static int gdReallocDynamic(dynamicPtr *dp, int required)
-{
+static int gdReallocDynamic(dynamicPtr *dp, int required) {
 	void *newPtr;
 
 	/* First try gdRealloc().  If that doesn't work, make a new
 	 * memory block and copy. */
-	if((newPtr = gdRealloc(dp->data, required))) {
+	if ((newPtr = gdRealloc(dp->data, required))) {
 		dp->realSize = required;
 		dp->data = newPtr;
 		return TRUE;
@@ -405,7 +390,7 @@ static int gdReallocDynamic(dynamicPtr *dp, int required)
 
 	/* create a new pointer */
 	newPtr = gdMalloc(required);
-	if(!newPtr) {
+	if (!newPtr) {
 		dp->dataGood = FALSE;
 		return FALSE;
 	}
@@ -420,10 +405,9 @@ static int gdReallocDynamic(dynamicPtr *dp, int required)
 }
 
 /* trim pointer so that its real and logical sizes match */
-static int trimDynamic(dynamicPtr *dp)
-{
+static int trimDynamic(dynamicPtr *dp) {
 	/* 2.0.21: we don't reallocate memory we don't own */
-	if(!dp->freeOK) {
+	if (!dp->freeOK) {
 		return TRUE;
 	}
 

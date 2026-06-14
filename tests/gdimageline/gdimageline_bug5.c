@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
 int main() {
 	/* Declare the image */
@@ -14,7 +14,8 @@ int main() {
 	 * gdImageCrateTrueColor will return NULL.
 	 * See https://github.com/libgd/libgd/issues/621 */
 	im = gdImageCreateTrueColor(63318, 771);
-	if (gdTestAssertMsg(im != NULL, "gdImageCreateTrueColor() returns NULL\n") == 0) {
+	if (gdTestAssertMsg(im != NULL,
+						"gdImageCreateTrueColor() returns NULL\n") == 0) {
 		return gdNumFailures();
 	}
 
@@ -26,15 +27,15 @@ int main() {
 	/* white background */
 	gdImageFill(im, 1, 1, white);
 
-    /* Make a reference copy. */
-    ref = gdImageClone(im);
+	/* Make a reference copy. */
+	ref = gdImageClone(im);
 
 	gdImageSetAntiAliased(im, black);
 
 	/* This line used to fail. */
 	gdImageLine(im, 28562, 631, 34266, 750, gdAntiAliased);
 
-    gdTestAssert(gdMaxPixelDiff(im, ref) > 0);
+	gdTestAssert(gdMaxPixelDiff(im, ref) > 0);
 
 #if 0
     {
@@ -54,7 +55,7 @@ int main() {
 
 	/* Destroy the image in memory. */
 	gdImageDestroy(im);
-    gdImageDestroy(ref);
+	gdImageDestroy(ref);
 
-    return gdNumFailures();
+	return gdNumFailures();
 }

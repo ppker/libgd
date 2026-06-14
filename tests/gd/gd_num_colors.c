@@ -1,9 +1,8 @@
 #include "gd.h"
-#include <stdio.h>
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp = gdTestFileOpen("gd/crafted_num_colors.gd");
 	im = gdImageCreateFromGd(fp);

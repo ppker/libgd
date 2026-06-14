@@ -1,25 +1,15 @@
 #include "gd.h"
+#include "gdtest.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gdtest.h"
 
-int main()
-{
+int main() {
 	int error = 0, i = 0;
 	gdImagePtr im, exp;
 	FILE *fp;
-	char *path[] = {
-			"conv_test.gd2",
-			"invalid_neg_size.gd2",
-			"invalid_header.gd2",
-			NULL
-	};
-	char *path_exp[] = {
-			"conv_test_exp.png",
-			NULL,
-			NULL,
-			NULL
-	};
+	char *path[] = {"conv_test.gd2", "invalid_neg_size.gd2",
+					"invalid_header.gd2", NULL};
+	char *path_exp[] = {"conv_test_exp.png", NULL, NULL, NULL};
 	while (path[i] != NULL) {
 		fp = gdTestFileOpen2("gd2", path[i]);
 		if (!fp) {
@@ -41,7 +31,8 @@ int main()
 			}
 			exp = gdImageCreateFromPng(fp);
 			if (!gdAssertImageEquals(exp, im)) {
-				gdTestErrorMsg("image %s differs from expected result\n", path[i]);
+				gdTestErrorMsg("image %s differs from expected result\n",
+							   path[i]);
 				error = 1;
 			}
 			if (exp) {
@@ -51,7 +42,8 @@ int main()
 		} else {
 			/* expected to fail */
 			if (im) {
-				gdTestErrorMsg("image %s should have failed to be loaded\n", path[i]);
+				gdTestErrorMsg("image %s should have failed to be loaded\n",
+							   path[i]);
 				gdImageDestroy(im);
 				error = 1;
 			}

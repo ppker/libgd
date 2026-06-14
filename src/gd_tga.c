@@ -8,15 +8,15 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "gd_tga.h"
 #include "gd.h"
 #include "gd_errors.h"
 #include "gd_io.h"
+#include "gd_tga.h"
 #include "gdhelpers.h"
 
 static int tga_is_rle(uint8_t imagetype);
@@ -24,7 +24,8 @@ static int tga_pixel_size(uint8_t bits);
 static int tga_read_color_map(gdIOCtx *ctx, oTga *tga);
 static int tga_read_pixel(gdIOCtx *ctx, oTga *tga, int *pixel);
 static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count);
-static int tga_decode_color(const unsigned char *buf, int bits, int alpha_bits, int *has_alpha);
+static int tga_decode_color(const unsigned char *buf, int bits, int alpha_bits,
+							int *has_alpha);
 static int tga_decode_16(unsigned int value, int alpha_bits, int *has_alpha);
 static int tga_scale_5_to_8(int c);
 static int tga_alpha_8_to_gd(int a);
@@ -39,29 +40,28 @@ static void tga_strip_alpha(oTga *tga, int pixel_count);
 
 		infile - Pointer to TGA binary file
  */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromTga(FILE *fp)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromTga(FILE *fp) {
 	gdImagePtr image;
-	gdIOCtx* in = gdNewFileCtx(fp);
-	if (in == NULL) return NULL;
+	gdIOCtx *in = gdNewFileCtx(fp);
+	if (in == NULL)
+		return NULL;
 	image = gdImageCreateFromTgaCtx(in);
-	in->gd_free( in );
+	in->gd_free(in);
 	return image;
 }
 
 /*
 	Function: gdImageCreateFromTgaPtr
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaPtr(int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaPtr(int size, void *data) {
 	gdImagePtr im;
-	gdIOCtx *in = gdNewDynamicCtxEx (size, data, 0);
-	if (in == NULL) return NULL;
+	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
+	if (in == NULL)
+		return NULL;
 	im = gdImageCreateFromTgaCtx(in);
 	in->gd_free(in);
 	return im;
 }
-
 
 /*
 	Function: gdImageCreateFromTgaCtx
@@ -71,15 +71,14 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaPtr(int size, void *data)
 	Parameters:
 		ctx - Pointer to a gdIOCtx structure
  */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtx* ctx)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtx *ctx) {
 	int bitmap_caret = 0;
 	oTga *tga = NULL;
 	volatile gdImagePtr image = NULL;
 	int x = 0;
 	int y = 0;
 
-	tga = (oTga *) gdMalloc(sizeof(oTga));
+	tga = (oTga *)gdMalloc(sizeof(oTga));
 	if (!tga) {
 		return NULL;
 	}
@@ -99,10 +98,10 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtx* ctx)
 		return NULL;
 	}
 
-	image = gdImageCreateTrueColor((int)tga->width, (int)tga->height );
+	image = gdImageCreateTrueColor((int)tga->width, (int)tga->height);
 
 	if (image == 0) {
-		free_tga( tga );
+		free_tga(tga);
 		return NULL;
 	}
 
@@ -117,7 +116,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtx* ctx)
 
 	for (y = 0; y < tga->height; y++) {
 		register int *tpix = image->tpixels[y];
-		for ( x = 0; x < tga->width; x++, tpix++) {
+		for (x = 0; x < tga->width; x++, tpix++) {
 			*tpix = tga->bitmap[bitmap_caret++];
 		}
 	}
@@ -136,13 +135,11 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtx* ctx)
 }
 
 /*!	\brief Reads a TGA header.
- *	Reads the header block from a binary TGA file populating the referenced TGA structure.
- *	\param ctx Pointer to TGA binary file
- *	\param tga Pointer to TGA structure
- *	\return int 1 on sucess, -1 on failure
+ *	Reads the header block from a binary TGA file populating the referenced TGA
+ *structure. \param ctx Pointer to TGA binary file \param tga Pointer to TGA
+ *structure \return int 1 on sucess, -1 on failure
  */
-int read_header_tga(gdIOCtx *ctx, oTga *tga)
-{
+int read_header_tga(gdIOCtx *ctx, oTga *tga) {
 
 	unsigned char header[18];
 
@@ -180,16 +177,17 @@ int read_header_tga(gdIOCtx *ctx, oTga *tga)
 	}
 
 	if (tga->colormaptype > 1) {
-		gd_error_ex(GD_WARNING, "gd-tga: unsupported color map type %u\n", tga->colormaptype);
+		gd_error_ex(GD_WARNING, "gd-tga: unsupported color map type %u\n",
+					tga->colormaptype);
 		return -1;
 	}
 
 	switch (tga->imagetype) {
 	case TGA_TYPE_INDEXED:
 	case TGA_TYPE_INDEXED_RLE:
-		if (tga->colormaptype != 1 || tga->bits != TGA_BPP_8
-				|| !(tga->colormapbits == 15 || tga->colormapbits == 16
-					|| tga->colormapbits == 24 || tga->colormapbits == 32)) {
+		if (tga->colormaptype != 1 || tga->bits != TGA_BPP_8 ||
+			!(tga->colormapbits == 15 || tga->colormapbits == 16 ||
+			  tga->colormapbits == 24 || tga->colormapbits == 32)) {
 			gd_error_ex(GD_WARNING, "gd-tga: unsupported color mapped image\n");
 			return -1;
 		}
@@ -197,8 +195,10 @@ int read_header_tga(gdIOCtx *ctx, oTga *tga)
 
 	case TGA_TYPE_RGB:
 	case TGA_TYPE_RGB_RLE:
-		if (!(tga->bits == TGA_BPP_16 || tga->bits == TGA_BPP_24 || (tga->bits == TGA_BPP_32 && tga->alphabits == 8))) {
-			gd_error_ex(GD_WARNING, "gd-tga: unsupported truecolor depth %u\n", tga->bits);
+		if (!(tga->bits == TGA_BPP_16 || tga->bits == TGA_BPP_24 ||
+			  (tga->bits == TGA_BPP_32 && tga->alphabits == 8))) {
+			gd_error_ex(GD_WARNING, "gd-tga: unsupported truecolor depth %u\n",
+						tga->bits);
 			return -1;
 		}
 		break;
@@ -206,25 +206,26 @@ int read_header_tga(gdIOCtx *ctx, oTga *tga)
 	case TGA_TYPE_GREYSCALE:
 	case TGA_TYPE_GREYSCALE_RLE:
 		if (tga->bits != TGA_BPP_8) {
-			gd_error_ex(GD_WARNING, "gd-tga: unsupported grayscale depth %u\n", tga->bits);
+			gd_error_ex(GD_WARNING, "gd-tga: unsupported grayscale depth %u\n",
+						tga->bits);
 			return -1;
 		}
 		break;
 
 	default:
-		gd_error_ex(GD_WARNING, "gd-tga: unsupported image type %u\n", tga->imagetype);
+		gd_error_ex(GD_WARNING, "gd-tga: unsupported image type %u\n",
+					tga->imagetype);
 		return -1;
 	}
 
 	tga->ident = NULL;
 
 	if (tga->identsize > 0) {
-		tga->ident = (char *) gdMalloc(tga->identsize * sizeof(char));
-		if(tga->ident == NULL) {
+		tga->ident = (char *)gdMalloc(tga->identsize * sizeof(char));
+		if (tga->ident == NULL) {
 			return -1;
 		}
 
-		
 		if (gdGetBuf(tga->ident, tga->identsize, ctx) != tga->identsize) {
 			gd_error("fail to read header ident");
 			return -1;
@@ -235,22 +236,20 @@ int read_header_tga(gdIOCtx *ctx, oTga *tga)
 }
 
 /*!	\brief Reads a TGA image data into buffer.
- *	Reads the image data block from a binary TGA file populating the referenced TGA structure.
- *	\param ctx Pointer to TGA binary file
- *	\param tga Pointer to TGA structure
- *	\return int 0 on sucess, -1 on failure
+ *	Reads the image data block from a binary TGA file populating the referenced
+ *TGA structure. \param ctx Pointer to TGA binary file \param tga Pointer to TGA
+ *structure \return int 0 on sucess, -1 on failure
  */
-int read_image_tga( gdIOCtx *ctx, oTga *tga )
-{
+int read_image_tga(gdIOCtx *ctx, oTga *tga) {
 	int pixel_count;
 	int bitmap_caret = 0;
 
-	if(overflow2(tga->width, tga->height)) {
+	if (overflow2(tga->width, tga->height)) {
 		return -1;
 	}
 
 	pixel_count = tga->width * tga->height;
-	if(overflow2(pixel_count, sizeof(int))) {
+	if (overflow2(pixel_count, sizeof(int))) {
 		return -1;
 	}
 
@@ -261,7 +260,7 @@ int read_image_tga( gdIOCtx *ctx, oTga *tga )
 	/*!	\brief Allocate memory for image block
 	 *  Allocate a chunk of memory for the image block to be passed into.
 	 */
-	tga->bitmap = (int *) gdMalloc(pixel_count * sizeof(int));
+	tga->bitmap = (int *)gdMalloc(pixel_count * sizeof(int));
 	if (tga->bitmap == NULL)
 		return -1;
 
@@ -312,20 +311,14 @@ int read_image_tga( gdIOCtx *ctx, oTga *tga )
 	return 1;
 }
 
-static int tga_is_rle(uint8_t imagetype)
-{
-	return imagetype == TGA_TYPE_INDEXED_RLE
-		|| imagetype == TGA_TYPE_RGB_RLE
-		|| imagetype == TGA_TYPE_GREYSCALE_RLE;
+static int tga_is_rle(uint8_t imagetype) {
+	return imagetype == TGA_TYPE_INDEXED_RLE || imagetype == TGA_TYPE_RGB_RLE ||
+		   imagetype == TGA_TYPE_GREYSCALE_RLE;
 }
 
-static int tga_pixel_size(uint8_t bits)
-{
-	return (bits + 7) / 8;
-}
+static int tga_pixel_size(uint8_t bits) { return (bits + 7) / 8; }
 
-static int tga_read_color_map(gdIOCtx *ctx, oTga *tga)
-{
+static int tga_read_color_map(gdIOCtx *ctx, oTga *tga) {
 	int i;
 	int has_alpha = 0;
 	int entry_size;
@@ -343,7 +336,7 @@ static int tga_read_color_map(gdIOCtx *ctx, oTga *tga)
 	}
 
 	entry_size = tga_pixel_size(tga->colormapbits);
-	tga->colormap = (int *) gdMalloc(tga->colormaplength * sizeof(int));
+	tga->colormap = (int *)gdMalloc(tga->colormaplength * sizeof(int));
 	if (tga->colormap == NULL) {
 		return -1;
 	}
@@ -356,7 +349,9 @@ static int tga_read_color_map(gdIOCtx *ctx, oTga *tga)
 			return -1;
 		}
 
-		tga->colormap[i] = tga_decode_color(buf, tga->colormapbits, tga->colormapbits == 32 ? 8 : 0, &has_alpha);
+		tga->colormap[i] =
+			tga_decode_color(buf, tga->colormapbits,
+							 tga->colormapbits == 32 ? 8 : 0, &has_alpha);
 	}
 
 	if (has_alpha) {
@@ -366,8 +361,7 @@ static int tga_read_color_map(gdIOCtx *ctx, oTga *tga)
 	return 1;
 }
 
-static int tga_read_pixel(gdIOCtx *ctx, oTga *tga, int *pixel)
-{
+static int tga_read_pixel(gdIOCtx *ctx, oTga *tga, int *pixel) {
 	unsigned char buf[4] = {0, 0, 0, 0};
 	int size = tga_pixel_size(tga->bits);
 	int has_alpha = 0;
@@ -382,7 +376,8 @@ static int tga_read_pixel(gdIOCtx *ctx, oTga *tga, int *pixel)
 	case TGA_TYPE_INDEXED_RLE: {
 		int index = buf[0] - tga->colormapstart;
 
-		if (index < 0 || index >= tga->colormaplength || tga->colormap == NULL) {
+		if (index < 0 || index >= tga->colormaplength ||
+			tga->colormap == NULL) {
 			return -1;
 		}
 		*pixel = tga->colormap[index];
@@ -409,11 +404,10 @@ static int tga_read_pixel(gdIOCtx *ctx, oTga *tga, int *pixel)
 	return 1;
 }
 
-static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count)
-{
-	static const unsigned char signature[18] = {
-		'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.', '\0'
-	};
+static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count) {
+	static const unsigned char signature[18] = {'T', 'R', 'U', 'E', 'V', 'I',
+												'S', 'I', 'O', 'N', '-', 'X',
+												'F', 'I', 'L', 'E', '.', '\0'};
 	unsigned char footer[26];
 	unsigned char *rest = NULL;
 	int rest_size = 0;
@@ -438,12 +432,14 @@ static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count)
 			int new_alloc = rest_alloc == 0 ? 1024 : rest_alloc * 2;
 			unsigned char *tmp;
 
-			if (new_alloc < rest_alloc || overflow2(new_alloc, sizeof(unsigned char))) {
+			if (new_alloc < rest_alloc ||
+				overflow2(new_alloc, sizeof(unsigned char))) {
 				gdFree(rest);
 				return;
 			}
 
-			tmp = (unsigned char *) gdRealloc(rest, new_alloc * sizeof(unsigned char));
+			tmp = (unsigned char *)gdRealloc(rest,
+											 new_alloc * sizeof(unsigned char));
 			if (tmp == NULL) {
 				gdFree(rest);
 				return;
@@ -451,7 +447,7 @@ static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count)
 			rest = tmp;
 			rest_alloc = new_alloc;
 		}
-		rest[rest_size++] = (unsigned char) c;
+		rest[rest_size++] = (unsigned char)c;
 	}
 
 	if (rest_size < 26) {
@@ -465,13 +461,14 @@ static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count)
 		return;
 	}
 
-	extension_offset = footer[0] | (footer[1] << 8) | (footer[2] << 16) | (footer[3] << 24);
+	extension_offset =
+		footer[0] | (footer[1] << 8) | (footer[2] << 16) | (footer[3] << 24);
 	if (extension_offset <= 0 || extension_offset < start) {
 		gdFree(rest);
 		return;
 	}
 
-	attr_type_offset = extension_offset - (int) start + 494;
+	attr_type_offset = extension_offset - (int)start + 494;
 	if (attr_type_offset < 0 || attr_type_offset >= rest_size) {
 		gdFree(rest);
 		return;
@@ -485,12 +482,13 @@ static void tga_apply_attribute_type(gdIOCtx *ctx, oTga *tga, int pixel_count)
 	gdFree(rest);
 }
 
-static int tga_decode_color(const unsigned char *buf, int bits, int alpha_bits, int *has_alpha)
-{
+static int tga_decode_color(const unsigned char *buf, int bits, int alpha_bits,
+							int *has_alpha) {
 	switch (bits) {
 	case 15:
 	case 16:
-		return tga_decode_16((unsigned int) buf[0] | ((unsigned int) buf[1] << 8), alpha_bits, has_alpha);
+		return tga_decode_16((unsigned int)buf[0] | ((unsigned int)buf[1] << 8),
+							 alpha_bits, has_alpha);
 
 	case 24:
 		return gdTrueColor(buf[2], buf[1], buf[0]);
@@ -499,14 +497,14 @@ static int tga_decode_color(const unsigned char *buf, int bits, int alpha_bits, 
 		if (has_alpha) {
 			*has_alpha = 1;
 		}
-		return gdTrueColorAlpha(buf[2], buf[1], buf[0], tga_alpha_8_to_gd(buf[3]));
+		return gdTrueColorAlpha(buf[2], buf[1], buf[0],
+								tga_alpha_8_to_gd(buf[3]));
 	}
 
 	return 0;
 }
 
-static int tga_decode_16(unsigned int value, int alpha_bits, int *has_alpha)
-{
+static int tga_decode_16(unsigned int value, int alpha_bits, int *has_alpha) {
 	int b = tga_scale_5_to_8(value & 0x1f);
 	int g = tga_scale_5_to_8((value >> 5) & 0x1f);
 	int r = tga_scale_5_to_8((value >> 10) & 0x1f);
@@ -523,34 +521,28 @@ static int tga_decode_16(unsigned int value, int alpha_bits, int *has_alpha)
 	return gdTrueColor(r, g, b);
 }
 
-static int tga_scale_5_to_8(int c)
-{
-	return (c * 255) / 31;
-}
+static int tga_scale_5_to_8(int c) { return (c * 255) / 31; }
 
-static int tga_alpha_8_to_gd(int a)
-{
-	return gdAlphaMax - (a >> 1);
-}
+static int tga_alpha_8_to_gd(int a) { return gdAlphaMax - (a >> 1); }
 
-static void tga_strip_alpha(oTga *tga, int pixel_count)
-{
+static void tga_strip_alpha(oTga *tga, int pixel_count) {
 	int i;
 
 	for (i = 0; i < pixel_count; i++) {
 		int pixel = tga->bitmap[i];
 
-		tga->bitmap[i] = gdTrueColor(gdTrueColorGetRed(pixel), gdTrueColorGetGreen(pixel), gdTrueColorGetBlue(pixel));
+		tga->bitmap[i] =
+			gdTrueColor(gdTrueColorGetRed(pixel), gdTrueColorGetGreen(pixel),
+						gdTrueColorGetBlue(pixel));
 	}
 	tga->has_alpha = 0;
 }
 
 /*!	\brief Cleans up a TGA structure.
- *	Dereferences the bitmap referenced in a TGA structure, then the structure itself
- *	\param tga Pointer to TGA structure
+ *	Dereferences the bitmap referenced in a TGA structure, then the structure
+ *itself \param tga Pointer to TGA structure
  */
-void free_tga(oTga * tga)
-{
+void free_tga(oTga *tga) {
 	if (tga) {
 		if (tga->ident)
 			gdFree(tga->ident);

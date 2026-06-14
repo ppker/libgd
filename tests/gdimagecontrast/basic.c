@@ -7,16 +7,14 @@
 
 static void test_contrast(double contrast);
 
-int main()
-{
+int main() {
 	test_contrast(+50.0);
 	test_contrast(-50.0);
 
 	return gdNumFailures();
 }
 
-static void test_contrast(double contrast)
-{
+static void test_contrast(double contrast) {
 	gdImagePtr im;
 	FILE *fp;
 	char basename[256];

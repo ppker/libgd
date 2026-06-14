@@ -1,12 +1,11 @@
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <stdio.h>
 #include "gd.h"
+#include <stdio.h>
 
-int main(void)
-{
+int main(void) {
 	/* 2.0.22: can't depend on PNG either  */
 	char *error;
 #ifdef HAVE_LIBJPEG
@@ -22,7 +21,7 @@ int main(void)
 	 */
 #ifdef HAVE_LIBJPEG
 	in = fopen("eleanor.jpg", "rb");
-	if(!in) {
+	if (!in) {
 		im = gdImageCreateTrueColor(300, 300);
 	} else {
 		im = gdImageCreateFromJpeg(in);
@@ -31,28 +30,26 @@ int main(void)
 #else
 	im = gdImageCreateTrueColor(300, 300);
 #endif /* HAVE_LIBJPEG */
-	if(!im) {
+	if (!im) {
 		fprintf(stderr, "gdImageCreateTrueColor failed \n");
 		return 1;
 	}
-	if(gdImageSX(im) < gdImageSY(im)) {
+	if (gdImageSX(im) < gdImageSY(im)) {
 		radius = gdImageSX(im) / 2;
 	} else {
 		radius = gdImageSY(im) / 2;
 	}
 
-	error = gdImageStringFTCircle(im,
-	                              gdImageSX(im) / 2, gdImageSY(im) / 2,
-	                              radius, radius / 2,
-	                              0.8, "arial", 24, "top text", "bottom text",
-	                              gdTrueColorAlpha(192, 100, 255, 32)
-	                             );
-	if(error)  {
+	error = gdImageStringFTCircle(im, gdImageSX(im) / 2, gdImageSY(im) / 2,
+								  radius, radius / 2, 0.8, "arial", 24,
+								  "top text", "bottom text",
+								  gdTrueColorAlpha(192, 100, 255, 32));
+	if (error) {
 		fprintf(stderr, "gdImageStringFTEx error: %s\n", error);
 	}
 
 	out = fopen("gdfx.png", "wb");
-	if(!out) {
+	if (!out) {
 		fprintf(stderr, "Can't create gdfx.png\n");
 		return 1;
 	}

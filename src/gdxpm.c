@@ -5,29 +5,26 @@
  * http://www.csn.ul.ie/~caolan
  */
 
-
 /**
  * File: XPM Input
  *
  * Read XPM images.
  */
 
-
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
+#include "gd.h"
+#include "gd_color_map.h"
+#include "gd_errors.h"
+#include "gdhelpers.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gd.h"
-#include "gdhelpers.h"
-#include "gd_color_map.h"
-#include "gd_errors.h"
 
 #ifndef HAVE_LIBXPM
-BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename) {
 	(void)filename;
 	gd_error_ex(GD_ERROR, "libgd was not built with xpm support\n");
 	return NULL;
@@ -39,42 +36,41 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
 /*
   Function: gdImageCreateFromXpm
 
-    <gdImageCreateFromXbm> is called to load images from XPM X Window
-    System color bitmap format files. This function is available only
-    if HAVE_XPM is selected in the Makefile and the Xpm library is
-    linked with the application. Unlike most gd file functions, the
-    Xpm functions *require filenames*, not file
-    pointers. <gdImageCreateFromXpm> returns a <gdImagePtr> to the new
-    image, or NULL if unable to load the image (most often because the
-    file is corrupt or does not contain an XPM bitmap format
-    image). You can inspect the sx and sy members of the image to
-    determine its size. The image must eventually be destroyed using
-    <gdImageDestroy>.
+	<gdImageCreateFromXbm> is called to load images from XPM X Window
+	System color bitmap format files. This function is available only
+	if HAVE_XPM is selected in the Makefile and the Xpm library is
+	linked with the application. Unlike most gd file functions, the
+	Xpm functions *require filenames*, not file
+	pointers. <gdImageCreateFromXpm> returns a <gdImagePtr> to the new
+	image, or NULL if unable to load the image (most often because the
+	file is corrupt or does not contain an XPM bitmap format
+	image). You can inspect the sx and sy members of the image to
+	determine its size. The image must eventually be destroyed using
+	<gdImageDestroy>.
 
   Parameters:
 
-    filename - The input filename (*not* FILE pointer)
+	filename - The input filename (*not* FILE pointer)
 
   Returns:
 
-    A pointer to the new image or NULL if an error occurred.
+	A pointer to the new image or NULL if an error occurred.
 
   Example:
-    (start code)
+	(start code)
 
-    gdImagePtr im;
-    FILE *in;
-    in = fopen("myxpm.xpm", "rb");
-    im = gdImageCreateFromXpm(in);
-    fclose(in);
-    // ... Use the image ...
-    gdImageDestroy(im);
+	gdImagePtr im;
+	FILE *in;
+	in = fopen("myxpm.xpm", "rb");
+	im = gdImageCreateFromXpm(in);
+	fclose(in);
+	// ... Use the image ...
+	gdImageDestroy(im);
 
-    (end code)
+	(end code)
 
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename) {
 	XpmInfo info;
 	XpmImage image;
 	unsigned int i, j, k, number, len;
@@ -86,15 +82,15 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
 	int ret;
 
 	ret = XpmReadFileToXpmImage(filename, &image, &info);
-	if(ret != XpmSuccess) {
+	if (ret != XpmSuccess) {
 		return 0;
 	}
 
 	number = image.ncolors;
-	if(overflow2(sizeof(int), number)) {
+	if (overflow2(sizeof(int), number)) {
 		goto done;
 	}
-	for(i = 0; i < number; i++) {
+	for (i = 0; i < number; i++) {
 		/*
 		   avoid NULL pointer dereference
 		   TODO better fix need to manage monochrome/monovisual
@@ -106,27 +102,30 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
 	}
 
 	colors = (int *)gdMalloc(sizeof(int) * number);
-	if(colors == NULL) {
+	if (colors == NULL) {
 		goto done;
 	}
 
-	if(!(im = gdImageCreate(image.width, image.height))) {
+	if (!(im = gdImageCreate(image.width, image.height))) {
 		gdFree(colors);
 		goto done;
 	}
 
-	for(i = 0; i < number; i++) {
+	for (i = 0; i < number; i++) {
 		char *c_color = image.colorTable[i].c_color;
-		if(strcmp(c_color, "None") == 0) {
+		if (strcmp(c_color, "None") == 0) {
 			colors[i] = gdImageGetTransparent(im);
-			if(colors[i] == -1) colors[i] = gdImageColorAllocate(im, 0, 0, 0);
-			if(colors[i] != -1) gdImageColorTransparent(im, colors[i]);
+			if (colors[i] == -1)
+				colors[i] = gdImageColorAllocate(im, 0, 0, 0);
+			if (colors[i] != -1)
+				gdImageColorTransparent(im, colors[i]);
 			continue;
 		}
 		len = strlen(c_color);
-		if(len < 1) continue;
-		if(c_color[0] == '#') {
-			switch(len) {
+		if (len < 1)
+			continue;
+		if (c_color[0] == '#') {
+			switch (len) {
 			case 4:
 				buf[2] = '\0';
 				buf[0] = buf[1] = c_color[1];
@@ -199,7 +198,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
 				blue /= 256;
 				break;
 			}
-		} else if(!gdColorMapLookup(GD_COLOR_MAP_X11, c_color, &red, &green, &blue)) {
+		} else if (!gdColorMapLookup(GD_COLOR_MAP_X11, c_color, &red, &green,
+									 &blue)) {
 			continue;
 		}
 
@@ -208,8 +208,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename)
 
 	pointer = (int *)image.data;
 
-	for(i = 0; i < image.height; i++) {
-		for(j = 0; j < image.width; j++) {
+	for (i = 0; i < image.height; i++) {
+		for (j = 0; j < image.width; j++) {
 			k = *pointer++;
 			gdImageSetPixel(im, j, i, colors[k]);
 		}

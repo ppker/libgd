@@ -5,13 +5,10 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
-	int effects[] = {
-		gdEffectReplace, gdEffectAlphaBlend, gdEffectNormal,
-		gdEffectOverlay, gdEffectMultiply
-	};
+	int effects[] = {gdEffectReplace, gdEffectAlphaBlend, gdEffectNormal,
+					 gdEffectOverlay, gdEffectMultiply};
 	int red[3], blue[3];
 	int x, y, i, j;
 	char *path;
@@ -28,7 +25,7 @@ int main()
 	gdImageAlphaBlending(im, gdEffectReplace);
 	for (j = 0; j < 3; j++) {
 		y = 60 * j;
-		gdImageFilledRectangle(im, 0,y, 119,y+59, red[j]);
+		gdImageFilledRectangle(im, 0, y, 119, y + 59, red[j]);
 	}
 
 	for (i = 0; i < 5; i++) {
@@ -36,7 +33,7 @@ int main()
 		gdImageAlphaBlending(im, effects[i]);
 		for (j = 0; j < 9; j++) {
 			y = 20 * j;
-			gdImageFilledRectangle(im, x+20,y, x+39,y+19, blue[j % 3]);
+			gdImageFilledRectangle(im, x + 20, y, x + 39, y + 19, blue[j % 3]);
 		}
 	}
 

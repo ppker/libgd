@@ -7,16 +7,14 @@
 
 static void test_brightness(int brightness);
 
-int main()
-{
+int main() {
 	test_brightness(+100);
 	test_brightness(-100);
 
 	return gdNumFailures();
 }
 
-static void test_brightness(int brightness)
-{
+static void test_brightness(int brightness) {
 	gdImagePtr im;
 	FILE *fp;
 	char basename[256];

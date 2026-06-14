@@ -1,11 +1,10 @@
 #include "gd.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include "gdtest.h"
 #include <jpeglib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-int main()
-{
+int main() {
 #if defined(JPEG_LIB_VERSION_MAJOR) && JPEG_LIB_VERSION_MAJOR >= 8
 	printf("skip, JPEG Major version too high (%i)\n", JPEG_LIB_VERSION_MAJOR);
 	return 0;

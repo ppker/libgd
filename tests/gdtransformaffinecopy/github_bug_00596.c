@@ -8,8 +8,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	double matrix[] = {1, 0, 0, 1, 0, 0};
 	gdImagePtr src, dst;
 	gdRect rect = {0, 0, 16, 16};

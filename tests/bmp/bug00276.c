@@ -1,12 +1,9 @@
 /* See <https://github.com/libgd/libgd/issues/276> */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
-
-int main()
-{
+int main() {
 	gdImagePtr im_orig, im_saved;
 	int white;
 	void *data;
@@ -16,7 +13,7 @@ int main()
 	im_orig = gdImageCreate(10, 10);
 	gdImageColorAllocate(im_orig, 0, 0, 0);
 	white = gdImageColorAllocate(im_orig, 255, 255, 255);
-	gdImageLine(im_orig, 0,0, 9,9, white);
+	gdImageLine(im_orig, 0, 0, 9, 9, white);
 
 	/* save the image, re-read it and compare it with the original */
 	data = gdImageBmpPtr(im_orig, &size, 1);

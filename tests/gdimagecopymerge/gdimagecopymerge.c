@@ -4,8 +4,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr dst = NULL;
 	gdImagePtr src = NULL;
 	int error = 0;
@@ -26,7 +25,8 @@ int main()
 	gdImageColorAllocate(dst, 0, 0, 0);
 	gdImageCopyMerge(dst, src, 25, 25, 0, 0, 50, 50, 50);
 
-	if (!gdAssertImageEqualsToFile("gdimagecopymerge/gdimagecopymerge_exp.png", dst)) {
+	if (!gdAssertImageEqualsToFile("gdimagecopymerge/gdimagecopymerge_exp.png",
+								   dst)) {
 		error = 1;
 	}
 

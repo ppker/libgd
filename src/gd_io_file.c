@@ -13,29 +13,28 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
 /* For platforms with incomplete ANSI defines. Fortunately,
  * SEEK_SET is defined to be zero by the standard. */
 
 #ifndef SEEK_SET
-#	define SEEK_SET 0
+#define SEEK_SET 0
 #endif /* SEEK_SET */
 
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gdhelpers.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* this is used for creating images in main memory */
 
 typedef struct fileIOCtx {
 	gdIOCtx ctx;
 	FILE *f;
-}
-fileIOCtx;
+} fileIOCtx;
 
 gdIOCtxPtr newFileCtx(FILE *f);
 
@@ -53,13 +52,13 @@ static void gdFreeFileCtx(gdIOCtxPtr ctx);
 
 	Return data as a dynamic pointer.
 */
-BGD_DECLARE(gdIOCtxPtr) gdNewFileCtx(FILE *f)
-{
+BGD_DECLARE(gdIOCtxPtr) gdNewFileCtx(FILE *f) {
 	fileIOCtx *ctx;
 
-	if (f == NULL) return NULL;
+	if (f == NULL)
+		return NULL;
 	ctx = (fileIOCtx *)gdMalloc(sizeof(fileIOCtx));
-	if(ctx == NULL) {
+	if (ctx == NULL) {
 		return NULL;
 	}
 
@@ -79,30 +78,23 @@ BGD_DECLARE(gdIOCtxPtr) gdNewFileCtx(FILE *f)
 	return (gdIOCtxPtr)ctx;
 }
 
-static void gdFreeFileCtx(gdIOCtxPtr ctx)
-{
-	gdFree(ctx);
-}
+static void gdFreeFileCtx(gdIOCtxPtr ctx) { gdFree(ctx); }
 
-
-static int filePutbuf(gdIOCtxPtr ctx, const void *buf, int size)
-{
+static int filePutbuf(gdIOCtxPtr ctx, const void *buf, int size) {
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
 
 	return fwrite(buf, 1, size, fctx->f);
 }
 
-static int fileGetbuf(gdIOCtxPtr ctx, void *buf, int size)
-{
+static int fileGetbuf(gdIOCtxPtr ctx, void *buf, int size) {
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
 
 	return (fread(buf, 1, size, fctx->f));
 }
 
-static void filePutchar(gdIOCtxPtr ctx, int a)
-{
+static void filePutchar(gdIOCtxPtr ctx, int a) {
 	unsigned char b;
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
@@ -112,23 +104,20 @@ static void filePutchar(gdIOCtxPtr ctx, int a)
 	putc(b, fctx->f);
 }
 
-static int fileGetchar(gdIOCtxPtr ctx)
-{
+static int fileGetchar(gdIOCtxPtr ctx) {
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
 
 	return getc(fctx->f);
 }
 
-static int fileSeek(gdIOCtxPtr ctx, const int pos)
-{
+static int fileSeek(gdIOCtxPtr ctx, const int pos) {
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
 	return (fseek(fctx->f, pos, SEEK_SET) == 0);
 }
 
-static long fileTell(gdIOCtxPtr ctx)
-{
+static long fileTell(gdIOCtxPtr ctx) {
 	fileIOCtx *fctx;
 	fctx = (fileIOCtx *)ctx;
 

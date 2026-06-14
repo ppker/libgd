@@ -6,8 +6,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int black;
 	gdPoint points[] = {{50, 5}, {24, 86}, {93, 36}, {7, 36}, {76, 86}};

@@ -15,13 +15,12 @@
 #undef ROTATE_PI
 #endif /* ROTATE_PI */
 
-typedef int (BGD_STDCALL *FuncPtr)(gdImagePtr, int, int);
+typedef int(BGD_STDCALL *FuncPtr)(gdImagePtr, int, int);
 
 /* Rotates an image by 90 degrees (counter clockwise) */
-gdImagePtr gdImageRotate90 (gdImagePtr src, int ignoretransparent)
-{
+gdImagePtr gdImageRotate90(gdImagePtr src, int ignoretransparent) {
 	int uY, uX;
-	int c,r,g,b,a;
+	int c, r, g, b, a;
 	gdImagePtr dst;
 	FuncPtr f;
 
@@ -37,20 +36,21 @@ gdImagePtr gdImageRotate90 (gdImagePtr src, int ignoretransparent)
 		dst->saveAlphaFlag = 1;
 		dst->transparent = src->transparent;
 
-		gdImagePaletteCopy (dst, src);
+		gdImagePaletteCopy(dst, src);
 
-		for (uY = 0; uY<src->sy; uY++) {
-			for (uX = 0; uX<src->sx; uX++) {
-				c = f (src, uX, uY);
+		for (uY = 0; uY < src->sy; uY++) {
+			for (uX = 0; uX < src->sx; uX++) {
+				c = f(src, uX, uY);
 				if (!src->trueColor) {
-					r = gdImageRed(src,c);
-					g = gdImageGreen(src,c);
-					b = gdImageBlue(src,c);
-					a = gdImageAlpha(src,c);
+					r = gdImageRed(src, c);
+					g = gdImageGreen(src, c);
+					b = gdImageBlue(src, c);
+					a = gdImageAlpha(src, c);
 					c = gdTrueColorAlpha(r, g, b, a);
 				}
 				if (ignoretransparent && c == dst->transparent) {
-					gdImageSetPixel(dst, uY, (dst->sy - uX - 1), dst->transparent);
+					gdImageSetPixel(dst, uY, (dst->sy - uX - 1),
+									dst->transparent);
 				} else {
 					gdImageSetPixel(dst, uY, (dst->sy - uX - 1), c);
 				}
@@ -63,10 +63,9 @@ gdImagePtr gdImageRotate90 (gdImagePtr src, int ignoretransparent)
 }
 
 /* Rotates an image by 180 degrees (counter clockwise) */
-gdImagePtr gdImageRotate180 (gdImagePtr src, int ignoretransparent)
-{
+gdImagePtr gdImageRotate180(gdImagePtr src, int ignoretransparent) {
 	int uY, uX;
-	int c,r,g,b,a;
+	int c, r, g, b, a;
 	gdImagePtr dst;
 	FuncPtr f;
 
@@ -83,23 +82,25 @@ gdImagePtr gdImageRotate180 (gdImagePtr src, int ignoretransparent)
 		dst->saveAlphaFlag = 1;
 		dst->transparent = src->transparent;
 
-		gdImagePaletteCopy (dst, src);
+		gdImagePaletteCopy(dst, src);
 
-		for (uY = 0; uY<src->sy; uY++) {
-			for (uX = 0; uX<src->sx; uX++) {
-				c = f (src, uX, uY);
+		for (uY = 0; uY < src->sy; uY++) {
+			for (uX = 0; uX < src->sx; uX++) {
+				c = f(src, uX, uY);
 				if (!src->trueColor) {
-					r = gdImageRed(src,c);
-					g = gdImageGreen(src,c);
-					b = gdImageBlue(src,c);
-					a = gdImageAlpha(src,c);
+					r = gdImageRed(src, c);
+					g = gdImageGreen(src, c);
+					b = gdImageBlue(src, c);
+					a = gdImageAlpha(src, c);
 					c = gdTrueColorAlpha(r, g, b, a);
 				}
 
 				if (ignoretransparent && c == dst->transparent) {
-					gdImageSetPixel(dst, (dst->sx - uX - 1), (dst->sy - uY - 1), dst->transparent);
+					gdImageSetPixel(dst, (dst->sx - uX - 1), (dst->sy - uY - 1),
+									dst->transparent);
 				} else {
-					gdImageSetPixel(dst, (dst->sx - uX - 1), (dst->sy - uY - 1), c);
+					gdImageSetPixel(dst, (dst->sx - uX - 1), (dst->sy - uY - 1),
+									c);
 				}
 			}
 		}
@@ -110,10 +111,9 @@ gdImagePtr gdImageRotate180 (gdImagePtr src, int ignoretransparent)
 }
 
 /* Rotates an image by 270 degrees (counter clockwise) */
-gdImagePtr gdImageRotate270 (gdImagePtr src, int ignoretransparent)
-{
+gdImagePtr gdImageRotate270(gdImagePtr src, int ignoretransparent) {
 	int uY, uX;
-	int c,r,g,b,a;
+	int c, r, g, b, a;
 	gdImagePtr dst;
 	FuncPtr f;
 
@@ -122,7 +122,7 @@ gdImagePtr gdImageRotate270 (gdImagePtr src, int ignoretransparent)
 	} else {
 		f = gdImageGetPixel;
 	}
-	dst = gdImageCreateTrueColor (src->sy, src->sx);
+	dst = gdImageCreateTrueColor(src->sy, src->sx);
 
 	if (dst != NULL) {
 		int old_blendmode = dst->alphaBlendingFlag;
@@ -130,21 +130,22 @@ gdImagePtr gdImageRotate270 (gdImagePtr src, int ignoretransparent)
 		dst->saveAlphaFlag = 1;
 		dst->transparent = src->transparent;
 
-		gdImagePaletteCopy (dst, src);
+		gdImagePaletteCopy(dst, src);
 
-		for (uY = 0; uY<src->sy; uY++) {
-			for (uX = 0; uX<src->sx; uX++) {
-				c = f (src, uX, uY);
+		for (uY = 0; uY < src->sy; uY++) {
+			for (uX = 0; uX < src->sx; uX++) {
+				c = f(src, uX, uY);
 				if (!src->trueColor) {
-					r = gdImageRed(src,c);
-					g = gdImageGreen(src,c);
-					b = gdImageBlue(src,c);
-					a = gdImageAlpha(src,c);
+					r = gdImageRed(src, c);
+					g = gdImageGreen(src, c);
+					b = gdImageBlue(src, c);
+					a = gdImageAlpha(src, c);
 					c = gdTrueColorAlpha(r, g, b, a);
 				}
 
 				if (ignoretransparent && c == dst->transparent) {
-					gdImageSetPixel(dst, (dst->sx - uY - 1), uX, dst->transparent);
+					gdImageSetPixel(dst, (dst->sx - uY - 1), uX,
+									dst->transparent);
 				} else {
 					gdImageSetPixel(dst, (dst->sx - uY - 1), uX, c);
 				}

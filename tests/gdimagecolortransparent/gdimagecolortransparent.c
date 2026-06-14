@@ -1,19 +1,18 @@
 #include "gd.h"
-#include <stdio.h>
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int error = 0, pos;
 
 	pos = gdMaxColors;
 
-	im = gdImageCreate(1,1);
+	im = gdImageCreate(1, 1);
 
 	gdImageColorTransparent(im, pos);
 
-	if(im->transparent == pos) {
+	if (im->transparent == pos) {
 		error = -1;
 	}
 
@@ -21,13 +20,13 @@ int main()
 
 	gdImageColorTransparent(im, pos);
 
-	if(im->transparent == pos) {
+	if (im->transparent == pos) {
 		error = -2;
 	}
 
 	pos = -1;
 	gdImageColorTransparent(im, pos);
-	if(im->transparent != pos) {
+	if (im->transparent != pos) {
 		error = -3;
 	}
 

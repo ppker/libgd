@@ -1,15 +1,14 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 	char *file;
 	const int r = 255, g = 0, b = 0;
-	int r_f,g_f,b_f, trans_c_f;
-	int trans_c = gdTrueColorAlpha(r,g,b,0);
+	int r_f, g_f, b_f, trans_c_f;
+	int trans_c = gdTrueColorAlpha(r, g, b, 0);
 	int error = 0;
 
 	im = gdImageCreateTrueColor(192, 36);
@@ -19,7 +18,7 @@ int main()
 	}
 
 	gdImageColorTransparent(im, trans_c);
-	gdImageFilledRectangle(im, 0,0, 192,36, trans_c);
+	gdImageFilledRectangle(im, 0, 0, 192, 36, trans_c);
 
 	file = gdTestTempFile("bug0006.gif");
 	fp = fopen(file, "wb");
@@ -31,7 +30,7 @@ int main()
 	gdImageTrueColorToPaletteSetMethod(im, GD_QUANT_JQUANT, 0);
 	gdImageTrueColorToPalette(im, 1, 256);
 
-	gdImageGif(im,fp);
+	gdImageGif(im, fp);
 	fclose(fp);
 
 	gdImageDestroy(im);
@@ -55,7 +54,8 @@ int main()
 		g_f = gdImageGreen(im, trans_c_f);
 		b_f = gdImageBlue(im, trans_c_f);
 
-		if (!gdTestAssert(r_f == r) || !gdTestAssert(g_f==g) || !gdTestAssert(b_f==b)) {
+		if (!gdTestAssert(r_f == r) || !gdTestAssert(g_f == g) ||
+			!gdTestAssert(b_f == b)) {
 			error = 1;
 		}
 	} else {

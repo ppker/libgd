@@ -2,18 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void usage(const char *prog)
-{
+static void usage(const char *prog) {
 	fprintf(stderr, "Usage: %s input.tif output-prefix\n", prog);
-	fprintf(stderr, "Writes output-prefix_000.png, output-prefix_001.png, ...\n");
+	fprintf(stderr,
+			"Writes output-prefix_000.png, output-prefix_001.png, ...\n");
 }
 
-static int write_png(gdImagePtr im, const char *prefix, int page)
-{
+static int write_png(gdImagePtr im, const char *prefix, int page) {
 	char filename[1024];
 	FILE *out;
 
-	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, page) >= (int) sizeof(filename)) {
+	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, page) >=
+		(int)sizeof(filename)) {
 		fprintf(stderr, "output filename is too long\n");
 		return 0;
 	}
@@ -30,8 +30,7 @@ static int write_png(gdImagePtr im, const char *prefix, int page)
 	return 1;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	FILE *in;
 	gdTiffReadPtr tiff;
 	gdTiffInfo info;
@@ -73,21 +72,24 @@ int main(int argc, char **argv)
 	}
 
 	if (gdTiffReadGetInfo(tiff, &info)) {
-		printf("first page: %dx%d, pages: %d, bits/sample: %d, samples/pixel: %d, compression: %d, photometric: %d\n",
-		       info.width, info.height, info.pageCount,
-		       info.bitsPerSample, info.samplesPerPixel,
-		       info.compression, info.photometric);
+		printf("first page: %dx%d, pages: %d, bits/sample: %d, samples/pixel: "
+			   "%d, compression: %d, photometric: %d\n",
+			   info.width, info.height, info.pageCount, info.bitsPerSample,
+			   info.samplesPerPixel, info.compression, info.photometric);
 	}
 
 	while (gdTiffReadNextImage(tiff, &pageInfo, &image) == 1) {
-		printf("page %d: %dx%d bits/sample=%d samples/pixel=%d compression=%d photometric=%d planar=%d alpha=%d tiled=%d resolution=%.2fx%.2f unit=%d\n",
-		       pageInfo.pageIndex, pageInfo.width, pageInfo.height,
-		       pageInfo.bitsPerSample, pageInfo.samplesPerPixel,
-		       pageInfo.compression, pageInfo.photometric, pageInfo.planar,
-		       pageInfo.hasAlpha, pageInfo.isTiled,
-		       pageInfo.xResolution, pageInfo.yResolution, pageInfo.resolutionUnit);
+		printf("page %d: %dx%d bits/sample=%d samples/pixel=%d compression=%d "
+			   "photometric=%d planar=%d alpha=%d tiled=%d "
+			   "resolution=%.2fx%.2f unit=%d\n",
+			   pageInfo.pageIndex, pageInfo.width, pageInfo.height,
+			   pageInfo.bitsPerSample, pageInfo.samplesPerPixel,
+			   pageInfo.compression, pageInfo.photometric, pageInfo.planar,
+			   pageInfo.hasAlpha, pageInfo.isTiled, pageInfo.xResolution,
+			   pageInfo.yResolution, pageInfo.resolutionUnit);
 
-		/* image is borrowed from the reader and is valid until the next iterator call. */
+		/* image is borrowed from the reader and is valid until the next
+		 * iterator call. */
 		if (!write_png(image, argv[2], pageCount)) {
 			gdTiffReadClose(tiff);
 			return 1;

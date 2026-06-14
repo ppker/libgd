@@ -1,11 +1,10 @@
+#include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gd.h"
 
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im, exp;
 	char *path, filename[2048];
 	const char *file_im = "gdimagerotate/remirh128.png";

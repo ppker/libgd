@@ -3,16 +3,15 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int transparent, color;
 
 	im = gdImageCreateTrueColor(100, 100);
 	transparent = gdImageColorAllocateAlpha(im, 255, 255, 255, 80);
-	gdImageFilledRectangle(im, 0,0, 99,99, transparent);
+	gdImageFilledRectangle(im, 0, 0, 99, 99, transparent);
 	color = gdImageColorAllocateAlpha(im, 0, 255, 0, 100);
-	gdImageFilledArc(im, 49,49, 99,99, 0,360, color, gdPie);
+	gdImageFilledArc(im, 49, 49, 99, 99, 0, 360, color, gdPie);
 
 	gdAssertImageEqualsToFile("gdimagefilledarc/php_bug43828_exp.png", im);
 

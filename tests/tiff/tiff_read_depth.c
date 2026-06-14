@@ -7,8 +7,7 @@ typedef struct {
 	int height;
 } TiffDepthCase;
 
-static void assert_tiff_readable(const TiffDepthCase *tc)
-{
+static void assert_tiff_readable(const TiffDepthCase *tc) {
 	FILE *fp;
 	gdImagePtr im;
 
@@ -27,14 +26,14 @@ static void assert_tiff_readable(const TiffDepthCase *tc)
 	}
 
 	gdTestAssertMsg(gdImageSX(im) == tc->width && gdImageSY(im) == tc->height,
-	                "%s decoded to %dx%d, expected %dx%d",
-	                tc->path, gdImageSX(im), gdImageSY(im), tc->width, tc->height);
-	gdTestAssertMsg(gdImageTrueColor(im), "%s should decode through the RGBA fallback", tc->path);
+					"%s decoded to %dx%d, expected %dx%d", tc->path,
+					gdImageSX(im), gdImageSY(im), tc->width, tc->height);
+	gdTestAssertMsg(gdImageTrueColor(im),
+					"%s should decode through the RGBA fallback", tc->path);
 	gdImageDestroy(im);
 }
 
-int main(void)
-{
+int main(void) {
 	static const TiffDepthCase cases[] = {
 		{"flower-minisblack-16.tif", 73, 43},
 		{"flower-rgb-contig-16.tif", 73, 43},

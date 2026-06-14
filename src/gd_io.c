@@ -10,58 +10,49 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Use this for commenting out debug-print statements. */
 /* Just use the first '#define' to allow all the prints... */
 /*#define IO_DBG(s) (s) */
 #define IO_DBG(s)
 
-#define GD_IO_EOF_CHK(r) \
-	if(r == EOF) { \
-		return 0; \
+#define GD_IO_EOF_CHK(r)                                                       \
+	if (r == EOF) {                                                            \
+		return 0;                                                              \
 	}
 
-void gdPutC(const unsigned char c, gdIOCtx *ctx)
-{
-	(ctx->putC)(ctx, c);
-}
+void gdPutC(const unsigned char c, gdIOCtx *ctx) { (ctx->putC)(ctx, c); }
 
-void gdPutWord (int w, gdIOCtx *ctx)
-{
+void gdPutWord(int w, gdIOCtx *ctx) {
 	IO_DBG(printf("Putting word...\n"));
 	(ctx->putC)(ctx, (unsigned char)(w >> 8));
 	(ctx->putC)(ctx, (unsigned char)(w & 0xFF));
 	IO_DBG(printf("put.\n"));
 }
 
-void gdPutInt (int w, gdIOCtx *ctx)
-{
+void gdPutInt(int w, gdIOCtx *ctx) {
 	IO_DBG(printf("Putting int...\n"));
-	(ctx->putC)(ctx, (unsigned char) (w >> 24));
-	(ctx->putC)(ctx, (unsigned char) ((w >> 16) & 0xFF));
-	(ctx->putC)(ctx, (unsigned char) ((w >> 8) & 0xFF));
-	(ctx->putC)(ctx, (unsigned char) (w & 0xFF));
+	(ctx->putC)(ctx, (unsigned char)(w >> 24));
+	(ctx->putC)(ctx, (unsigned char)((w >> 16) & 0xFF));
+	(ctx->putC)(ctx, (unsigned char)((w >> 8) & 0xFF));
+	(ctx->putC)(ctx, (unsigned char)(w & 0xFF));
 	IO_DBG(printf("put.\n"));
 }
 
-int gdGetC(gdIOCtx *ctx)
-{
-	return ((ctx->getC)(ctx));
-}
+int gdGetC(gdIOCtx *ctx) { return ((ctx->getC)(ctx)); }
 
-int gdGetByte(int *result, gdIOCtx *ctx)
-{
+int gdGetByte(int *result, gdIOCtx *ctx) {
 	int r;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
@@ -70,19 +61,18 @@ int gdGetByte(int *result, gdIOCtx *ctx)
 	return 1;
 }
 
-int gdGetWord(int *result, gdIOCtx *ctx)
-{
+int gdGetWord(int *result, gdIOCtx *ctx) {
 	int r;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
 	*result = r << 8;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
@@ -91,15 +81,14 @@ int gdGetWord(int *result, gdIOCtx *ctx)
 	return 1;
 }
 
-int gdGetWordLSB(signed short int *result, gdIOCtx *ctx)
-{
+int gdGetWordLSB(signed short int *result, gdIOCtx *ctx) {
 	int high = 0, low = 0;
-	low = (ctx->getC) (ctx);
+	low = (ctx->getC)(ctx);
 	if (low == EOF) {
 		return 0;
 	}
 
-	high = (ctx->getC) (ctx);
+	high = (ctx->getC)(ctx);
 	if (high == EOF) {
 		return 0;
 	}
@@ -111,33 +100,32 @@ int gdGetWordLSB(signed short int *result, gdIOCtx *ctx)
 	return 1;
 }
 
-int gdGetInt(int *result, gdIOCtx *ctx)
-{
+int gdGetInt(int *result, gdIOCtx *ctx) {
 	int r;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
 	*result = r << 24;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
 	*result += r << 16;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
 	*result += r << 8;
 
 	r = (ctx->getC)(ctx);
-	if(r == EOF) {
+	if (r == EOF) {
 		return 0;
 	}
 
@@ -146,33 +134,32 @@ int gdGetInt(int *result, gdIOCtx *ctx)
 	return 1;
 }
 
-int gdGetIntLSB(signed int *result, gdIOCtx *ctx)
-{
+int gdGetIntLSB(signed int *result, gdIOCtx *ctx) {
 	int c;
 	unsigned int r = 0;
 
-	c = (ctx->getC) (ctx);
+	c = (ctx->getC)(ctx);
 	if (c == EOF) {
 		return 0;
 	}
 	r |= (c << 24);
 	r >>= 8;
 
-	c = (ctx->getC) (ctx);
+	c = (ctx->getC)(ctx);
 	if (c == EOF) {
 		return 0;
 	}
 	r |= (c << 24);
 	r >>= 8;
 
-	c = (ctx->getC) (ctx);
+	c = (ctx->getC)(ctx);
 	if (c == EOF) {
 		return 0;
 	}
 	r |= (c << 24);
 	r >>= 8;
 
-	c = (ctx->getC) (ctx);
+	c = (ctx->getC)(ctx);
 	if (c == EOF) {
 		return 0;
 	}
@@ -185,27 +172,23 @@ int gdGetIntLSB(signed int *result, gdIOCtx *ctx)
 	return 1;
 }
 
-int gdPutBuf(const void *buf, int size, gdIOCtx *ctx)
-{
+int gdPutBuf(const void *buf, int size, gdIOCtx *ctx) {
 	IO_DBG(printf("Putting buf...\n"));
 	return (ctx->putBuf)(ctx, buf, size);
 	IO_DBG(printf("put.\n"));
 }
 
-int gdGetBuf(void *buf, int size, gdIOCtx *ctx)
-{
+int gdGetBuf(void *buf, int size, gdIOCtx *ctx) {
 	return (ctx->getBuf)(ctx, buf, size);
 }
 
-int gdSeek(gdIOCtx *ctx, const int pos)
-{
+int gdSeek(gdIOCtx *ctx, const int pos) {
 	IO_DBG(printf("Seeking...\n"));
 	return ((ctx->seek)(ctx, pos));
 	IO_DBG(printf("Done.\n"));
 }
 
-long gdTell(gdIOCtx *ctx)
-{
+long gdTell(gdIOCtx *ctx) {
 	IO_DBG(printf("Telling...\n"));
 	return ((ctx->tell)(ctx));
 	IO_DBG(printf("told.\n"));

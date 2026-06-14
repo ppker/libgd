@@ -7,21 +7,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/types.h>
 #include <ctype.h>
+#include <sys/types.h>
 
 /* TBB: gd_strtok_r is not portable; provide an implementation */
 
-#define SEP_TEST (separators[*((unsigned char *) s)])
+#define SEP_TEST (separators[*((unsigned char *)s)])
 
-char *
-gd_strtok_r(char *s, const char *sep, char **state)
-{
+char *gd_strtok_r(char *s, const char *sep, char **state) {
 	char separators[256];
 	char *result = 0;
-	memset (separators, 0, sizeof (separators));
+	memset(separators, 0, sizeof(separators));
 	while (*sep) {
-		separators[*((const unsigned char *) sep)] = 1;
+		separators[*((const unsigned char *)sep)] = 1;
 		sep++;
 	}
 	if (!s) {
@@ -64,27 +62,14 @@ gd_strtok_r(char *s, const char *sep, char **state)
 	return result;
 }
 
-void * gdCalloc (size_t nmemb, size_t size)
-{
-	return calloc (nmemb, size);
-}
+void *gdCalloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
 
-void *
-gdMalloc (size_t size)
-{
-	return malloc (size);
-}
+void *gdMalloc(size_t size) { return malloc(size); }
 
-void *
-gdRealloc (void *ptr, size_t size)
-{
-	return realloc (ptr, size);
-}
+void *gdRealloc(void *ptr, size_t size) { return realloc(ptr, size); }
 
-void *
-gdReallocEx (void *ptr, size_t size)
-{
-	void *newPtr = gdRealloc (ptr, size);
+void *gdReallocEx(void *ptr, size_t size) {
+	void *newPtr = gdRealloc(ptr, size);
 	if (!newPtr && ptr)
 		gdFree(ptr);
 	return newPtr;
@@ -93,7 +78,7 @@ gdReallocEx (void *ptr, size_t size)
 /*
   Function: gdFree
 
-    Frees memory that has been allocated by libgd functions.
+	Frees memory that has been allocated by libgd functions.
 
 	Unless more specialized functions exists (for instance, <gdImageDestroy>),
 	all memory that has been allocated by public libgd functions has to be
@@ -110,7 +95,4 @@ gdReallocEx (void *ptr, size_t size)
 
 	Nothing.
 */
-BGD_DECLARE(void) gdFree (void *ptr)
-{
-	free (ptr);
-}
+BGD_DECLARE(void) gdFree(void *ptr) { free(ptr); }

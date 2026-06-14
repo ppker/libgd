@@ -8,12 +8,12 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gdhelpers.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Used only when debugging GIF compression code */
 /* #define DEBUGGING_ENVARS */
@@ -25,38 +25,37 @@ static int verbose;
 
 #define VERBOSE (verbose_set ? verbose : set_verbose())
 
-static int set_verbose(void)
-{
+static int set_verbose(void) {
 	verbose = !!getenv("GIF_VERBOSE");
 	verbose_set = 1;
-	return(verbose);
+	return (verbose);
 }
 
 #else
 
-#define VERBOSE	0
+#define VERBOSE 0
 
 #endif
 
-#define MAXCOLORMAPSIZE	256
+#define MAXCOLORMAPSIZE 256
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE 1
+#define FALSE 0
 
-#define CM_RED		0
-#define CM_GREEN	1
-#define CM_BLUE		2
+#define CM_RED 0
+#define CM_GREEN 1
+#define CM_BLUE 2
 
-#define MAX_LWZ_BITS	12
+#define MAX_LWZ_BITS 12
 
-#define INTERLACE		0x40
-#define LOCALCOLORMAP	0x80
+#define INTERLACE 0x40
+#define LOCALCOLORMAP 0x80
 
-#define BitSet(byte, bit)	(((byte) & (bit)) == (bit))
+#define BitSet(byte, bit) (((byte) & (bit)) == (bit))
 
 #define ReadOK(file, buffer, len) (gdGetBuf(buffer, len, file) == len)
 
-#define LM_to_uint(a, b)	(((b)<<8)|(a))
+#define LM_to_uint(a, b) (((b) << 8) | (a))
 
 /* We may eventually want to use this information, but def it out for now */
 #if 0
@@ -80,7 +79,7 @@ static struct {
 } Gif89 = { -1, -1, -1, 0 };
 #endif
 
-#define STACK_SIZE ((1<<(MAX_LWZ_BITS))*2)
+#define STACK_SIZE ((1 << (MAX_LWZ_BITS)) * 2)
 
 #define CSD_BUF_SIZE 280
 
@@ -98,18 +97,23 @@ typedef struct {
 	int max_code, max_code_size;
 	int firstcode, oldcode;
 	int clear_code, end_code;
-	int table[2][(1<< MAX_LWZ_BITS)];
+	int table[2][(1 << MAX_LWZ_BITS)];
 	int stack[STACK_SIZE], *sp;
 	CODE_STATIC_DATA scd;
 } LZW_STATIC_DATA;
 
-static int ReadColorMap (gdIOCtx *fd, int number, unsigned char (*buffer)[256]);
-static int DoExtension (gdIOCtx *fd, int label, int *Transparent, int *ZeroDataBlockP);
-static int GetDataBlock (gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP);
-static int GetCode (gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroDataBlockP);
-static int LWZReadByte (gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, int *ZeroDataBlockP);
+static int ReadColorMap(gdIOCtx *fd, int number, unsigned char (*buffer)[256]);
+static int DoExtension(gdIOCtx *fd, int label, int *Transparent,
+					   int *ZeroDataBlockP);
+static int GetDataBlock(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP);
+static int GetCode(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag,
+				   int *ZeroDataBlockP);
+static int LWZReadByte(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag,
+					   int input_code_size, int *ZeroDataBlockP);
 
-static int ReadImage (gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)[256], int colorCount, int interlace, int *ZeroDataBlockP); /*1.4//, int ignore); */
+static int ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height,
+					 unsigned char (*cmap)[256], int colorCount, int interlace,
+					 int *ZeroDataBlockP); /*1.4//, int ignore); */
 
 typedef struct {
 	int transparent;
@@ -155,21 +159,17 @@ static void GifApplyPreviousDisposal(gdGifRead *gif);
 static int GifCompositeFrame(gdGifRead *gif);
 static int GifProbeIsAnimated(gdIOCtxPtr in);
 
-static void
-GifResetGraphicControl(GifGraphicControl *gce)
-{
+static void GifResetGraphicControl(GifGraphicControl *gce) {
 	gce->transparent = -1;
 	gce->delay = 0;
 	gce->disposal = gdDisposalUnknown;
 }
 
-static void
-GifTrimColorTable(gdImagePtr im)
-{
+static void GifTrimColorTable(gdImagePtr im) {
 	int i;
 
-	for(i = im->colorsTotal - 1; i >= 0; i--) {
-		if(im->open[i]) {
+	for (i = im->colorsTotal - 1; i >= 0; i--) {
+		if (im->open[i]) {
 			im->colorsTotal--;
 		} else {
 			break;
@@ -177,9 +177,7 @@ GifTrimColorTable(gdImagePtr im)
 	}
 }
 
-static int
-GifReadHeader(gdGifRead *gif)
-{
+static int GifReadHeader(gdGifRead *gif) {
 	unsigned char buf[16];
 	int bitPixel;
 
@@ -188,23 +186,23 @@ GifReadHeader(gdGifRead *gif)
 	GifResetGraphicControl(&gif->gce);
 	gif->loopCount = 1;
 
-	if(!ReadOK(gif->in, buf, 6)) {
+	if (!ReadOK(gif->in, buf, 6)) {
 		return 0;
 	}
-	if(strncmp((char *)buf, "GIF", 3) != 0) {
+	if (strncmp((char *)buf, "GIF", 3) != 0) {
 		return 0;
 	}
-	if(memcmp((char *)buf + 3, "87a", 3) != 0 &&
-	        memcmp((char *)buf + 3, "89a", 3) != 0) {
+	if (memcmp((char *)buf + 3, "87a", 3) != 0 &&
+		memcmp((char *)buf + 3, "89a", 3) != 0) {
 		return 0;
 	}
-	if(!ReadOK(gif->in, buf, 7)) {
+	if (!ReadOK(gif->in, buf, 7)) {
 		return 0;
 	}
 
 	gif->screenWidth = LM_to_uint(buf[0], buf[1]);
 	gif->screenHeight = LM_to_uint(buf[2], buf[3]);
-	if(gif->screenWidth <= 0 || gif->screenHeight <= 0) {
+	if (gif->screenWidth <= 0 || gif->screenHeight <= 0) {
 		return 0;
 	}
 
@@ -212,8 +210,8 @@ GifReadHeader(gdGifRead *gif)
 	bitPixel = 2 << (buf[4] & 0x07);
 	gif->globalColorCount = bitPixel;
 	gif->haveGlobalColormap = BitSet(buf[4], LOCALCOLORMAP);
-	if(gif->haveGlobalColormap) {
-		if(ReadColorMap(gif->in, bitPixel, gif->globalColorMap)) {
+	if (gif->haveGlobalColormap) {
+		if (ReadColorMap(gif->in, bitPixel, gif->globalColorMap)) {
 			return 0;
 		}
 	}
@@ -221,114 +219,107 @@ GifReadHeader(gdGifRead *gif)
 	return 1;
 }
 
-static int
-GifSkipSubBlocks(gdIOCtxPtr in, int *ZeroDataBlockP)
-{
+static int GifSkipSubBlocks(gdIOCtxPtr in, int *ZeroDataBlockP) {
 	unsigned char buf[256];
 	int count;
 
 	do {
 		count = GetDataBlock(in, buf, ZeroDataBlockP);
-		if(count < 0) {
+		if (count < 0) {
 			return 0;
 		}
-	} while(count > 0);
+	} while (count > 0);
 
 	return 1;
 }
 
-static int
-GifReadApplicationExtension(gdGifRead *gif, int *ZeroDataBlockP)
-{
+static int GifReadApplicationExtension(gdGifRead *gif, int *ZeroDataBlockP) {
 	unsigned char buf[256];
 	int count;
 
 	count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-	if(count < 0) {
+	if (count < 0) {
 		return 0;
 	}
 
-	if(count == 11 && memcmp(buf, "NETSCAPE2.0", 11) == 0) {
+	if (count == 11 && memcmp(buf, "NETSCAPE2.0", 11) == 0) {
 		count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-		if(count < 0) {
+		if (count < 0) {
 			return 0;
 		}
-		if(count >= 3 && buf[0] == 1) {
+		if (count >= 3 && buf[0] == 1) {
 			gif->loopCount = LM_to_uint(buf[1], buf[2]);
 		}
-		while(count > 0) {
+		while (count > 0) {
 			count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-			if(count < 0) {
+			if (count < 0) {
 				return 0;
 			}
 		}
 		return 1;
 	}
 
-	while(count > 0) {
+	while (count > 0) {
 		count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-		if(count < 0) {
+		if (count < 0) {
 			return 0;
 		}
 	}
 	return 1;
 }
 
-static int
-GifReadExtension(gdGifRead *gif, int label, int *ZeroDataBlockP)
-{
+static int GifReadExtension(gdGifRead *gif, int label, int *ZeroDataBlockP) {
 	unsigned char buf[256];
 	int count;
 
-	if(label == 0xf9) {
+	if (label == 0xf9) {
 		count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-		if(count < 0) {
+		if (count < 0) {
 			return 0;
 		}
-		if(count >= 4) {
+		if (count >= 4) {
 			gif->gce.disposal = (buf[0] >> 2) & 0x7;
-			if(gif->gce.disposal == 4) {
+			if (gif->gce.disposal == 4) {
 				gif->gce.disposal = gdDisposalRestorePrevious;
 			}
 			gif->gce.delay = LM_to_uint(buf[1], buf[2]);
 			gif->gce.transparent = (buf[0] & 0x1) ? buf[3] : -1;
 		}
-		while(count > 0) {
+		while (count > 0) {
 			count = GetDataBlock(gif->in, buf, ZeroDataBlockP);
-			if(count < 0) {
+			if (count < 0) {
 				return 0;
 			}
 		}
 		return 1;
 	}
 
-	if(label == 0xff) {
+	if (label == 0xff) {
 		return GifReadApplicationExtension(gif, ZeroDataBlockP);
 	}
 
 	return GifSkipSubBlocks(gif->in, ZeroDataBlockP);
 }
 
-static int
-GifPrimeFirstImage(gdGifRead *gif)
-{
+static int GifPrimeFirstImage(gdGifRead *gif) {
 	unsigned char c;
 	int ZeroDataBlock = FALSE;
 
-	for(;;) {
-		if(!ReadOK(gif->in, &c, 1)) {
+	for (;;) {
+		if (!ReadOK(gif->in, &c, 1)) {
 			return 0;
 		}
-		if(c == ';') {
+		if (c == ';') {
 			gif->done = 1;
 			return 1;
 		}
-		if(c == ',') {
+		if (c == ',') {
 			gif->pendingSeparator = 1;
 			return 1;
 		}
-		if(c == '!') {
-			if(!ReadOK(gif->in, &c, 1) || !GifReadExtension(gif, c, &ZeroDataBlock)) {
+		if (c == '!') {
+			if (!ReadOK(gif->in, &c, 1) ||
+				!GifReadExtension(gif, c, &ZeroDataBlock)) {
 				return 0;
 			}
 			continue;
@@ -336,57 +327,48 @@ GifPrimeFirstImage(gdGifRead *gif)
 	}
 }
 
-static void
-GifFillFrameInfo(gdGifRead *gif, gdGifFrameInfo *info)
-{
-	if(info != NULL) {
+static void GifFillFrameInfo(gdGifRead *gif, gdGifFrameInfo *info) {
+	if (info != NULL) {
 		*info = gif->lastInfo;
 	}
 }
 
-static int
-GifFrameToColor(gdImagePtr frame, int color)
-{
-	return gdTrueColorAlpha(frame->red[color], frame->green[color], frame->blue[color],
-	                        frame->alpha[color]);
+static int GifFrameToColor(gdImagePtr frame, int color) {
+	return gdTrueColorAlpha(frame->red[color], frame->green[color],
+							frame->blue[color], frame->alpha[color]);
 }
 
-static int
-GifBackgroundColor(gdGifRead *gif, int transparentIndex)
-{
+static int GifBackgroundColor(gdGifRead *gif, int transparentIndex) {
 	int bg = gif->backgroundIndex;
 
-	if(bg == transparentIndex) {
+	if (bg == transparentIndex) {
 		return gdTrueColorAlpha(0, 0, 0, gdAlphaTransparent);
 	}
-	if(gif->haveGlobalColormap && bg >= 0 && bg < MAXCOLORMAPSIZE) {
-		return gdTrueColorAlpha(gif->globalColorMap[CM_RED][bg],
-		                        gif->globalColorMap[CM_GREEN][bg],
-		                        gif->globalColorMap[CM_BLUE][bg],
-		                        gdAlphaOpaque);
+	if (gif->haveGlobalColormap && bg >= 0 && bg < MAXCOLORMAPSIZE) {
+		return gdTrueColorAlpha(
+			gif->globalColorMap[CM_RED][bg], gif->globalColorMap[CM_GREEN][bg],
+			gif->globalColorMap[CM_BLUE][bg], gdAlphaOpaque);
 	}
 	return gdTrueColorAlpha(0, 0, 0, gdAlphaTransparent);
 }
 
-static int
-GifEnsureCanvas(gdGifRead *gif, int transparentIndex)
-{
+static int GifEnsureCanvas(gdGifRead *gif, int transparentIndex) {
 	int x, y, bg;
 
-	if(gif->canvas != NULL) {
+	if (gif->canvas != NULL) {
 		return 1;
 	}
 
 	gif->canvas = gdImageCreateTrueColor(gif->screenWidth, gif->screenHeight);
-	if(gif->canvas == NULL) {
+	if (gif->canvas == NULL) {
 		return 0;
 	}
 	gdImageAlphaBlending(gif->canvas, 0);
 	gdImageSaveAlpha(gif->canvas, 1);
 
 	bg = GifBackgroundColor(gif, transparentIndex);
-	for(y = 0; y < gif->screenHeight; y++) {
-		for(x = 0; x < gif->screenWidth; x++) {
+	for (y = 0; y < gif->screenHeight; y++) {
+		for (x = 0; x < gif->screenWidth; x++) {
 			gdImageSetPixel(gif->canvas, x, y, bg);
 		}
 	}
@@ -394,31 +376,30 @@ GifEnsureCanvas(gdGifRead *gif, int transparentIndex)
 	return 1;
 }
 
-static gdImagePtr
-GifCloneImage(gdImagePtr src)
-{
+static gdImagePtr GifCloneImage(gdImagePtr src) {
 	gdImagePtr dst;
 	int x, y;
 
-	if(src == NULL) {
+	if (src == NULL) {
 		return NULL;
 	}
 
-	dst = src->trueColor ? gdImageCreateTrueColor(src->sx, src->sy) : gdImageCreate(src->sx, src->sy);
-	if(dst == NULL) {
+	dst = src->trueColor ? gdImageCreateTrueColor(src->sx, src->sy)
+						 : gdImageCreate(src->sx, src->sy);
+	if (dst == NULL) {
 		return NULL;
 	}
 
-	if(src->trueColor) {
+	if (src->trueColor) {
 		gdImageAlphaBlending(dst, 0);
 		gdImageSaveAlpha(dst, src->saveAlphaFlag);
-		for(y = 0; y < src->sy; y++) {
-			for(x = 0; x < src->sx; x++) {
+		for (y = 0; y < src->sy; y++) {
+			for (x = 0; x < src->sx; x++) {
 				gdImageSetPixel(dst, x, y, gdImageGetPixel(src, x, y));
 			}
 		}
 	} else {
-		for(x = 0; x < gdMaxColors; x++) {
+		for (x = 0; x < gdMaxColors; x++) {
 			dst->red[x] = src->red[x];
 			dst->green[x] = src->green[x];
 			dst->blue[x] = src->blue[x];
@@ -427,8 +408,8 @@ GifCloneImage(gdImagePtr src)
 		}
 		dst->colorsTotal = src->colorsTotal;
 		dst->transparent = src->transparent;
-		for(y = 0; y < src->sy; y++) {
-			for(x = 0; x < src->sx; x++) {
+		for (y = 0; y < src->sy; y++) {
+			for (x = 0; x < src->sx; x++) {
 				gdImageSetPixel(dst, x, y, gdImageGetPixel(src, x, y));
 			}
 		}
@@ -437,126 +418,123 @@ GifCloneImage(gdImagePtr src)
 	return dst;
 }
 
-static void
-GifApplyPreviousDisposal(gdGifRead *gif)
-{
+static void GifApplyPreviousDisposal(gdGifRead *gif) {
 	gdGifFrameInfo *info = &gif->lastInfo;
 	int x, y, bg;
 
-	if(gif->canvas == NULL || gif->frameIndex <= 0) {
+	if (gif->canvas == NULL || gif->frameIndex <= 0) {
 		return;
 	}
 
-	if(info->disposal == gdDisposalRestoreBackground) {
+	if (info->disposal == gdDisposalRestoreBackground) {
 		bg = GifBackgroundColor(gif, info->transparentIndex);
-		for(y = info->y; y < info->y + info->height; y++) {
-			for(x = info->x; x < info->x + info->width; x++) {
+		for (y = info->y; y < info->y + info->height; y++) {
+			for (x = info->x; x < info->x + info->width; x++) {
 				gdImageSetPixel(gif->canvas, x, y, bg);
 			}
 		}
-	} else if(info->disposal == gdDisposalRestorePrevious && gif->previousCanvas != NULL) {
-		for(y = info->y; y < info->y + info->height; y++) {
-			for(x = info->x; x < info->x + info->width; x++) {
-				gdImageSetPixel(gif->canvas, x, y, gdImageGetPixel(gif->previousCanvas, x, y));
+	} else if (info->disposal == gdDisposalRestorePrevious &&
+			   gif->previousCanvas != NULL) {
+		for (y = info->y; y < info->y + info->height; y++) {
+			for (x = info->x; x < info->x + info->width; x++) {
+				gdImageSetPixel(gif->canvas, x, y,
+								gdImageGetPixel(gif->previousCanvas, x, y));
 			}
 		}
 	}
 
-	if(gif->previousCanvas != NULL) {
+	if (gif->previousCanvas != NULL) {
 		gdImageDestroy(gif->previousCanvas);
 		gif->previousCanvas = NULL;
 	}
 }
 
-static int
-GifCompositeFrame(gdGifRead *gif)
-{
+static int GifCompositeFrame(gdGifRead *gif) {
 	gdGifFrameInfo *info = &gif->lastInfo;
 	int x, y, c;
 
-	if(!GifEnsureCanvas(gif, info->transparentIndex)) {
+	if (!GifEnsureCanvas(gif, info->transparentIndex)) {
 		return 0;
 	}
 
-	if(info->disposal == gdDisposalRestorePrevious) {
+	if (info->disposal == gdDisposalRestorePrevious) {
 		gif->previousCanvas = GifCloneImage(gif->canvas);
-		if(gif->previousCanvas == NULL) {
+		if (gif->previousCanvas == NULL) {
 			return 0;
 		}
 	}
 
-	for(y = 0; y < info->height; y++) {
-		for(x = 0; x < info->width; x++) {
+	for (y = 0; y < info->height; y++) {
+		for (x = 0; x < info->width; x++) {
 			c = gdImageGetPixel(gif->rawFrame, x, y);
-			if(c == info->transparentIndex) {
+			if (c == info->transparentIndex) {
 				continue;
 			}
 			gdImageSetPixel(gif->canvas, info->x + x, info->y + y,
-			                GifFrameToColor(gif->rawFrame, c));
+							GifFrameToColor(gif->rawFrame, c));
 		}
 	}
 
 	return 1;
 }
 
-static int
-GifProbeIsAnimated(gdIOCtxPtr in)
-{
+static int GifProbeIsAnimated(gdIOCtxPtr in) {
 	unsigned char buf[16], c;
 	int bitPixel, frameCount = 0, zero = 0;
 
-	if(in == NULL || !ReadOK(in, buf, 6)) {
+	if (in == NULL || !ReadOK(in, buf, 6)) {
 		return -1;
 	}
-	if(strncmp((char *)buf, "GIF", 3) != 0 ||
-	        (memcmp((char *)buf + 3, "87a", 3) != 0 &&
-	         memcmp((char *)buf + 3, "89a", 3) != 0)) {
+	if (strncmp((char *)buf, "GIF", 3) != 0 ||
+		(memcmp((char *)buf + 3, "87a", 3) != 0 &&
+		 memcmp((char *)buf + 3, "89a", 3) != 0)) {
 		return -1;
 	}
-	if(!ReadOK(in, buf, 7)) {
+	if (!ReadOK(in, buf, 7)) {
 		return -1;
 	}
-	if(LM_to_uint(buf[0], buf[1]) <= 0 || LM_to_uint(buf[2], buf[3]) <= 0) {
+	if (LM_to_uint(buf[0], buf[1]) <= 0 || LM_to_uint(buf[2], buf[3]) <= 0) {
 		return -1;
 	}
 	bitPixel = 2 << (buf[4] & 0x07);
-	if(BitSet(buf[4], LOCALCOLORMAP)) {
-		while(bitPixel-- > 0) {
-			if(!ReadOK(in, buf, 3)) {
+	if (BitSet(buf[4], LOCALCOLORMAP)) {
+		while (bitPixel-- > 0) {
+			if (!ReadOK(in, buf, 3)) {
 				return -1;
 			}
 		}
 	}
 
-	for(;;) {
-		if(!ReadOK(in, &c, 1)) {
+	for (;;) {
+		if (!ReadOK(in, &c, 1)) {
 			return -1;
 		}
-		if(c == ';') {
+		if (c == ';') {
 			return frameCount > 1 ? 1 : 0;
 		}
-		if(c == '!') {
-			if(!ReadOK(in, &c, 1) || !GifSkipSubBlocks(in, &zero)) {
+		if (c == '!') {
+			if (!ReadOK(in, &c, 1) || !GifSkipSubBlocks(in, &zero)) {
 				return -1;
 			}
 			continue;
 		}
-		if(c == ',') {
+		if (c == ',') {
 			int localColorCount;
-			if(!ReadOK(in, buf, 9)) {
+			if (!ReadOK(in, buf, 9)) {
 				return -1;
 			}
-			localColorCount = BitSet(buf[8], LOCALCOLORMAP) ? (2 << (buf[8] & 0x07)) : 0;
-			while(localColorCount-- > 0) {
-				if(!ReadOK(in, buf, 3)) {
+			localColorCount =
+				BitSet(buf[8], LOCALCOLORMAP) ? (2 << (buf[8] & 0x07)) : 0;
+			while (localColorCount-- > 0) {
+				if (!ReadOK(in, buf, 3)) {
 					return -1;
 				}
 			}
-			if(!ReadOK(in, &c, 1) || !GifSkipSubBlocks(in, &zero)) {
+			if (!ReadOK(in, &c, 1) || !GifSkipSubBlocks(in, &zero)) {
 				return -1;
 			}
 			frameCount++;
-			if(frameCount > 1) {
+			if (frameCount > 1) {
 				return 1;
 			}
 			continue;
@@ -565,59 +543,56 @@ GifProbeIsAnimated(gdIOCtxPtr in)
 	}
 }
 
-BGD_DECLARE(int) gdGifIsAnimated(FILE *fdFile)
-{
+BGD_DECLARE(int) gdGifIsAnimated(FILE *fdFile) {
 	gdIOCtx *fd;
 	int result, pos;
 
-	if(fdFile == NULL) {
+	if (fdFile == NULL) {
 		return -1;
 	}
 	fd = gdNewFileCtx(fdFile);
-	if(fd == NULL) {
+	if (fd == NULL) {
 		return -1;
 	}
-	pos = (int) gdTell(fd);
-	if(pos < 0) {
+	pos = (int)gdTell(fd);
+	if (pos < 0) {
 		fd->gd_free(fd);
 		return -1;
 	}
 	result = GifProbeIsAnimated(fd);
-	if(!gdSeek(fd, pos)) {
+	if (!gdSeek(fd, pos)) {
 		result = -1;
 	}
 	fd->gd_free(fd);
 	return result;
 }
 
-BGD_DECLARE(int) gdGifIsAnimatedCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(int) gdGifIsAnimatedCtx(gdIOCtxPtr in) {
 	int result, pos;
 
-	if(in == NULL || in->tell == NULL || in->seek == NULL) {
+	if (in == NULL || in->tell == NULL || in->seek == NULL) {
 		return -1;
 	}
-	pos = (int) gdTell(in);
-	if(pos < 0) {
+	pos = (int)gdTell(in);
+	if (pos < 0) {
 		return -1;
 	}
 	result = GifProbeIsAnimated(in);
-	if(!gdSeek(in, pos)) {
+	if (!gdSeek(in, pos)) {
 		return -1;
 	}
 	return result;
 }
 
-BGD_DECLARE(int) gdGifIsAnimatedPtr(int size, void *data)
-{
+BGD_DECLARE(int) gdGifIsAnimatedPtr(int size, void *data) {
 	gdIOCtx *in;
 	int result;
 
-	if(size <= 0 || data == NULL) {
+	if (size <= 0 || data == NULL) {
 		return -1;
 	}
 	in = gdNewDynamicCtxEx(size, data, 0);
-	if(in == NULL) {
+	if (in == NULL) {
 		return -1;
 	}
 	result = GifProbeIsAnimated(in);
@@ -625,20 +600,19 @@ BGD_DECLARE(int) gdGifIsAnimatedPtr(int size, void *data)
 	return result;
 }
 
-BGD_DECLARE(gdGifReadPtr) gdGifReadOpen(FILE *fdFile)
-{
+BGD_DECLARE(gdGifReadPtr) gdGifReadOpen(FILE *fdFile) {
 	gdIOCtx *fd;
 	gdGifReadPtr gif;
 
-	if(fdFile == NULL) {
+	if (fdFile == NULL) {
 		return NULL;
 	}
 	fd = gdNewFileCtx(fdFile);
-	if(fd == NULL) {
+	if (fd == NULL) {
 		return NULL;
 	}
 	gif = gdGifReadOpenCtx(fd);
-	if(gif == NULL) {
+	if (gif == NULL) {
 		fd->gd_free(fd);
 		return NULL;
 	}
@@ -646,20 +620,19 @@ BGD_DECLARE(gdGifReadPtr) gdGifReadOpen(FILE *fdFile)
 	return gif;
 }
 
-BGD_DECLARE(gdGifReadPtr) gdGifReadOpenPtr(int size, void *data)
-{
+BGD_DECLARE(gdGifReadPtr) gdGifReadOpenPtr(int size, void *data) {
 	gdIOCtx *in;
 	gdGifReadPtr gif;
 
-	if(size <= 0 || data == NULL) {
+	if (size <= 0 || data == NULL) {
 		return NULL;
 	}
 	in = gdNewDynamicCtxEx(size, data, 0);
-	if(in == NULL) {
+	if (in == NULL) {
 		return NULL;
 	}
 	gif = gdGifReadOpenCtx(in);
-	if(gif == NULL) {
+	if (gif == NULL) {
 		in->gd_free(in);
 		return NULL;
 	}
@@ -667,22 +640,21 @@ BGD_DECLARE(gdGifReadPtr) gdGifReadOpenPtr(int size, void *data)
 	return gif;
 }
 
-BGD_DECLARE(gdGifReadPtr) gdGifReadOpenCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(gdGifReadPtr) gdGifReadOpenCtx(gdIOCtxPtr in) {
 	gdGifReadPtr gif;
 
-	if(in == NULL) {
+	if (in == NULL) {
 		return NULL;
 	}
 
-	gif = (gdGifReadPtr) gdCalloc(1, sizeof(gdGifRead));
-	if(gif == NULL) {
+	gif = (gdGifReadPtr)gdCalloc(1, sizeof(gdGifRead));
+	if (gif == NULL) {
 		return NULL;
 	}
 	gif->in = in;
 	gif->ownsCtx = 0;
 	GifResetGraphicControl(&gif->gce);
-	if(!GifReadHeader(gif) || !GifPrimeFirstImage(gif)) {
+	if (!GifReadHeader(gif) || !GifPrimeFirstImage(gif)) {
 		gdFree(gif);
 		return NULL;
 	}
@@ -690,29 +662,27 @@ BGD_DECLARE(gdGifReadPtr) gdGifReadOpenCtx(gdIOCtxPtr in)
 	return gif;
 }
 
-BGD_DECLARE(void) gdGifReadClose(gdGifReadPtr gif)
-{
-	if(gif == NULL) {
+BGD_DECLARE(void) gdGifReadClose(gdGifReadPtr gif) {
+	if (gif == NULL) {
 		return;
 	}
-	if(gif->rawFrame != NULL) {
+	if (gif->rawFrame != NULL) {
 		gdImageDestroy(gif->rawFrame);
 	}
-	if(gif->canvas != NULL) {
+	if (gif->canvas != NULL) {
 		gdImageDestroy(gif->canvas);
 	}
-	if(gif->previousCanvas != NULL) {
+	if (gif->previousCanvas != NULL) {
 		gdImageDestroy(gif->previousCanvas);
 	}
-	if(gif->ownsCtx && gif->in != NULL) {
+	if (gif->ownsCtx && gif->in != NULL) {
 		gif->in->gd_free(gif->in);
 	}
 	gdFree(gif);
 }
 
-BGD_DECLARE(int) gdGifReadGetInfo(gdGifReadPtr gif, gdGifInfo *info)
-{
-	if(gif == NULL || info == NULL) {
+BGD_DECLARE(int) gdGifReadGetInfo(gdGifReadPtr gif, gdGifInfo *info) {
+	if (gif == NULL || info == NULL) {
 		return 0;
 	}
 	info->width = gif->screenWidth;
@@ -723,48 +693,49 @@ BGD_DECLARE(int) gdGifReadGetInfo(gdGifReadPtr gif, gdGifInfo *info)
 	return 1;
 }
 
-BGD_DECLARE(int) gdGifReadNextFrame(gdGifReadPtr gif, gdGifFrameInfo *info, gdImagePtr *frame)
-{
+BGD_DECLARE(int)
+gdGifReadNextFrame(gdGifReadPtr gif, gdGifFrameInfo *info, gdImagePtr *frame) {
 	unsigned char buf[16], c;
 	int ZeroDataBlock = FALSE;
 
-	if(frame != NULL) {
+	if (frame != NULL) {
 		*frame = NULL;
 	}
-	if(gif == NULL || gif->error) {
+	if (gif == NULL || gif->error) {
 		return -1;
 	}
-	if(gif->done) {
+	if (gif->done) {
 		return 0;
 	}
 
-	for(;;) {
+	for (;;) {
 		int top, left, width, height;
 		int useGlobalColormap, bitPixel, interlace, hasLocal;
 
-		if(gif->pendingSeparator) {
+		if (gif->pendingSeparator) {
 			c = ',';
 			gif->pendingSeparator = 0;
-		} else if(!ReadOK(gif->in, &c, 1)) {
+		} else if (!ReadOK(gif->in, &c, 1)) {
 			gif->error = 1;
 			return -1;
 		}
-		if(c == ';') {
+		if (c == ';') {
 			gif->done = 1;
 			return 0;
 		}
-		if(c == '!') {
-			if(!ReadOK(gif->in, &c, 1) || !GifReadExtension(gif, c, &ZeroDataBlock)) {
+		if (c == '!') {
+			if (!ReadOK(gif->in, &c, 1) ||
+				!GifReadExtension(gif, c, &ZeroDataBlock)) {
 				gif->error = 1;
 				return -1;
 			}
 			continue;
 		}
-		if(c != ',') {
+		if (c != ',') {
 			continue;
 		}
 
-		if(!ReadOK(gif->in, buf, 9)) {
+		if (!ReadOK(gif->in, buf, 9)) {
 			gif->error = 1;
 			return -1;
 		}
@@ -778,46 +749,50 @@ BGD_DECLARE(int) gdGifReadNextFrame(gdGifReadPtr gif, gdGifFrameInfo *info, gdIm
 		height = LM_to_uint(buf[6], buf[7]);
 		interlace = BitSet(buf[8], INTERLACE);
 
-		if(width <= 0 || height <= 0 ||
-		        ((left + width) > gif->screenWidth) || ((top + height) > gif->screenHeight)) {
+		if (width <= 0 || height <= 0 || ((left + width) > gif->screenWidth) ||
+			((top + height) > gif->screenHeight)) {
 			gif->error = 1;
 			return -1;
 		}
-		if(useGlobalColormap && !gif->haveGlobalColormap) {
+		if (useGlobalColormap && !gif->haveGlobalColormap) {
 			gif->globalColorMap[CM_RED][1] = 0xff;
 			gif->globalColorMap[CM_GREEN][1] = 0xff;
 			gif->globalColorMap[CM_BLUE][1] = 0xff;
 		}
 
-		if(gif->rawFrame != NULL) {
+		if (gif->rawFrame != NULL) {
 			gdImageDestroy(gif->rawFrame);
 			gif->rawFrame = NULL;
 		}
 		gif->rawFrame = gdImageCreate(width, height);
-		if(gif->rawFrame == NULL) {
+		if (gif->rawFrame == NULL) {
 			gif->error = 1;
 			return -1;
 		}
 		gif->rawFrame->interlace = interlace;
 
-		if(hasLocal) {
-			if(ReadColorMap(gif->in, bitPixel, gif->localColorMap) ||
-			        !ReadImage(gif->rawFrame, gif->in, width, height, gif->localColorMap, bitPixel, interlace, &ZeroDataBlock)) {
+		if (hasLocal) {
+			if (ReadColorMap(gif->in, bitPixel, gif->localColorMap) ||
+				!ReadImage(gif->rawFrame, gif->in, width, height,
+						   gif->localColorMap, bitPixel, interlace,
+						   &ZeroDataBlock)) {
 				gif->error = 1;
 				return -1;
 			}
 		} else {
-			if(!ReadImage(gif->rawFrame, gif->in, width, height, gif->globalColorMap, gif->globalColorCount, interlace, &ZeroDataBlock)) {
+			if (!ReadImage(gif->rawFrame, gif->in, width, height,
+						   gif->globalColorMap, gif->globalColorCount,
+						   interlace, &ZeroDataBlock)) {
 				gif->error = 1;
 				return -1;
 			}
 		}
 
-		if(gif->gce.transparent != -1) {
+		if (gif->gce.transparent != -1) {
 			gdImageColorTransparent(gif->rawFrame, gif->gce.transparent);
 		}
 		GifTrimColorTable(gif->rawFrame);
-		if(!gif->rawFrame->colorsTotal) {
+		if (!gif->rawFrame->colorsTotal) {
 			gif->error = 1;
 			return -1;
 		}
@@ -834,7 +809,7 @@ BGD_DECLARE(int) gdGifReadNextFrame(gdGifReadPtr gif, gdGifFrameInfo *info, gdIm
 		gif->lastInfo.interlace = interlace;
 		gif->frameIndex++;
 		GifFillFrameInfo(gif, info);
-		if(frame != NULL) {
+		if (frame != NULL) {
 			*frame = gif->rawFrame;
 		}
 		GifResetGraphicControl(&gif->gce);
@@ -842,35 +817,34 @@ BGD_DECLARE(int) gdGifReadNextFrame(gdGifReadPtr gif, gdGifFrameInfo *info, gdIm
 	}
 }
 
-BGD_DECLARE(int) gdGifReadNextImage(gdGifReadPtr gif, gdGifFrameInfo *info, gdImagePtr *image)
-{
+BGD_DECLARE(int)
+gdGifReadNextImage(gdGifReadPtr gif, gdGifFrameInfo *info, gdImagePtr *image) {
 	int result;
 
-	if(image != NULL) {
+	if (image != NULL) {
 		*image = NULL;
 	}
-	if(gif == NULL) {
+	if (gif == NULL) {
 		return -1;
 	}
 
 	GifApplyPreviousDisposal(gif);
 	result = gdGifReadNextFrame(gif, info, NULL);
-	if(result <= 0) {
+	if (result <= 0) {
 		return result;
 	}
-	if(!GifCompositeFrame(gif)) {
+	if (!GifCompositeFrame(gif)) {
 		gif->error = 1;
 		return -1;
 	}
-	if(image != NULL) {
+	if (image != NULL) {
 		*image = gif->canvas;
 	}
 	return 1;
 }
 
-BGD_DECLARE(gdImagePtr) gdGifReadCloneImage(gdGifReadPtr gif)
-{
-	if(gif == NULL) {
+BGD_DECLARE(gdImagePtr) gdGifReadCloneImage(gdGifReadPtr gif) {
+	if (gif == NULL) {
 		return NULL;
 	}
 	return GifCloneImage(gif->canvas);
@@ -879,52 +853,52 @@ BGD_DECLARE(gdImagePtr) gdGifReadCloneImage(gdGifReadPtr gif)
 /*
   Function: gdImageCreateFromGif
 
-    <gdImageCreateFromGif> is called to load images from GIF format
-    files. Invoke <gdImageCreateFromGif> with an already opened
-    pointer to a file containing the desired
-    image.
+	<gdImageCreateFromGif> is called to load images from GIF format
+	files. Invoke <gdImageCreateFromGif> with an already opened
+	pointer to a file containing the desired
+	image.
 
-    <gdImageCreateFromGif> returns a <gdImagePtr> to the new image, or
-    NULL if unable to load the image (most often because the file is
-    corrupt or does not contain a GIF image). <gdImageCreateFromGif>
-    does not close the file. You can inspect the sx and sy members of
-    the image to determine its size. The image must eventually be
-    destroyed using <gdImageDestroy>.
+	<gdImageCreateFromGif> returns a <gdImagePtr> to the new image, or
+	NULL if unable to load the image (most often because the file is
+	corrupt or does not contain a GIF image). <gdImageCreateFromGif>
+	does not close the file. You can inspect the sx and sy members of
+	the image to determine its size. The image must eventually be
+	destroyed using <gdImageDestroy>.
 
   Variants:
 
-    <gdImageCreateFromGifPtr> creates an image from GIF data (i.e. the
-    contents of a GIF file) already in memory.
+	<gdImageCreateFromGifPtr> creates an image from GIF data (i.e. the
+	contents of a GIF file) already in memory.
 
-    <gdImageCreateFromGifCtx> reads in an image using the functions in
-    a <gdIOCtx> struct.
+	<gdImageCreateFromGifCtx> reads in an image using the functions in
+	a <gdIOCtx> struct.
 
   Parameters:
 
-    infile - The input FILE pointer
+	infile - The input FILE pointer
 
   Returns:
 
-    A pointer to the new image or NULL if an error occurred.
+	A pointer to the new image or NULL if an error occurred.
 
   Example:
 
-    > gdImagePtr im;
-    > ... inside a function ...
-    > FILE *in;
-    > in = fopen("mygif.gif", "rb");
-    > im = gdImageCreateFromGif(in);
-    > fclose(in);
-    > // ... Use the image ...
-    > gdImageDestroy(im);
+	> gdImagePtr im;
+	> ... inside a function ...
+	> FILE *in;
+	> in = fopen("mygif.gif", "rb");
+	> im = gdImageCreateFromGif(in);
+	> fclose(in);
+	> // ... Use the image ...
+	> gdImageDestroy(im);
 
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGif(FILE *fdFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGif(FILE *fdFile) {
 	gdIOCtx *fd = gdNewFileCtx(fdFile);
 	gdImagePtr im;
 
-	if (fd == NULL) return NULL;
+	if (fd == NULL)
+		return NULL;
 	im = gdImageCreateFromGifCtx(fd);
 
 	fd->gd_free(fd);
@@ -937,16 +911,15 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGif(FILE *fdFile)
 
   Parameters:
 
-    size - size of GIF data in bytes.
-    data - GIF data (i.e. contents of a GIF file).
+	size - size of GIF data in bytes.
+	data - GIF data (i.e. contents of a GIF file).
 
   See <gdImageCreateFromGif>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGifPtr (int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGifPtr(int size, void *data) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
-	if(!in) {
+	if (!in) {
 		return 0;
 	}
 	im = gdImageCreateFromGifCtx(in);
@@ -959,8 +932,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifPtr (int size, void *data)
 
   See <gdImageCreateFromGif>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd) {
 	int BitPixel;
 #if 0
 	int ColorResolution;
@@ -985,23 +957,23 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 	memset(ColorMap, 0, 3 * MAXCOLORMAPSIZE);
 	memset(localColorMap, 0, 3 * MAXCOLORMAPSIZE);
 
-	if(!ReadOK(fd, buf, 6)) {
+	if (!ReadOK(fd, buf, 6)) {
 		return 0;
 	}
 
-	if(strncmp((char *)buf, "GIF", 3) != 0) {
+	if (strncmp((char *)buf, "GIF", 3) != 0) {
 		return 0;
 	}
 
-	if(memcmp((char *)buf + 3, "87a", 3) == 0) {
+	if (memcmp((char *)buf + 3, "87a", 3) == 0) {
 		/* GIF87a */
-	} else if(memcmp((char *)buf + 3, "89a", 3) == 0) {
+	} else if (memcmp((char *)buf + 3, "89a", 3) == 0) {
 		/* GIF89a */
 	} else {
 		return 0;
 	}
 
-	if(!ReadOK(fd, buf, 7)) {
+	if (!ReadOK(fd, buf, 7)) {
 		return 0;
 	}
 
@@ -1015,8 +987,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 	screen_height = imh = LM_to_uint(buf[2], buf[3]);
 
 	haveGlobalColormap = BitSet(buf[4], LOCALCOLORMAP); /* Global Colormap */
-	if(haveGlobalColormap) {
-		if(ReadColorMap(fd, BitPixel, ColorMap)) {
+	if (haveGlobalColormap) {
+		if (ReadColorMap(fd, BitPixel, ColorMap)) {
 			return 0;
 		}
 	}
@@ -1025,7 +997,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 		int top, left;
 		int width, height;
 
-		if(!ReadOK(fd, &c, 1)) {
+		if (!ReadOK(fd, &c, 1)) {
 			return 0;
 		}
 
@@ -1033,8 +1005,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 			goto terminated;
 		}
 
-		if(c == '!') { /* Extension */
-			if(!ReadOK(fd, &c, 1)) {
+		if (c == '!') { /* Extension */
+			if (!ReadOK(fd, &c, 1)) {
 				return 0;
 			}
 
@@ -1042,13 +1014,13 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 			continue;
 		}
 
-		if(c != ',') { /* Not a valid start character */
+		if (c != ',') { /* Not a valid start character */
 			continue;
 		}
 
 		/*1.4//++imageCount; */
 
-		if(!ReadOK(fd, buf, 9)) {
+		if (!ReadOK(fd, buf, 9)) {
 			return 0;
 		}
 
@@ -1060,50 +1032,54 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 		width = LM_to_uint(buf[4], buf[5]);
 		height = LM_to_uint(buf[6], buf[7]);
 
-		if(((left + width) > screen_width) || ((top + height) > screen_height)) {
-			if(VERBOSE) {
+		if (((left + width) > screen_width) ||
+			((top + height) > screen_height)) {
+			if (VERBOSE) {
 				printf("Frame is not confined to screen dimension.\n");
 			}
 			return 0;
 		}
 
-		if(!(im = gdImageCreate(width, height))) {
+		if (!(im = gdImageCreate(width, height))) {
 			return 0;
 		}
 
 		im->interlace = BitSet(buf[8], INTERLACE);
-		if(!useGlobalColormap) {
-			if(ReadColorMap(fd, bitPixel, localColorMap)) {
+		if (!useGlobalColormap) {
+			if (ReadColorMap(fd, bitPixel, localColorMap)) {
 				gdImageDestroy(im);
 				return 0;
 			}
 
-			/* Legacy gdImageCreateFromGif* is intentionally tolerant of out-of-palette
-			 * LZW results and maps them to color 0. The newer iterator API passes the
-			 * actual color table size and rejects those malformed frames instead.
+			/* Legacy gdImageCreateFromGif* is intentionally tolerant of
+			 * out-of-palette LZW results and maps them to color 0. The newer
+			 * iterator API passes the actual color table size and rejects those
+			 * malformed frames instead.
 			 */
-			if(!ReadImage(im, fd, width, height, localColorMap, 0, BitSet(buf[8], INTERLACE), &ZeroDataBlock)) {
+			if (!ReadImage(im, fd, width, height, localColorMap, 0,
+						   BitSet(buf[8], INTERLACE), &ZeroDataBlock)) {
 				gdImageDestroy(im);
 				return 0;
 			}
 		} else {
-			if(!haveGlobalColormap) {
+			if (!haveGlobalColormap) {
 				// Still a valid gif, apply simple default palette as per spec
 				ColorMap[CM_RED][1] = 0xff;
 				ColorMap[CM_GREEN][1] = 0xff;
 				ColorMap[CM_BLUE][1] = 0xff;
 			}
 
-			/* Keep legacy tolerance here as above; strict validation is used by the
-			 * animated GIF iterator.
+			/* Keep legacy tolerance here as above; strict validation is used by
+			 * the animated GIF iterator.
 			 */
-			if(!ReadImage(im, fd, width, height, ColorMap, 0, BitSet(buf[8], INTERLACE), &ZeroDataBlock)) {
+			if (!ReadImage(im, fd, width, height, ColorMap, 0,
+						   BitSet(buf[8], INTERLACE), &ZeroDataBlock)) {
 				gdImageDestroy(im);
 				return 0;
 			}
 		}
 
-		if(Transparent != (-1)) {
+		if (Transparent != (-1)) {
 			gdImageColorTransparent(im, Transparent);
 		}
 
@@ -1112,22 +1088,22 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGifCtx(gdIOCtxPtr fd)
 
 terminated:
 	/* Terminator before any image was declared! */
-	if(!im) {
+	if (!im) {
 		return 0;
 	}
 
 	/* Check for open colors at the end, so
 	 * we can reduce colorsTotal and ultimately
 	 * BitsPerPixel */
-	for(i = im->colorsTotal - 1; i >= 0; i--) {
-		if(im->open[i]) {
+	for (i = im->colorsTotal - 1; i >= 0; i--) {
+		if (im->open[i]) {
 			im->colorsTotal--;
 		} else {
 			break;
 		}
 	}
 
-	if(!im->colorsTotal) {
+	if (!im->colorsTotal) {
 		gdImageDestroy(im);
 		return 0;
 	}
@@ -1135,14 +1111,12 @@ terminated:
 	return im;
 }
 
-static int
-ReadColorMap(gdIOCtx *fd, int number, unsigned char (*buffer)[256])
-{
+static int ReadColorMap(gdIOCtx *fd, int number, unsigned char (*buffer)[256]) {
 	int i;
 	unsigned char rgb[3];
 
-	for(i = 0; i < number; ++i) {
-		if(!ReadOK(fd, rgb, sizeof(rgb))) {
+	for (i = 0; i < number; ++i) {
+		if (!ReadOK(fd, rgb, sizeof(rgb))) {
 			return TRUE;
 		}
 
@@ -1154,25 +1128,27 @@ ReadColorMap(gdIOCtx *fd, int number, unsigned char (*buffer)[256])
 	return FALSE;
 }
 
-static int
-DoExtension(gdIOCtx *fd, int label, int *Transparent, int *ZeroDataBlockP)
-{
+static int DoExtension(gdIOCtx *fd, int label, int *Transparent,
+					   int *ZeroDataBlockP) {
 	unsigned char buf[256];
 
-	switch(label) {
+	switch (label) {
 	case 0xf9: /* Graphic Control Extension */
-		memset(buf, 0, 4); /* initialize a few bytes in the case the next function fails */
-		(void) GetDataBlock(fd, (unsigned char*) buf, ZeroDataBlockP);
+		memset(
+			buf, 0,
+			4); /* initialize a few bytes in the case the next function fails */
+		(void)GetDataBlock(fd, (unsigned char *)buf, ZeroDataBlockP);
 #if 0
 		Gif89.disposal  = (buf[0] >> 2) & 0x7;
 		Gif89.inputFlag = (buf[0] >> 1) & 0x1;
 		Gif89.delayTime = LM_to_uint(buf[1], buf[2]);
 #endif
-		if((buf[0] & 0x1) != 0) {
+		if ((buf[0] & 0x1) != 0) {
 			*Transparent = buf[3];
 		}
 
-		while(GetDataBlock(fd, (unsigned char*) buf, ZeroDataBlockP) > 0);
+		while (GetDataBlock(fd, (unsigned char *)buf, ZeroDataBlockP) > 0)
+			;
 
 		return FALSE;
 
@@ -1180,42 +1156,39 @@ DoExtension(gdIOCtx *fd, int label, int *Transparent, int *ZeroDataBlockP)
 		break;
 	}
 
-	while(GetDataBlock(fd, (unsigned char*) buf, ZeroDataBlockP) > 0);
+	while (GetDataBlock(fd, (unsigned char *)buf, ZeroDataBlockP) > 0)
+		;
 
 	return FALSE;
 }
 
-static int
-GetDataBlock_(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP)
-{
+static int GetDataBlock_(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP) {
 	unsigned char count;
 
-	if(!ReadOK(fd, &count, 1)) {
+	if (!ReadOK(fd, &count, 1)) {
 		return -1;
 	}
 
 	*ZeroDataBlockP = count == 0;
 
-	if((count != 0) && (!ReadOK(fd, buf, count))) {
+	if ((count != 0) && (!ReadOK(fd, buf, count))) {
 		return -1;
 	}
 
 	return count;
 }
 
-static int
-GetDataBlock(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP)
-{
+static int GetDataBlock(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP) {
 	int rv, i;
 
-	rv = GetDataBlock_(fd,buf, ZeroDataBlockP);
+	rv = GetDataBlock_(fd, buf, ZeroDataBlockP);
 
-	if(VERBOSE) {
-		printf("[GetDataBlock returning %d",rv);
-		if(rv > 0) {
+	if (VERBOSE) {
+		printf("[GetDataBlock returning %d", rv);
+		if (rv > 0) {
 			printf(":");
-			for(i = 0; i < rv; i++) {
-				printf(" %02x",buf[i]);
+			for (i = 0; i < rv; i++) {
+				printf(" %02x", buf[i]);
 			}
 		}
 		printf("]\n");
@@ -1224,13 +1197,12 @@ GetDataBlock(gdIOCtx *fd, unsigned char *buf, int *ZeroDataBlockP)
 	return rv;
 }
 
-static int
-GetCode_(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroDataBlockP)
-{
+static int GetCode_(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag,
+					int *ZeroDataBlockP) {
 	int i, j, ret;
 	int count;
 
-	if(flag) {
+	if (flag) {
 		scd->curbit = 0;
 		scd->lastbit = 0;
 		scd->last_byte = 2;
@@ -1238,9 +1210,9 @@ GetCode_(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroD
 		return 0;
 	}
 
-	if((scd->curbit + code_size) >= scd->lastbit) {
-		if(scd->done) {
-			if(scd->curbit >= scd->lastbit) {
+	if ((scd->curbit + code_size) >= scd->lastbit) {
+		if (scd->done) {
+			if (scd->curbit >= scd->lastbit) {
 				/* Oh well */
 			}
 			return -1;
@@ -1253,18 +1225,19 @@ GetCode_(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroD
 		scd->lastbit = 16;
 
 		do {
-			if(scd->last_byte > (CSD_BUF_SIZE - 255)) {
+			if (scd->last_byte > (CSD_BUF_SIZE - 255)) {
 				return -1;
 			}
 
-			if((count = GetDataBlock(fd, &scd->buf[scd->last_byte], ZeroDataBlockP)) <= 0) {
+			if ((count = GetDataBlock(fd, &scd->buf[scd->last_byte],
+									  ZeroDataBlockP)) <= 0) {
 				scd->done = TRUE;
 				break;
 			}
 
 			scd->last_byte += count;
 			scd->lastbit += count * 8;
-		} while((scd->curbit + code_size) > scd->lastbit);
+		} while ((scd->curbit + code_size) > scd->lastbit);
 	}
 
 	if ((scd->curbit + code_size) > scd->lastbit) {
@@ -1285,26 +1258,24 @@ GetCode_(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroD
 	return ret;
 }
 
-static int
-GetCode(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag, int *ZeroDataBlockP)
-{
+static int GetCode(gdIOCtx *fd, CODE_STATIC_DATA *scd, int code_size, int flag,
+				   int *ZeroDataBlockP) {
 	int rv;
 
-	rv = GetCode_(fd, scd, code_size,flag, ZeroDataBlockP);
+	rv = GetCode_(fd, scd, code_size, flag, ZeroDataBlockP);
 
-	if(VERBOSE) {
-		printf("[GetCode(,%d,%d) returning %d]\n",code_size,flag,rv);
+	if (VERBOSE) {
+		printf("[GetCode(,%d,%d) returning %d]\n", code_size, flag, rv);
 	}
 
 	return rv;
 }
 
-static int
-LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, int *ZeroDataBlockP)
-{
+static int LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag,
+						int input_code_size, int *ZeroDataBlockP) {
 	int code, incode, i;
 
-	if(flag) {
+	if (flag) {
 		sd->set_code_size = input_code_size;
 		sd->code_size = sd->set_code_size + 1;
 		sd->clear_code = 1 << sd->set_code_size;
@@ -1316,12 +1287,12 @@ LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, i
 
 		sd->fresh = TRUE;
 
-		for(i = 0; i < sd->clear_code; ++i) {
+		for (i = 0; i < sd->clear_code; ++i) {
 			sd->table[0][i] = 0;
 			sd->table[1][i] = i;
 		}
 
-		for(; i < (1 << MAX_LWZ_BITS); ++i) {
+		for (; i < (1 << MAX_LWZ_BITS); ++i) {
 			sd->table[0][i] = sd->table[1][0] = 0;
 		}
 
@@ -1329,24 +1300,25 @@ LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, i
 
 		return 0;
 
-	} else if(sd->fresh) {
+	} else if (sd->fresh) {
 		sd->fresh = FALSE;
 
 		do {
 			sd->firstcode = sd->oldcode =
-			                    GetCode(fd, &sd->scd, sd->code_size, FALSE, ZeroDataBlockP);
-		} while(sd->firstcode == sd->clear_code);
+				GetCode(fd, &sd->scd, sd->code_size, FALSE, ZeroDataBlockP);
+		} while (sd->firstcode == sd->clear_code);
 
 		return sd->firstcode;
 	}
 
-	if(sd->sp > sd->stack) {
+	if (sd->sp > sd->stack) {
 		return *--sd->sp;
 	}
 
-	while((code = GetCode(fd, &sd->scd, sd->code_size, FALSE, ZeroDataBlockP)) >= 0) {
-		if(code == sd->clear_code) {
-			for(i = 0; i < sd->clear_code; ++i) {
+	while ((code = GetCode(fd, &sd->scd, sd->code_size, FALSE,
+						   ZeroDataBlockP)) >= 0) {
+		if (code == sd->clear_code) {
+			for (i = 0; i < sd->clear_code; ++i) {
 				sd->table[0][i] = 0;
 				sd->table[1][i] = i;
 			}
@@ -1360,67 +1332,69 @@ LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, i
 			sd->max_code = sd->clear_code + 2;
 			sd->sp = sd->stack;
 			sd->firstcode = sd->oldcode =
-			                    GetCode(fd, &sd->scd, sd->code_size, FALSE, ZeroDataBlockP);
+				GetCode(fd, &sd->scd, sd->code_size, FALSE, ZeroDataBlockP);
 
 			return sd->firstcode;
-		} else if(code == sd->end_code) {
+		} else if (code == sd->end_code) {
 			int count;
 			unsigned char buf[260];
 
-			if(*ZeroDataBlockP) {
+			if (*ZeroDataBlockP) {
 				return -2;
 			}
 
-			while((count = GetDataBlock(fd, buf, ZeroDataBlockP)) > 0);
+			while ((count = GetDataBlock(fd, buf, ZeroDataBlockP)) > 0)
+				;
 
-			if(count != 0) {
+			if (count != 0) {
 				return -2;
 			}
 		}
 
 		incode = code;
 
-		if(sd->sp == (sd->stack + STACK_SIZE)) {
+		if (sd->sp == (sd->stack + STACK_SIZE)) {
 			/* Bad compressed data stream */
 			return -1;
 		}
 
-		if(code >= sd->max_code) {
+		if (code >= sd->max_code) {
 			*sd->sp++ = sd->firstcode;
 			code = sd->oldcode;
 		}
 
-		while(code >= sd->clear_code) {
-			if(sd->sp == (sd->stack + STACK_SIZE)) {
+		while (code >= sd->clear_code) {
+			if (sd->sp == (sd->stack + STACK_SIZE)) {
 				/* Bad compressed data stream */
 				return -1;
 			}
-			if(code >= (1 << MAX_LWZ_BITS)) {
+			if (code >= (1 << MAX_LWZ_BITS)) {
 				/* Corrupted code */
 				return -1;
 			}
 
 			*sd->sp++ = sd->table[1][code];
 
-			if(code == sd->table[0][code]) {
+			if (code == sd->table[0][code]) {
 				/* Oh well */
 			}
 
 			code = sd->table[0][code];
 		}
-		if(code >= (1 << MAX_LWZ_BITS)) {
+		if (code >= (1 << MAX_LWZ_BITS)) {
 			/* Corrupted code */
 			return -1;
 		}
 
 		*sd->sp++ = sd->firstcode = sd->table[1][code];
 
-		if((code = sd->max_code) < (1 << MAX_LWZ_BITS)) {
+		if ((code = sd->max_code) < (1 << MAX_LWZ_BITS)) {
 			sd->table[0][code] = sd->oldcode;
 			sd->table[1][code] = sd->firstcode;
 			++sd->max_code;
 
-			if((sd->max_code >= sd->max_code_size) && (sd->max_code_size < (1<<MAX_LWZ_BITS))) {
+			if ((sd->max_code >= sd->max_code_size) &&
+				(sd->max_code_size < (1 << MAX_LWZ_BITS))) {
 				sd->max_code_size *= 2;
 				++sd->code_size;
 			}
@@ -1428,7 +1402,7 @@ LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, i
 
 		sd->oldcode = incode;
 
-		if(sd->sp > sd->stack) {
+		if (sd->sp > sd->stack) {
 			return *--sd->sp;
 		}
 	}
@@ -1436,22 +1410,23 @@ LWZReadByte_(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, i
 	return code;
 }
 
-static int
-LWZReadByte(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag, int input_code_size, int *ZeroDataBlockP)
-{
+static int LWZReadByte(gdIOCtx *fd, LZW_STATIC_DATA *sd, char flag,
+					   int input_code_size, int *ZeroDataBlockP) {
 	int rv;
 
 	rv = LWZReadByte_(fd, sd, flag, input_code_size, ZeroDataBlockP);
 
-	if(VERBOSE) {
-		printf("[LWZReadByte(,%d,%d) returning %d]\n",flag,input_code_size,rv);
+	if (VERBOSE) {
+		printf("[LWZReadByte(,%d,%d) returning %d]\n", flag, input_code_size,
+			   rv);
 	}
 
 	return rv;
 }
 
-static int
-ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)[256], int colorCount, int interlace, int *ZeroDataBlockP) /*1.4//, int ignore) */
+static int ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height,
+					 unsigned char (*cmap)[256], int colorCount, int interlace,
+					 int *ZeroDataBlockP) /*1.4//, int ignore) */
 {
 	unsigned char c;
 	int xpos = 0, ypos = 0, pass = 0;
@@ -1459,16 +1434,16 @@ ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)
 	LZW_STATIC_DATA sd;
 
 	/* Initialize the Compression routines */
-	if(!ReadOK(fd, &c, 1)) {
+	if (!ReadOK(fd, &c, 1)) {
 		return 0;
 	}
 
-	if(c > MAX_LWZ_BITS) {
+	if (c > MAX_LWZ_BITS) {
 		return 0;
 	}
 
 	/* Stash the color map into the image */
-	for(i=0; (i < gdMaxColors); i++) {
+	for (i = 0; (i < gdMaxColors); i++) {
 		im->red[i] = cmap[CM_RED][i];
 		im->green[i] = cmap[CM_GREEN][i];
 		im->blue[i] = cmap[CM_BLUE][i];
@@ -1477,7 +1452,7 @@ ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)
 
 	/* Many (perhaps most) of these colors will remain marked open. */
 	im->colorsTotal = gdMaxColors;
-	if(LWZReadByte(fd, &sd, TRUE, c, ZeroDataBlockP) < 0) {
+	if (LWZReadByte(fd, &sd, TRUE, c, ZeroDataBlockP) < 0) {
 		return 0;
 	}
 
@@ -1491,25 +1466,25 @@ ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)
 	/*        return; */
 	/*} */
 
-	while((v = LWZReadByte(fd, &sd, FALSE, c, ZeroDataBlockP)) >= 0 ) {
-		if(colorCount > 0 && v >= colorCount) {
+	while ((v = LWZReadByte(fd, &sd, FALSE, c, ZeroDataBlockP)) >= 0) {
+		if (colorCount > 0 && v >= colorCount) {
 			return 0;
 		}
-		if(v >= gdMaxColors) {
+		if (v >= gdMaxColors) {
 			v = 0;
 		}
 
 		/* This how we recognize which colors are actually used. */
-		if(im->open[v]) {
+		if (im->open[v]) {
 			im->open[v] = 0;
 		}
 
 		gdImageSetPixel(im, xpos, ypos, v);
 
 		++xpos;
-		if(xpos == len) {
+		if (xpos == len) {
 			xpos = 0;
-			if(interlace) {
+			if (interlace) {
 				switch (pass) {
 				case 0:
 				case 1:
@@ -1523,7 +1498,7 @@ ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)
 					break;
 				}
 
-				if(ypos >= height) {
+				if (ypos >= height) {
 					++pass;
 					switch (pass) {
 					case 1:
@@ -1544,13 +1519,13 @@ ReadImage(gdImagePtr im, gdIOCtx *fd, int len, int height, unsigned char (*cmap)
 			}
 		}
 
-		if(ypos >= height) {
+		if (ypos >= height) {
 			break;
 		}
 	}
 
 fini:
-	if(LWZReadByte(fd, &sd, FALSE, c, ZeroDataBlockP) >=0) {
+	if (LWZReadByte(fd, &sd, FALSE, c, ZeroDataBlockP) >= 0) {
 		/* Ignore extra */
 	}
 	return 1;

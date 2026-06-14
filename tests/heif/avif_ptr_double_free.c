@@ -7,13 +7,10 @@
  * See also <https://github.com/libgd/libgd/issues/381>
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
-
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int size;
 
@@ -22,7 +19,8 @@ int main()
 
 	src->sx = 0;
 
-	dst = gdImageHeifPtrEx(src, &size, 100, GD_HEIF_CODEC_AV1, GD_HEIF_CHROMA_444);
+	dst = gdImageHeifPtrEx(src, &size, 100, GD_HEIF_CODEC_AV1,
+						   GD_HEIF_CHROMA_444);
 	gdTestAssert(dst == NULL);
 
 	gdImageDestroy(src);

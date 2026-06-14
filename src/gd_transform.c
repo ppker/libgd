@@ -2,7 +2,6 @@
  * File: Transformations
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -23,8 +22,7 @@
  *   - <gdImageFlipHorizontal>
  *   - <gdImageFlipBoth>
  */
-BGD_DECLARE(void) gdImageFlipVertical(gdImagePtr im)
-{
+BGD_DECLARE(void) gdImageFlipVertical(gdImagePtr im) {
 	register int x, y;
 
 	if (im->trueColor) {
@@ -43,7 +41,7 @@ BGD_DECLARE(void) gdImageFlipVertical(gdImagePtr im)
 		for (y = 0; y < im->sy / 2; y++) {
 			for (x = 0; x < im->sx; x++) {
 				p = im->pixels[y][x];
-				im->pixels[y][x] =	im->pixels[im->sy - 1 - y][x];
+				im->pixels[y][x] = im->pixels[im->sy - 1 - y][x];
 				im->pixels[im->sy - 1 - y][x] = p;
 			}
 		}
@@ -65,8 +63,7 @@ BGD_DECLARE(void) gdImageFlipVertical(gdImagePtr im)
  *   - <gdImageFlipVertical>
  *   - <gdImageFlipBoth>
  */
-BGD_DECLARE(void) gdImageFlipHorizontal(gdImagePtr im)
-{
+BGD_DECLARE(void) gdImageFlipHorizontal(gdImagePtr im) {
 
 	int x, y;
 
@@ -115,8 +112,7 @@ BGD_DECLARE(void) gdImageFlipHorizontal(gdImagePtr im)
  *   - <gdImageFlipVertical>
  *   - <gdImageFlipHorizontal>
  */
-BGD_DECLARE(void) gdImageFlipBoth(gdImagePtr im)
-{
+BGD_DECLARE(void) gdImageFlipBoth(gdImagePtr im) {
 	gdImageFlipVertical(im);
 	gdImageFlipHorizontal(im);
 }

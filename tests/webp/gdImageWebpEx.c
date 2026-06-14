@@ -4,8 +4,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp1;
 	int size = 1;
@@ -20,12 +19,12 @@ int main()
 	gdImageWebpEx(im, fp1, 8);
 	data = gdImageWebpPtrEx(im, &size, 9);
 	fclose(fp1);
-    if (data == NULL) {
+	if (data == NULL) {
 		gdImageDestroy(im);
-        return 1;
-    }
+		return 1;
+	}
 
-    gdFree(data);
+	gdFree(data);
 	gdImageDestroy(im);
 	return 0;
 }

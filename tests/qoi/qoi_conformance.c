@@ -5,8 +5,7 @@
 
 static void assert_conformance_file(const char *basename);
 
-int main()
-{
+int main() {
 	assert_conformance_file("dice");
 	assert_conformance_file("edgecase");
 	assert_conformance_file("kodim10");
@@ -19,8 +18,7 @@ int main()
 	return gdNumFailures();
 }
 
-static void assert_conformance_file(const char *basename)
-{
+static void assert_conformance_file(const char *basename) {
 	char filename[64];
 	FILE *fp;
 	gdImagePtr im;
@@ -42,7 +40,8 @@ static void assert_conformance_file(const char *basename)
 
 	snprintf(filename, sizeof(filename), "%s.png", basename);
 	expected = gdTestFilePathX("qoi", "conformance", filename, NULL);
-	if (!gdTestImagePerceptualCompareToFile(__FILE__, __LINE__, NULL, expected, im, 0.0, 0)) {
+	if (!gdTestImagePerceptualCompareToFile(__FILE__, __LINE__, NULL, expected,
+											im, 0.0, 0)) {
 		gdTestErrorMsg("%s failed\n", basename);
 	}
 	gdFree(expected);

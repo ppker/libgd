@@ -8,8 +8,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int r, g, b;
 	void *p;

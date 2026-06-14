@@ -12,11 +12,10 @@
 	basis image that must be loaded quickly. The .gd format
 	is not intended to be a general-purpose format. */
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	gdImagePtr im;
 	FILE *in, *out;
-	int	cs, fmt;
+	int cs, fmt;
 
 	if (argc != 5) {
 		fprintf(stderr, "Usage: giftogd2 filename.gif filename.gd2 cs fmt\n");

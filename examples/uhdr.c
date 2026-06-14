@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void usage(const char *prog)
-{
-	fprintf(stderr,
+static void usage(const char *prog) {
+	fprintf(
+		stderr,
 		"Usage: %s <input_uhdr.jpg> <output_uhdr.jpg> [options]\n"
 		"Options:\n"
 		"  --quality <1..95>           JPEG quality for output (default: 90)\n"
@@ -16,12 +16,12 @@ static void usage(const char *prog)
 		"  --crop <x>,<y>,<w>,<h>      Queue crop\n"
 		"  --rotate <90|180|270>       Queue clockwise rotation\n"
 		"  --mirror <h|v>              Queue mirror horizontal/vertical\n"
-		"  --sdr <output_sdr.jpg>      Also extract SDR base and save as JPEG\n",
+		"  --sdr <output_sdr.jpg>      Also extract SDR base and save as "
+		"JPEG\n",
 		prog);
 }
 
-static int parse_int(const char *s, int *out)
-{
+static int parse_int(const char *s, int *out) {
 	char *end = NULL;
 	long v;
 
@@ -38,12 +38,12 @@ static int parse_int(const char *s, int *out)
 		return 0;
 	}
 
-	*out = (int) v;
+	*out = (int)v;
 	return 1;
 }
 
-static int parse_resize(const char *s, gdUhdrImagePtr uhdr, int *out_w, int *out_h)
-{
+static int parse_resize(const char *s, gdUhdrImagePtr uhdr, int *out_w,
+						int *out_h) {
 	char *end = NULL;
 	long w;
 	long h;
@@ -63,9 +63,9 @@ static int parse_resize(const char *s, gdUhdrImagePtr uhdr, int *out_w, int *out
 		errno = 0;
 		h = strtol(end + 1, &height_end, 10);
 		if (errno != ERANGE && height_end != end + 1 && *height_end == '\0' &&
-				w > 0 && h > 0 && w <= INT_MAX && h <= INT_MAX) {
-			*out_w = (int) w;
-			*out_h = (int) h;
+			w > 0 && h > 0 && w <= INT_MAX && h <= INT_MAX) {
+			*out_w = (int)w;
+			*out_h = (int)h;
 			return 1;
 		}
 		return 0;
@@ -78,8 +78,8 @@ static int parse_resize(const char *s, gdUhdrImagePtr uhdr, int *out_w, int *out
 		if (w > INT_MAX) {
 			return 0;
 		}
-		scaled_w = ((long long) gdUhdrImageWidth(uhdr) * w + 50) / 100;
-		scaled_h = ((long long) gdUhdrImageHeight(uhdr) * w + 50) / 100;
+		scaled_w = ((long long)gdUhdrImageWidth(uhdr) * w + 50) / 100;
+		scaled_h = ((long long)gdUhdrImageHeight(uhdr) * w + 50) / 100;
 		if (scaled_w > INT_MAX || scaled_h > INT_MAX) {
 			return 0;
 		}
@@ -89,29 +89,25 @@ static int parse_resize(const char *s, gdUhdrImagePtr uhdr, int *out_w, int *out
 		if (scaled_h <= 0) {
 			scaled_h = 1;
 		}
-		*out_w = (int) scaled_w;
-		*out_h = (int) scaled_h;
+		*out_w = (int)scaled_w;
+		*out_h = (int)scaled_h;
 		return 1;
 	}
 
 	return 0;
 }
 
-static void print_error(const char *where, const gdUhdrError *err)
-{
+static void print_error(const char *where, const gdUhdrError *err) {
 	if (!err) {
 		fprintf(stderr, "%s failed\n", where);
 		return;
 	}
-	fprintf(stderr, "%s failed: code=%d provider=%d message=%s\n",
-		where,
-		err->code,
-		err->provider_code,
-		err->message[0] ? err->message : "(none)");
+	fprintf(stderr, "%s failed: code=%d provider=%d message=%s\n", where,
+			err->code, err->provider_code,
+			err->message[0] ? err->message : "(none)");
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	const char *in_path;
 	const char *out_path;
 	const char *sdr_path = NULL;
@@ -131,7 +127,8 @@ int main(int argc, char **argv)
 	memset(&err, 0, sizeof(err));
 
 	if (!gdUhdrIsAvailable()) {
-		fprintf(stderr, "UltraHDR support is not available in this libgd build.\n");
+		fprintf(stderr,
+				"UltraHDR support is not available in this libgd build.\n");
 		return 2;
 	}
 
@@ -141,8 +138,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	fprintf(stdout, "Loaded: %dx%d gain_map=%d\n",
-		gdUhdrImageWidth(uhdr), gdUhdrImageHeight(uhdr), gdUhdrImageHasGainMap(uhdr));
+	fprintf(stdout, "Loaded: %dx%d gain_map=%d\n", gdUhdrImageWidth(uhdr),
+			gdUhdrImageHeight(uhdr), gdUhdrImageHasGainMap(uhdr));
 
 	for (i = 3; i < argc; i++) {
 		if (strcmp(argv[i], "--quality") == 0) {
@@ -158,7 +155,8 @@ int main(int argc, char **argv)
 		if (strcmp(argv[i], "--resize") == 0) {
 			int w, h;
 			if (i + 1 >= argc || !parse_resize(argv[i + 1], uhdr, &w, &h)) {
-				fprintf(stderr, "Invalid --resize value, expected <w>x<h> or <percent>%%\n");
+				fprintf(stderr, "Invalid --resize value, expected <w>x<h> or "
+								"<percent>%%\n");
 				gdUhdrImageDestroy(uhdr);
 				return 1;
 			}
@@ -174,8 +172,10 @@ int main(int argc, char **argv)
 
 		if (strcmp(argv[i], "--crop") == 0) {
 			int x, y, w, h;
-			if (i + 1 >= argc || sscanf(argv[i + 1], "%d,%d,%d,%d", &x, &y, &w, &h) != 4) {
-				fprintf(stderr, "Invalid --crop value, expected <x>,<y>,<w>,<h>\n");
+			if (i + 1 >= argc ||
+				sscanf(argv[i + 1], "%d,%d,%d,%d", &x, &y, &w, &h) != 4) {
+				fprintf(stderr,
+						"Invalid --crop value, expected <x>,<y>,<w>,<h>\n");
 				gdUhdrImageDestroy(uhdr);
 				return 1;
 			}

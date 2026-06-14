@@ -4,7 +4,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main(){
+int main() {
 	gdImagePtr im1, im2;
 
 	im1 = gdImageCreateTrueColor(80, 80);
@@ -22,8 +22,7 @@ int main(){
 	gdImageDestroy(im1);
 	gdImageDestroy(im2);
 
-	if (gdTestAssert(ifMatch != 0))
-	{
+	if (gdTestAssert(ifMatch != 0)) {
 		gdTestErrorMsg("gdImageColorMatch failed.\n");
 		return 1;
 	}

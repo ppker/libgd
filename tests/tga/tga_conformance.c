@@ -9,8 +9,7 @@
 
 static void assert_conformance_file(const char *basename);
 
-int main()
-{
+int main() {
 	assert_conformance_file("b5-attrib");
 	assert_conformance_file("b5-cmap");
 	assert_conformance_file("b5-noattrib");
@@ -32,8 +31,7 @@ int main()
 	return gdNumFailures();
 }
 
-static void assert_conformance_file(const char *basename)
-{
+static void assert_conformance_file(const char *basename) {
 	char filename[64];
 	gdImagePtr im;
 	FILE *fp;

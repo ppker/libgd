@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int r, g, b;
 	void *p;
@@ -22,14 +21,17 @@ int main()
 	gdImageRectangle(src, 20, 20, 79, 79, g);
 	gdImageEllipse(src, 70, 25, 30, 20, b);
 
-#define OUTPUT_GD2(x) do {												\
-		FILE *fp = gdTestTempFp();										\
-		gdImageGd2(x, fp, (GD2_CHUNKSIZE_MIN+GD2_CHUNKSIZE_MAX)/2, GD2_FMT_COMPRESSED); \
-		fclose(fp);														\
+#define OUTPUT_GD2(x)                                                          \
+	do {                                                                       \
+		FILE *fp = gdTestTempFp();                                             \
+		gdImageGd2(x, fp, (GD2_CHUNKSIZE_MIN + GD2_CHUNKSIZE_MAX) / 2,         \
+				   GD2_FMT_COMPRESSED);                                        \
+		fclose(fp);                                                            \
 	} while (0)
 
 	OUTPUT_GD2(src);
-	p = gdImageGd2Ptr(src, (GD2_CHUNKSIZE_MIN+GD2_CHUNKSIZE_MAX)/2, GD2_FMT_COMPRESSED, &size);
+	p = gdImageGd2Ptr(src, (GD2_CHUNKSIZE_MIN + GD2_CHUNKSIZE_MAX) / 2,
+					  GD2_FMT_COMPRESSED, &size);
 	if (p == NULL) {
 		status = 1;
 		gdTestErrorMsg("p is null\n");

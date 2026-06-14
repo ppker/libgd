@@ -8,9 +8,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-
-int main()
-{
+int main() {
 	gdImagePtr im;
 
 	im = gdImageCreateFromAvif(NULL);

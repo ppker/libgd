@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst = NULL;
 	double affine[6];
 	int x, y;
@@ -16,10 +15,12 @@ int main()
 	gdImageAlphaBlending(src, 0);
 	gdImageSaveAlpha(src, 1);
 	gdImageSetInterpolationMethod(src, GD_LINEAR);
-	gdImageFilledRectangle(src, 0, 0, 15, 15, gdTrueColorAlpha(255, 255, 255, gdAlphaOpaque));
+	gdImageFilledRectangle(src, 0, 0, 15, 15,
+						   gdTrueColorAlpha(255, 255, 255, gdAlphaOpaque));
 
 	gdAffineRotate(affine, 10.0);
-	if (!gdTestAssert(gdTransformAffineGetImage(&dst, src, NULL, affine) == GD_TRUE)) {
+	if (!gdTestAssert(gdTransformAffineGetImage(&dst, src, NULL, affine) ==
+					  GD_TRUE)) {
 		gdImageDestroy(src);
 		return gdNumFailures();
 	}
@@ -30,15 +31,17 @@ int main()
 
 	for (y = 0; y < gdImageSY(dst); y++) {
 		for (x = 0; x < gdImageSX(dst); x++) {
-			const int alpha = gdTrueColorGetAlpha(gdImageGetTrueColorPixel(dst, x, y));
+			const int alpha =
+				gdTrueColorGetAlpha(gdImageGetTrueColorPixel(dst, x, y));
 			if (alpha > gdAlphaOpaque && alpha < gdAlphaTransparent) {
 				partial_alpha_pixels++;
 			}
 		}
 	}
 
-	gdTestAssertMsg(partial_alpha_pixels > 0,
-	                "expected affine edge interpolation to create partial-alpha pixels");
+	gdTestAssertMsg(
+		partial_alpha_pixels > 0,
+		"expected affine edge interpolation to create partial-alpha pixels");
 
 	gdImageDestroy(dst);
 	gdImageDestroy(src);

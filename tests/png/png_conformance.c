@@ -13,15 +13,11 @@ static const char *valid_files[] = {
 	"wm_upload_wikimedia_org_a23d1e831e128dff.png",
 	"wm_upload_wikimedia_org_c8a458b0cef3d942.png",
 	"wm_upload_wikimedia_org_f14b0faca19b77e2.png",
-	"wm_upload_wikimedia_org_f6c96971fbd1da0d.png"
-};
+	"wm_upload_wikimedia_org_f6c96971fbd1da0d.png"};
 
-static const char *invalid_files[] = {
-	"badadler.png"
-};
+static const char *invalid_files[] = {"badadler.png"};
 
-static gdImagePtr read_png(const char *dir, const char *filename, int *opened)
-{
+static gdImagePtr read_png(const char *dir, const char *filename, int *opened) {
 	FILE *fp;
 	gdImagePtr im;
 
@@ -36,12 +32,12 @@ static gdImagePtr read_png(const char *dir, const char *filename, int *opened)
 	return im;
 }
 
-static void assert_valid_file(const char *filename)
-{
+static void assert_valid_file(const char *filename) {
 	int opened;
 	gdImagePtr im = read_png("valid", filename, &opened);
 
-	gdTestAssertMsg(opened, "cannot open valid PNG conformance file: %s\n", filename);
+	gdTestAssertMsg(opened, "cannot open valid PNG conformance file: %s\n",
+					filename);
 	if (!opened) {
 		return;
 	}
@@ -51,27 +47,27 @@ static void assert_valid_file(const char *filename)
 	}
 
 	gdTestAssertMsg(gdImageSX(im) > 0 && gdImageSY(im) > 0,
-	                "decoded PNG has invalid dimensions: %s\n", filename);
+					"decoded PNG has invalid dimensions: %s\n", filename);
 	gdImageDestroy(im);
 }
 
-static void assert_invalid_file(const char *filename)
-{
+static void assert_invalid_file(const char *filename) {
 	int opened;
 	gdImagePtr im = read_png("invalid", filename, &opened);
 
-	gdTestAssertMsg(opened, "cannot open invalid PNG conformance file: %s\n", filename);
+	gdTestAssertMsg(opened, "cannot open invalid PNG conformance file: %s\n",
+					filename);
 	if (!opened) {
 		return;
 	}
-	gdTestAssertMsg(im == NULL, "invalid PNG decoded successfully: %s\n", filename);
+	gdTestAssertMsg(im == NULL, "invalid PNG decoded successfully: %s\n",
+					filename);
 	if (im != NULL) {
 		gdImageDestroy(im);
 	}
 }
 
-int main(void)
-{
+int main(void) {
 	size_t i;
 
 	gdSetErrorMethod(gdSilence);

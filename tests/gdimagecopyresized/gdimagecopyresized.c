@@ -5,8 +5,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src;
 	gdImagePtr dst;
 	gdImagePtr dst_tc;
@@ -24,8 +23,10 @@ int main()
 	gdImageCopyResized(dst, src, 32, 32, 0, 0, 64, 64, 64, 64);
 	gdImageCopyResized(dst_tc, src, 32, 32, 0, 0, 64, 64, 64, 64);
 
-	gdAssertImageEqualsToFile("gdimagecopyresized/gdimagecopyresized_exp.png", dst);
-	gdAssertImageEqualsToFile("gdimagecopyresized/gdimagecopyresized_exp.png", dst_tc);
+	gdAssertImageEqualsToFile("gdimagecopyresized/gdimagecopyresized_exp.png",
+							  dst);
+	gdAssertImageEqualsToFile("gdimagecopyresized/gdimagecopyresized_exp.png",
+							  dst_tc);
 
 	gdImageDestroy(src);
 	gdImageDestroy(dst);

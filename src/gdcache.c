@@ -1,12 +1,12 @@
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
 #include "gd.h"
 #include "gdhelpers.h"
 
 #ifdef HAVE_LIBFREETYPE
-#	define NEED_CACHE 1
+#define NEED_CACHE 1
 #endif
 
 #ifdef NEED_CACHE
@@ -58,15 +58,13 @@
 /*********************************************************/
 
 /* create a new cache */
-gdCache_head_t *gdCacheCreate(int size,
-                              gdCacheTestFn_t gdCacheTest,
-                              gdCacheFetchFn_t gdCacheFetch,
-                              gdCacheReleaseFn_t gdCacheRelease)
-{
+gdCache_head_t *gdCacheCreate(int size, gdCacheTestFn_t gdCacheTest,
+							  gdCacheFetchFn_t gdCacheFetch,
+							  gdCacheReleaseFn_t gdCacheRelease) {
 	gdCache_head_t *head;
 
 	head = (gdCache_head_t *)gdMalloc(sizeof(gdCache_head_t));
-	if(!head) {
+	if (!head) {
 		return NULL;
 	}
 
@@ -79,12 +77,11 @@ gdCache_head_t *gdCacheCreate(int size,
 	return head;
 }
 
-void gdCacheDelete(gdCache_head_t *head)
-{
+void gdCacheDelete(gdCache_head_t *head) {
 	gdCache_element_t *elem, *prev;
 
 	elem = head->mru;
-	while(elem) {
+	while (elem) {
 		(*(head->gdCacheRelease))(elem->userdata);
 		prev = elem;
 		elem = elem->next;
@@ -94,16 +91,15 @@ void gdCacheDelete(gdCache_head_t *head)
 	gdFree((char *)head);
 }
 
-void * gdCacheGet(gdCache_head_t *head, void *keydata)
-{
+void *gdCacheGet(gdCache_head_t *head, void *keydata) {
 	int i = 0;
 	gdCache_element_t *elem, *prev = NULL, *prevprev = NULL;
 	void *userdata;
 
 	elem = head->mru;
-	while(elem) {
-		if((*(head->gdCacheTest))(elem->userdata, keydata)) {
-			if(i) {
+	while (elem) {
+		if ((*(head->gdCacheTest))(elem->userdata, keydata)) {
+			if (i) {
 				/* if not already most-recently-used */
 				/* relink to top of list */
 				prev->next = elem->next;
@@ -121,21 +117,21 @@ void * gdCacheGet(gdCache_head_t *head, void *keydata)
 	}
 
 	userdata = (*(head->gdCacheFetch))(&(head->error), keydata);
-	if(!userdata) {
+	if (!userdata) {
 		/* if there was an error in the fetch then don't cache */
 		return NULL;
 	}
 
-	if(i < head->size) {
+	if (i < head->size) {
 		/* cache still growing - add new elem */
 		elem = (gdCache_element_t *)gdMalloc(sizeof(gdCache_element_t));
-		if(!elem) {
-			(*(head->gdCacheRelease)) (userdata);
+		if (!elem) {
+			(*(head->gdCacheRelease))(userdata);
 			return NULL;
 		}
 	} else {
 		/* cache full - replace least-recently-used */
-		if(!prevprev) {
+		if (!prevprev) {
 			/* cache size is 1 */
 			head->mru = NULL;
 		} else {
@@ -144,7 +140,8 @@ void * gdCacheGet(gdCache_head_t *head, void *keydata)
 		}
 		elem = prev;
 		if (!elem) {
-			/* Happen only with an invalid cache size (<= 0). Bad state but still worth handling it here before deref */
+			/* Happen only with an invalid cache size (<= 0). Bad state but
+			 * still worth handling it here before deref */
 			(*(head->gdCacheRelease))(userdata);
 			return NULL;
 		}
@@ -170,16 +167,13 @@ void * gdCacheGet(gdCache_head_t *head, void *keydata)
 typedef struct {
 	int key;
 	int value;
-}
-key_value_t;
+} key_value_t;
 
-static int cacheTest(void *map, void *key)
-{
+static int cacheTest(void *map, void *key) {
 	return (((key_value_t *)map)->key == *(int *)key);
 }
 
-static void *cacheFetch(char **error, void *key)
-{
+static void *cacheFetch(char **error, void *key) {
 	key_value_t *map;
 
 	map = (key_value_t *)gdMalloc(sizeof(key_value_t));
@@ -195,18 +189,14 @@ static void *cacheFetch(char **error, void *key)
 	return (void *)map;
 }
 
-static void cacheRelease(void *map)
-{
-	gdFree((char *)map);
-}
+static void cacheRelease(void *map) { gdFree((char *)map); }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	gdCache_head_t *cacheTable;
 	int elem, key;
 
 	cacheTable = gdCacheCreate(3, cacheTest, cacheFetch, cacheRelease);
-	if(!cacheTable) {
+	if (!cacheTable) {
 		exit(1);
 	}
 

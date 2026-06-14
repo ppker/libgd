@@ -7,25 +7,22 @@
  * See also <https://github.com/libgd/libgd/issues/381>
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr src, dst;
+	int size;
 
-int main()
-{
-    gdImagePtr src, dst;
-    int size;
+	src = gdImageCreateTrueColor(1, 10);
+	gdTestAssert(src != NULL);
 
-    src = gdImageCreateTrueColor(1, 10);
-    gdTestAssert(src != NULL);
+	src->sx = 0; /* this hack forces gdImageJpegPtr() to fail */
 
-    src->sx = 0; /* this hack forces gdImageJpegPtr() to fail */
+	dst = gdImageJpegPtr(src, &size, 0);
+	gdTestAssert(dst == NULL);
 
-    dst = gdImageJpegPtr(src, &size, 0);
-    gdTestAssert(dst == NULL);
+	gdImageDestroy(src);
 
-    gdImageDestroy(src);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

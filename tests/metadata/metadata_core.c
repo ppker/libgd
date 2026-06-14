@@ -3,11 +3,10 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static void test_lifecycle_and_profiles(void)
-{
+static void test_lifecycle_and_profiles(void) {
 	gdImageMetadata *metadata;
-	const unsigned char input[] = { 'a', 'b', 'c' };
-	const unsigned char replacement[] = { 'x', 'y' };
+	const unsigned char input[] = {'a', 'b', 'c'};
+	const unsigned char replacement[] = {'x', 'y'};
 	const unsigned char *profile;
 	const char *key;
 	size_t size;
@@ -16,7 +15,8 @@ static void test_lifecycle_and_profiles(void)
 	gdTestAssert(metadata != NULL);
 
 	gdTestAssert(gdImageMetadataGetProfileCount(metadata) == 0);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", input, sizeof(input)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", input,
+										   sizeof(input)) == GD_META_OK);
 	gdTestAssert(gdImageMetadataGetProfileCount(metadata) == 1);
 
 	profile = gdImageMetadataGetProfile(metadata, "exif", &size);
@@ -24,12 +24,14 @@ static void test_lifecycle_and_profiles(void)
 	gdTestAssert(size == sizeof(input));
 	gdTestAssert(memcmp(profile, input, sizeof(input)) == 0);
 
-	gdTestAssert(gdImageMetadataGetProfileAt(metadata, 0, &key, &profile, &size) == GD_META_OK);
+	gdTestAssert(gdImageMetadataGetProfileAt(metadata, 0, &key, &profile,
+											 &size) == GD_META_OK);
 	gdTestAssert(strcmp(key, "exif") == 0);
 	gdTestAssert(size == sizeof(input));
 	gdTestAssert(memcmp(profile, input, sizeof(input)) == 0);
 
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", replacement, sizeof(replacement)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", replacement,
+										   sizeof(replacement)) == GD_META_OK);
 	gdTestAssert(gdImageMetadataGetProfileCount(metadata) == 1);
 	profile = gdImageMetadataGetProfile(metadata, "exif", &size);
 	gdTestAssert(profile != NULL);
@@ -44,11 +46,10 @@ static void test_lifecycle_and_profiles(void)
 	gdImageMetadataFree(metadata);
 }
 
-static void test_limits(void)
-{
+static void test_limits(void) {
 	gdImageMetadata *metadata;
-	const unsigned char one[] = { 1 };
-	const unsigned char two[] = { 1, 2 };
+	const unsigned char one[] = {1};
+	const unsigned char two[] = {1, 2};
 	size_t max_profile_size = 0;
 	size_t max_total_size = 0;
 
@@ -60,38 +61,49 @@ static void test_limits(void)
 	gdTestAssert(max_total_size == GD_METADATA_DEFAULT_MAX_TOTAL_SIZE);
 
 	gdTestAssert(gdImageMetadataSetLimits(metadata, 1, 2) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", one, sizeof(one)) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "xmp", one, sizeof(one)) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "iptc", one, sizeof(one)) == GD_META_ERR_LIMIT);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", two, sizeof(two)) == GD_META_ERR_LIMIT);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", one, sizeof(one)) ==
+				 GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "xmp", one, sizeof(one)) ==
+				 GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "iptc", one,
+										   sizeof(one)) == GD_META_ERR_LIMIT);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", two, sizeof(two)) ==
+				 GD_META_ERR_LIMIT);
 
 	gdTestAssert(gdImageMetadataSetLimits(metadata, 0, 0) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", two, sizeof(two)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", two, sizeof(two)) ==
+				 GD_META_OK);
 
 	gdImageMetadataFree(metadata);
 }
 
-static void test_invalid_inputs(void)
-{
+static void test_invalid_inputs(void) {
 	gdImageMetadata *metadata;
-	const unsigned char data[] = { 1 };
+	const unsigned char data[] = {1};
 
 	metadata = gdImageMetadataCreate();
 	gdTestAssert(metadata != NULL);
 
-	gdTestAssert(gdImageMetadataSetProfile(NULL, "exif", data, sizeof(data)) == GD_META_ERR_INVALID);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, NULL, data, sizeof(data)) == GD_META_ERR_INVALID);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "", data, sizeof(data)) == GD_META_ERR_INVALID);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", NULL, sizeof(data)) == GD_META_ERR_INVALID);
-	gdTestAssert(gdImageMetadataRemoveProfile(NULL, "exif") == GD_META_ERR_INVALID);
+	gdTestAssert(gdImageMetadataSetProfile(NULL, "exif", data, sizeof(data)) ==
+				 GD_META_ERR_INVALID);
+	gdTestAssert(
+		gdImageMetadataSetProfile(metadata, NULL, data, sizeof(data)) ==
+		GD_META_ERR_INVALID);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "", data, sizeof(data)) ==
+				 GD_META_ERR_INVALID);
+	gdTestAssert(
+		gdImageMetadataSetProfile(metadata, "exif", NULL, sizeof(data)) ==
+		GD_META_ERR_INVALID);
+	gdTestAssert(gdImageMetadataRemoveProfile(NULL, "exif") ==
+				 GD_META_ERR_INVALID);
 	gdTestAssert(gdImageMetadataGetProfileCount(NULL) == 0);
-	gdTestAssert(gdImageMetadataGetProfileAt(NULL, 0, NULL, NULL, NULL) == GD_META_ERR_INVALID);
+	gdTestAssert(gdImageMetadataGetProfileAt(NULL, 0, NULL, NULL, NULL) ==
+				 GD_META_ERR_INVALID);
 
 	gdImageMetadataFree(metadata);
 }
 
-int main(void)
-{
+int main(void) {
 	test_lifecycle_and_profiles();
 	test_limits();
 	test_invalid_inputs();

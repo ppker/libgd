@@ -1,16 +1,15 @@
 #include "gd.h"
-#include <stdio.h>
 #include "gdtest.h"
+#include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im, tile;
 
 	gdSetErrorMethod(gdSilence);
 
 	tile = gdImageCreateTrueColor(10, 10);
 	gdImageFill(tile, 0, 0, 0xFFFFFF);
-	gdImageLine(tile, 0,0, 9,9, 0xff0000);
+	gdImageLine(tile, 0, 0, 9, 9, 0xff0000);
 	gdImageColorTransparent(tile, 0xFFFFFF);
 
 	im = gdImageCreateTrueColor(50, 50);

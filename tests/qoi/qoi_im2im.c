@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "gd.h"
 #include "gdtest.h"
@@ -15,8 +15,7 @@ typedef struct {
 	int size;
 } SinkBuffer;
 
-static int source_read(void *context, char *buffer, int len)
-{
+static int source_read(void *context, char *buffer, int len) {
 	SourceBuffer *src = (SourceBuffer *)context;
 	int remaining = src->size - src->pos;
 	int n = remaining < len ? remaining : len;
@@ -29,10 +28,10 @@ static int source_read(void *context, char *buffer, int len)
 	return n;
 }
 
-static int sink_write(void *context, const char *buffer, int len)
-{
+static int sink_write(void *context, const char *buffer, int len) {
 	SinkBuffer *sink = (SinkBuffer *)context;
-	unsigned char *data = (unsigned char *)realloc(sink->data, sink->size + len);
+	unsigned char *data =
+		(unsigned char *)realloc(sink->data, sink->size + len);
 
 	if (data == NULL) {
 		return -1;
@@ -43,8 +42,7 @@ static int sink_write(void *context, const char *buffer, int len)
 	return len;
 }
 
-static gdImagePtr create_truecolor_image(void)
-{
+static gdImagePtr create_truecolor_image(void) {
 	gdImagePtr im;
 	int x, y;
 
@@ -59,14 +57,14 @@ static gdImagePtr create_truecolor_image(void)
 	for (y = 0; y < gdImageSY(im); y++) {
 		for (x = 0; x < gdImageSX(im); x++) {
 			int alpha = (x + y) % (gdAlphaMax + 1);
-			gdImageSetPixel(im, x, y, gdTrueColorAlpha(x * 13, y * 11, (x + y) * 7, alpha));
+			gdImageSetPixel(
+				im, x, y, gdTrueColorAlpha(x * 13, y * 11, (x + y) * 7, alpha));
 		}
 	}
 	return im;
 }
 
-static gdImagePtr create_palette_expected(void)
-{
+static gdImagePtr create_palette_expected(void) {
 	gdImagePtr im;
 	int colors[4];
 	int x, y;
@@ -92,8 +90,7 @@ static gdImagePtr create_palette_expected(void)
 	return im;
 }
 
-static gdImagePtr create_palette_image(void)
-{
+static gdImagePtr create_palette_image(void) {
 	gdImagePtr im;
 	int colors[4];
 	int x, y;
@@ -107,7 +104,8 @@ static gdImagePtr create_palette_image(void)
 	colors[0] = gdImageColorAllocateAlpha(im, 255, 0, 0, gdAlphaOpaque);
 	colors[1] = gdImageColorAllocateAlpha(im, 0, 255, 0, 32);
 	colors[2] = gdImageColorAllocateAlpha(im, 0, 0, 255, 96);
-	colors[3] = gdImageColorAllocateAlpha(im, 255, 255, 255, gdAlphaTransparent);
+	colors[3] =
+		gdImageColorAllocateAlpha(im, 255, 255, 255, gdAlphaTransparent);
 
 	for (y = 0; y < gdImageSY(im); y++) {
 		for (x = 0; x < gdImageSX(im); x++) {
@@ -117,8 +115,7 @@ static gdImagePtr create_palette_image(void)
 	return im;
 }
 
-int main()
-{
+int main() {
 	gdImagePtr src = NULL, dst = NULL, palette = NULL, palette_expected = NULL;
 	void *data = NULL;
 	int size = 0;
@@ -153,7 +150,8 @@ int main()
 	gdTestAssertMsg(data != NULL, "gdImageQoiPtrEx returned NULL\n");
 	if (data != NULL) {
 		dst = gdImageCreateFromQoiPtrWithMetadata(size, data, NULL);
-		gdTestAssertMsg(dst != NULL, "gdImageCreateFromQoiPtrWithMetadata returned NULL\n");
+		gdTestAssertMsg(dst != NULL,
+						"gdImageCreateFromQoiPtrWithMetadata returned NULL\n");
 		if (dst != NULL) {
 			gdAssertImageEquals(src, dst);
 			gdImageDestroy(dst);
@@ -196,7 +194,8 @@ int main()
 	gd_sink.sink = sink_write;
 	gd_sink.context = &sink;
 	gdImageQoiToSink(src, &gd_sink);
-	gdTestAssertMsg(sink.data != NULL && sink.size > 0, "gdImageQoiToSink wrote no data\n");
+	gdTestAssertMsg(sink.data != NULL && sink.size > 0,
+					"gdImageQoiToSink wrote no data\n");
 	if (sink.data != NULL) {
 		dst = gdImageCreateFromQoiPtr(sink.size, sink.data);
 		gdTestAssertMsg(dst != NULL, "sink data could not be decoded\n");
@@ -223,13 +222,20 @@ int main()
 	}
 
 cleanup:
-	if (src != NULL) gdImageDestroy(src);
-	if (dst != NULL) gdImageDestroy(dst);
-	if (palette != NULL) gdImageDestroy(palette);
-	if (palette_expected != NULL) gdImageDestroy(palette_expected);
-	if (data != NULL) gdFree(data);
-	if (filename != NULL) gdFree(filename);
-	if (sink.data != NULL) free(sink.data);
+	if (src != NULL)
+		gdImageDestroy(src);
+	if (dst != NULL)
+		gdImageDestroy(dst);
+	if (palette != NULL)
+		gdImageDestroy(palette);
+	if (palette_expected != NULL)
+		gdImageDestroy(palette_expected);
+	if (data != NULL)
+		gdFree(data);
+	if (filename != NULL)
+		gdFree(filename);
+	if (sink.data != NULL)
+		free(sink.data);
 
 	return gdNumFailures();
 }

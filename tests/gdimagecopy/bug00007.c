@@ -1,25 +1,25 @@
+#include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gd.h"
 
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr dst_tc, src;
 	int c1;
 
-	src = gdImageCreate(5,5);
+	src = gdImageCreate(5, 5);
 	gdImageAlphaBlending(src, 0);
 
-	gdImageColorAllocate(src, 255,255,255); /* allocate white for background color */
-	c1 = gdImageColorAllocateAlpha(src, 255,0,0,70);
+	gdImageColorAllocate(src, 255, 255,
+						 255); /* allocate white for background color */
+	c1 = gdImageColorAllocateAlpha(src, 255, 0, 0, 70);
 
-	gdImageFilledRectangle(src, 0,0, 4,4, c1);
+	gdImageFilledRectangle(src, 0, 0, 4, 4, c1);
 
-	dst_tc  = gdImageCreateTrueColor(5,5);
+	dst_tc = gdImageCreateTrueColor(5, 5);
 	gdImageAlphaBlending(dst_tc, 0);
-	gdImageCopy(dst_tc, src, 0,0, 0,0, gdImageSX(src), gdImageSY(src));
+	gdImageCopy(dst_tc, src, 0, 0, 0, 0, gdImageSX(src), gdImageSY(src));
 
 	/* CuAssertImageEquals(tc, src, dst_tc); */
 

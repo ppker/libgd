@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static gdImagePtr create_visual_source(void)
-{
+static gdImagePtr create_visual_source(void) {
 	gdImagePtr im;
 	int transparent, white, black, red, green, blue, yellow;
 
@@ -37,8 +36,7 @@ static gdImagePtr create_visual_source(void)
 	return im;
 }
 
-static int write_png(const char *path, gdImagePtr im)
-{
+static int write_png(const char *path, gdImagePtr im) {
 	FILE *fp;
 
 	fp = fopen(path, "wb");
@@ -50,8 +48,7 @@ static int write_png(const char *path, gdImagePtr im)
 	return GD_TRUE;
 }
 
-int main()
-{
+int main() {
 	gdImagePtr src = NULL, actual = NULL, ref = NULL, diff = NULL;
 	gdRect src_region = {0, 0, 40, 30};
 	double rotate[6], scale[6], shear[6], translate[6], tmp[6], mixed[6];
@@ -74,7 +71,8 @@ int main()
 	gdAffineConcat(tmp, mixed, translate);
 	memcpy(mixed, tmp, sizeof(mixed));
 
-	if (!gdTestAssert(gdTransformAffineGetImage(&actual, src, &src_region, mixed) == GD_TRUE)) {
+	if (!gdTestAssert(gdTransformAffineGetImage(&actual, src, &src_region,
+												mixed) == GD_TRUE)) {
 		error = 1;
 		goto done;
 	}
@@ -98,9 +96,12 @@ int main()
 		error = 1;
 		goto done;
 	}
-	if (gdImageSX(actual) != gdImageSX(ref) || gdImageSY(actual) != gdImageSY(ref)) {
-		gdTestErrorMsg("affine visual dimensions changed: got %dx%d, expected %dx%d\n",
-		               gdImageSX(actual), gdImageSY(actual), gdImageSX(ref), gdImageSY(ref));
+	if (gdImageSX(actual) != gdImageSX(ref) ||
+		gdImageSY(actual) != gdImageSY(ref)) {
+		gdTestErrorMsg(
+			"affine visual dimensions changed: got %dx%d, expected %dx%d\n",
+			gdImageSX(actual), gdImageSY(actual), gdImageSX(ref),
+			gdImageSY(ref));
 		error = 1;
 		goto done;
 	}
@@ -116,7 +117,8 @@ int main()
 		write_png("gdimageaffine_visual_diff.png", diff);
 		write_png("/tmp/gdimageaffine_visual_actual.png", actual);
 		write_png("/tmp/gdimageaffine_visual_ref.png", ref);
-		gdTestErrorMsg("affine visual perceptual diff changed %u pixels\n", result.pixels_changed);
+		gdTestErrorMsg("affine visual perceptual diff changed %u pixels\n",
+					   result.pixels_changed);
 		error = 1;
 	}
 

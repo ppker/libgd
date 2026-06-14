@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
 int main() {
 	gdImagePtr im, imres, imexp;
@@ -45,7 +45,8 @@ int main() {
 		goto door1;
 	}
 
-	if (gdTestImageCompareToImage("jpeg/github_bug_18.png", __LINE__, __FILE__, imexp, imres) != 1) {
+	if (gdTestImageCompareToImage("jpeg/github_bug_18.png", __LINE__, __FILE__,
+								  imexp, imres) != 1) {
 		status = 1;
 	}
 	gdImageDestroy(imexp);

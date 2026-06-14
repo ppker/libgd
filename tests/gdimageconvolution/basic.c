@@ -5,8 +5,8 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static void test_convolution(void (*convolution_func)(gdImagePtr im), const char *expected)
-{
+static void test_convolution(void (*convolution_func)(gdImagePtr im),
+							 const char *expected) {
 	gdImagePtr im;
 	FILE *fp;
 	char *path;
@@ -24,28 +24,17 @@ static void test_convolution(void (*convolution_func)(gdImagePtr im), const char
 	gdImageDestroy(im);
 }
 
-static void test_edge_detect_quick(gdImagePtr im)
-{
+static void test_edge_detect_quick(gdImagePtr im) {
 	gdImageEdgeDetectQuick(im);
 }
 
-static void test_smooth(gdImagePtr im)
-{
-	gdImageSmooth(im, 5);
-}
+static void test_smooth(gdImagePtr im) { gdImageSmooth(im, 5); }
 
-static void test_emboss(gdImagePtr im)
-{
-	gdImageEmboss(im);
-}
+static void test_emboss(gdImagePtr im) { gdImageEmboss(im); }
 
-static void test_mean_removal(gdImagePtr im)
-{
-	gdImageMeanRemoval(im);
-}
+static void test_mean_removal(gdImagePtr im) { gdImageMeanRemoval(im); }
 
-int main()
-{
+int main() {
 	test_convolution(&test_edge_detect_quick, "basic_edge_detect_quick.png");
 	test_convolution(&test_smooth, "basic_smooth.png");
 	test_convolution(&test_emboss, "basic_emboss.png");

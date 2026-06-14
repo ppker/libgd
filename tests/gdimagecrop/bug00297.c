@@ -5,24 +5,21 @@
  * if the source was also a palette image.
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr src, dst;
+	gdRect rect = {0, 0, 8, 8};
 
-int main()
-{
-    gdImagePtr src, dst;
-    gdRect rect = {0, 0, 8, 8};
+	src = gdImageCreate(8, 8);
+	dst = gdImageCrop(src, &rect);
 
-    src = gdImageCreate(8, 8);
-    dst = gdImageCrop(src, &rect);
+	gdTestAssert(!gdImageTrueColor(src));
+	gdTestAssert(!gdImageTrueColor(dst));
 
-    gdTestAssert(!gdImageTrueColor(src));
-    gdTestAssert(!gdImageTrueColor(dst));
+	gdImageDestroy(dst);
+	gdImageDestroy(src);
 
-    gdImageDestroy(dst);
-    gdImageDestroy(src);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

@@ -3,8 +3,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static void fill_icc(unsigned char *icc, size_t size)
-{
+static void fill_icc(unsigned char *icc, size_t size) {
 	size_t i;
 
 	for (i = 0; i < size; i++) {
@@ -12,8 +11,9 @@ static void fill_icc(unsigned char *icc, size_t size)
 	}
 }
 
-static void assert_profile_equals(gdImageMetadata *metadata, const char *key, const unsigned char *expected, size_t expected_size)
-{
+static void assert_profile_equals(gdImageMetadata *metadata, const char *key,
+								  const unsigned char *expected,
+								  size_t expected_size) {
 	const unsigned char *actual;
 	size_t actual_size;
 
@@ -23,10 +23,11 @@ static void assert_profile_equals(gdImageMetadata *metadata, const char *key, co
 	gdTestAssert(memcmp(actual, expected, expected_size) == 0);
 }
 
-int main(void)
-{
-	static const unsigned char exif[] = { 'E', 'x', 'i', 'f', '\0', '\0', 'g', 'd' };
-	static const unsigned char xmp[] = "http://ns.adobe.com/xap/1.0/\0<x:xmpmeta>gd</x:xmpmeta>";
+int main(void) {
+	static const unsigned char exif[] = {'E',  'x',	 'i', 'f',
+										 '\0', '\0', 'g', 'd'};
+	static const unsigned char xmp[] =
+		"http://ns.adobe.com/xap/1.0/\0<x:xmpmeta>gd</x:xmpmeta>";
 	static const unsigned char iptc[] = "Photoshop 3.0\0gd-iptc";
 	unsigned char icc[70000];
 	gdImagePtr im;
@@ -44,10 +45,14 @@ int main(void)
 	gdTestAssert(metadata != NULL);
 	gdTestAssert(decoded_metadata != NULL);
 
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", exif, sizeof(exif)) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "xmp", xmp, sizeof(xmp)) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "iptc", iptc, sizeof(iptc)) == GD_META_OK);
-	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", icc, sizeof(icc)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "exif", exif,
+										   sizeof(exif)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "xmp", xmp, sizeof(xmp)) ==
+				 GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "iptc", iptc,
+										   sizeof(iptc)) == GD_META_OK);
+	gdTestAssert(gdImageMetadataSetProfile(metadata, "icc", icc, sizeof(icc)) ==
+				 GD_META_OK);
 
 	im = gdImageCreateTrueColor(8, 8);
 	gdTestAssert(im != NULL);
@@ -58,7 +63,8 @@ int main(void)
 	gdTestAssert(jpeg != NULL);
 	gdTestAssert(size > 0);
 
-	decoded = gdImageCreateFromJpegPtrWithMetadata(size, jpeg, decoded_metadata);
+	decoded =
+		gdImageCreateFromJpegPtrWithMetadata(size, jpeg, decoded_metadata);
 	gdTestAssert(decoded != NULL);
 
 	assert_profile_equals(decoded_metadata, "exif", exif, sizeof(exif));

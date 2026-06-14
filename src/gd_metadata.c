@@ -22,13 +22,11 @@ struct gdImageMetadata {
 	size_t max_total_size;
 };
 
-static int gdMetadataKeyIsValid(const char *key)
-{
+static int gdMetadataKeyIsValid(const char *key) {
 	return key != NULL && key[0] != '\0';
 }
 
-static char *gdMetadataStrdup(const char *src)
-{
+static char *gdMetadataStrdup(const char *src) {
 	size_t len;
 	char *dst;
 
@@ -41,8 +39,8 @@ static char *gdMetadataStrdup(const char *src)
 	return dst;
 }
 
-static gdImageMetadataProfile *gdMetadataFindProfile(const gdImageMetadata *metadata, const char *key)
-{
+static gdImageMetadataProfile *
+gdMetadataFindProfile(const gdImageMetadata *metadata, const char *key) {
 	gdImageMetadataProfile *profile;
 
 	if (metadata == NULL || !gdMetadataKeyIsValid(key)) {
@@ -60,8 +58,7 @@ static gdImageMetadataProfile *gdMetadataFindProfile(const gdImageMetadata *meta
 	return NULL;
 }
 
-static void gdMetadataFreeProfile(gdImageMetadataProfile *profile)
-{
+static void gdMetadataFreeProfile(gdImageMetadataProfile *profile) {
 	if (profile == NULL) {
 		return;
 	}
@@ -74,8 +71,7 @@ static void gdMetadataFreeProfile(gdImageMetadataProfile *profile)
 	gdFree(profile);
 }
 
-BGD_DECLARE(gdImageMetadata *) gdImageMetadataCreate(void)
-{
+BGD_DECLARE(gdImageMetadata *) gdImageMetadataCreate(void) {
 	gdImageMetadata *metadata;
 
 	metadata = (gdImageMetadata *)gdCalloc(1, sizeof(gdImageMetadata));
@@ -89,8 +85,7 @@ BGD_DECLARE(gdImageMetadata *) gdImageMetadataCreate(void)
 	return metadata;
 }
 
-BGD_DECLARE(void) gdImageMetadataFree(gdImageMetadata *metadata)
-{
+BGD_DECLARE(void) gdImageMetadataFree(gdImageMetadata *metadata) {
 	if (metadata == NULL) {
 		return;
 	}
@@ -99,8 +94,7 @@ BGD_DECLARE(void) gdImageMetadataFree(gdImageMetadata *metadata)
 	gdFree(metadata);
 }
 
-BGD_DECLARE(void) gdImageMetadataReset(gdImageMetadata *metadata)
-{
+BGD_DECLARE(void) gdImageMetadataReset(gdImageMetadata *metadata) {
 	gdImageMetadataProfile *profile;
 
 	if (metadata == NULL) {
@@ -119,8 +113,9 @@ BGD_DECLARE(void) gdImageMetadataReset(gdImageMetadata *metadata)
 	metadata->total_size = 0;
 }
 
-BGD_DECLARE(int) gdImageMetadataSetLimits(gdImageMetadata *metadata, size_t max_profile_size, size_t max_total_size)
-{
+BGD_DECLARE(int)
+gdImageMetadataSetLimits(gdImageMetadata *metadata, size_t max_profile_size,
+						 size_t max_total_size) {
 	if (metadata == NULL) {
 		return GD_META_ERR_INVALID;
 	}
@@ -146,8 +141,9 @@ BGD_DECLARE(int) gdImageMetadataSetLimits(gdImageMetadata *metadata, size_t max_
 	return GD_META_OK;
 }
 
-BGD_DECLARE(void) gdImageMetadataGetLimits(const gdImageMetadata *metadata, size_t *max_profile_size, size_t *max_total_size)
-{
+BGD_DECLARE(void)
+gdImageMetadataGetLimits(const gdImageMetadata *metadata,
+						 size_t *max_profile_size, size_t *max_total_size) {
 	if (max_profile_size != NULL) {
 		*max_profile_size = metadata != NULL ? metadata->max_profile_size : 0;
 	}
@@ -156,14 +152,16 @@ BGD_DECLARE(void) gdImageMetadataGetLimits(const gdImageMetadata *metadata, size
 	}
 }
 
-BGD_DECLARE(int) gdImageMetadataSetProfile(gdImageMetadata *metadata, const char *key, const unsigned char *data, size_t size)
-{
+BGD_DECLARE(int)
+gdImageMetadataSetProfile(gdImageMetadata *metadata, const char *key,
+						  const unsigned char *data, size_t size) {
 	gdImageMetadataProfile *profile;
 	unsigned char *new_data = NULL;
 	size_t old_size = 0;
 	size_t new_total;
 
-	if (metadata == NULL || !gdMetadataKeyIsValid(key) || (data == NULL && size != 0)) {
+	if (metadata == NULL || !gdMetadataKeyIsValid(key) ||
+		(data == NULL && size != 0)) {
 		return GD_META_ERR_INVALID;
 	}
 
@@ -193,7 +191,8 @@ BGD_DECLARE(int) gdImageMetadataSetProfile(gdImageMetadata *metadata, const char
 	}
 
 	if (profile == NULL) {
-		profile = (gdImageMetadataProfile *)gdCalloc(1, sizeof(gdImageMetadataProfile));
+		profile = (gdImageMetadataProfile *)gdCalloc(
+			1, sizeof(gdImageMetadataProfile));
 		if (profile == NULL) {
 			if (new_data != NULL) {
 				gdFree(new_data);
@@ -222,8 +221,9 @@ BGD_DECLARE(int) gdImageMetadataSetProfile(gdImageMetadata *metadata, const char
 	return GD_META_OK;
 }
 
-BGD_DECLARE(const unsigned char *) gdImageMetadataGetProfile(const gdImageMetadata *metadata, const char *key, size_t *size)
-{
+BGD_DECLARE(const unsigned char *)
+gdImageMetadataGetProfile(const gdImageMetadata *metadata, const char *key,
+						  size_t *size) {
 	gdImageMetadataProfile *profile;
 
 	if (size != NULL) {
@@ -241,8 +241,8 @@ BGD_DECLARE(const unsigned char *) gdImageMetadataGetProfile(const gdImageMetada
 	return profile->data;
 }
 
-BGD_DECLARE(int) gdImageMetadataRemoveProfile(gdImageMetadata *metadata, const char *key)
-{
+BGD_DECLARE(int)
+gdImageMetadataRemoveProfile(gdImageMetadata *metadata, const char *key) {
 	gdImageMetadataProfile *profile;
 	gdImageMetadataProfile *previous = NULL;
 
@@ -270,13 +270,15 @@ BGD_DECLARE(int) gdImageMetadataRemoveProfile(gdImageMetadata *metadata, const c
 	return GD_META_OK;
 }
 
-BGD_DECLARE(size_t) gdImageMetadataGetProfileCount(const gdImageMetadata *metadata)
-{
+BGD_DECLARE(size_t)
+gdImageMetadataGetProfileCount(const gdImageMetadata *metadata) {
 	return metadata != NULL ? metadata->profile_count : 0;
 }
 
-BGD_DECLARE(int) gdImageMetadataGetProfileAt(const gdImageMetadata *metadata, size_t index, const char **key, const unsigned char **data, size_t *size)
-{
+BGD_DECLARE(int)
+gdImageMetadataGetProfileAt(const gdImageMetadata *metadata, size_t index,
+							const char **key, const unsigned char **data,
+							size_t *size) {
 	gdImageMetadataProfile *profile;
 	size_t i = 0;
 

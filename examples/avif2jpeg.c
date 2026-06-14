@@ -12,8 +12,7 @@
 
 #include "gd.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	gdImagePtr im;
 	FILE *in, *out;
 
@@ -33,7 +32,8 @@ int main(int argc, char **argv)
 	im = gdImageCreateFromAvif(in);
 	fclose(in);
 	if (!im) {
-		fprintf(stderr, "\nError: input file %s is not in AVIF format.\n", argv[1]);
+		fprintf(stderr, "\nError: input file %s is not in AVIF format.\n",
+				argv[1]);
 		exit(1);
 	}
 

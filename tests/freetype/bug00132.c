@@ -1,11 +1,10 @@
 #include "gd.h"
+#include "gdfontl.h"
+#include "gdtest.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gdtest.h"
-#include "gdfontl.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int error = 0;
 	char *path;
@@ -25,7 +24,8 @@ int main()
 	gdImageFilledRectangle(im, 0, 0, 200, 200, gdTrueColorAlpha(0, 0, 0, 127));
 
 	path = gdTestFilePath("freetype/DejaVuSans.ttf");
-	ret = gdImageStringFT(im, NULL,  - 0xFFFFFF, path, 14.0, 0.0, 10, 20, "&thetasym; &theta;");
+	ret = gdImageStringFT(im, NULL, -0xFFFFFF, path, 14.0, 0.0, 10, 20,
+						  "&thetasym; &theta;");
 	free(path);
 	if (ret) {
 		error = 1;

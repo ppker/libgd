@@ -8,19 +8,17 @@
 	See also <https://github.com/libgd/libgd/issues/170>.
 */
 
-#include <inttypes.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <inttypes.h>
 #ifdef _WIN32
 
-int main()
-{
+int main() {
 	/* skip for now */
 	return 0;
 }
 #else
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int black;
 	FILE *outFile;
@@ -44,7 +42,9 @@ int main()
 
 	gdImageDestroy(im);
 
-	gdTestAssertMsg(length == 250, "expected to write 250 bytes; %jd bytes written", (intmax_t) length);
+	gdTestAssertMsg(length == 250,
+					"expected to write 250 bytes; %jd bytes written",
+					(intmax_t)length);
 	return gdNumFailures();
 }
 #endif

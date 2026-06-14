@@ -52,12 +52,12 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gd_errors.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* 2.3: gd is no longer mandatory */
 #if ENABLE_GD_FORMATS
@@ -73,13 +73,11 @@
 /* */
 /* Shared code to read color tables from gd file. */
 /* */
-int
-_gdGetColors (gdIOCtx * in, gdImagePtr im, int gd2xFlag)
-{
+int _gdGetColors(gdIOCtx *in, gdImagePtr im, int gd2xFlag) {
 	int i;
 	if (gd2xFlag) {
 		int trueColorFlag;
-		if (!gdGetByte (&trueColorFlag, in)) {
+		if (!gdGetByte(&trueColorFlag, in)) {
 			goto fail1;
 		}
 		/* 2.0.12: detect bad truecolor .gd files created by pre-2.0.12.
@@ -90,7 +88,7 @@ _gdGetColors (gdIOCtx * in, gdImagePtr im, int gd2xFlag)
 		}
 		/* This should have been a word all along */
 		if (!im->trueColor) {
-			if (!gdGetWord (&im->colorsTotal, in)) {
+			if (!gdGetWord(&im->colorsTotal, in)) {
 				goto fail1;
 			}
 			if (im->colorsTotal > gdMaxColors) {
@@ -98,39 +96,39 @@ _gdGetColors (gdIOCtx * in, gdImagePtr im, int gd2xFlag)
 			}
 		}
 		/* Int to accommodate truecolor single-color transparency */
-		if (!gdGetInt (&im->transparent, in)) {
+		if (!gdGetInt(&im->transparent, in)) {
 			goto fail1;
 		}
 	} else {
-		if (!gdGetByte (&im->colorsTotal, in)) {
+		if (!gdGetByte(&im->colorsTotal, in)) {
 			goto fail1;
 		}
-		if (!gdGetWord (&im->transparent, in)) {
+		if (!gdGetWord(&im->transparent, in)) {
 			goto fail1;
 		}
 	}
 	/* Make sure transparent index is within bounds of the palette. */
-	if (!(im->trueColor) && (im->transparent >= im->colorsTotal || im->transparent < 0)) {
+	if (!(im->trueColor) &&
+		(im->transparent >= im->colorsTotal || im->transparent < 0)) {
 		im->transparent = (-1);
 	}
-	GD2_DBG (printf
-	         ("Palette had %d colours (T=%d)\n", im->colorsTotal,
-	          im->transparent));
+	GD2_DBG(printf("Palette had %d colours (T=%d)\n", im->colorsTotal,
+				   im->transparent));
 	if (im->trueColor) {
 		return TRUE;
 	}
 	for (i = 0; (i < gdMaxColors); i++) {
-		if (!gdGetByte (&im->red[i], in)) {
+		if (!gdGetByte(&im->red[i], in)) {
 			goto fail1;
 		}
-		if (!gdGetByte (&im->green[i], in)) {
+		if (!gdGetByte(&im->green[i], in)) {
 			goto fail1;
 		}
-		if (!gdGetByte (&im->blue[i], in)) {
+		if (!gdGetByte(&im->blue[i], in)) {
 			goto fail1;
 		}
 		if (gd2xFlag) {
-			if (!gdGetByte (&im->alpha[i], in)) {
+			if (!gdGetByte(&im->alpha[i], in)) {
 				goto fail1;
 			}
 		}
@@ -148,13 +146,11 @@ fail1:
 /* */
 /* Use the common basic header info to make the image object. */
 /* */
-static gdImagePtr
-_gdCreateFromFile (gdIOCtx * in, int *sx, int *sy)
-{
+static gdImagePtr _gdCreateFromFile(gdIOCtx *in, int *sx, int *sy) {
 	gdImagePtr im;
 	int gd2xFlag = 0;
 	int trueColorFlag = 0;
-	if (!gdGetWord (sx, in)) {
+	if (!gdGetWord(sx, in)) {
 		goto fail1;
 	}
 	if ((*sx == 65535) || (*sx == 65534)) {
@@ -166,30 +162,30 @@ _gdCreateFromFile (gdIOCtx * in, int *sx, int *sy)
 		if (*sx == 65534) {
 			trueColorFlag = 1;
 		}
-		if (!gdGetWord (sx, in)) {
+		if (!gdGetWord(sx, in)) {
 			goto fail1;
 		}
 	}
-	if (!gdGetWord (sy, in)) {
+	if (!gdGetWord(sy, in)) {
 		goto fail1;
 	}
 
-	GD2_DBG (printf ("Image is %dx%d\n", *sx, *sy));
+	GD2_DBG(printf("Image is %dx%d\n", *sx, *sy));
 	if (trueColorFlag) {
-		im = gdImageCreateTrueColor (*sx, *sy);
+		im = gdImageCreateTrueColor(*sx, *sy);
 	} else {
-		im = gdImageCreate (*sx, *sy);
+		im = gdImageCreate(*sx, *sy);
 	}
 	if (!im) {
 		goto fail1;
 	}
-	if (!_gdGetColors (in, im, gd2xFlag)) {
+	if (!_gdGetColors(in, im, gd2xFlag)) {
 		goto fail2;
 	}
 
 	return im;
 fail2:
-	gdImageDestroy (im);
+	gdImageDestroy(im);
 fail1:
 	return 0;
 }
@@ -197,56 +193,56 @@ fail1:
 /*
   Function: gdImageCreateFromGd
 
-    <gdImageCreateFromGd> is called to load images from gd format
-    files. Invoke <gdImageCreateFromGd> with an already opened pointer
-    to a file containing the desired image in the gd file format,
-    which is specific to gd and intended for very fast loading. (It is
-    not intended for compression; for compression, use PNG or JPEG.)
+	<gdImageCreateFromGd> is called to load images from gd format
+	files. Invoke <gdImageCreateFromGd> with an already opened pointer
+	to a file containing the desired image in the gd file format,
+	which is specific to gd and intended for very fast loading. (It is
+	not intended for compression; for compression, use PNG or JPEG.)
 
-    <gdImageCreateFromGd> returns a <gdImagePtr> to the new image, or
-    NULL if unable to load the image (most often because the file is
-    corrupt or does not contain a gd format
-    image). <gdImageCreateFromGd> does not close the file. You can
-    inspect the sx and sy members of the image to determine its
-    size. The image must eventually be destroyed using
-    <gdImageDestroy>.
+	<gdImageCreateFromGd> returns a <gdImagePtr> to the new image, or
+	NULL if unable to load the image (most often because the file is
+	corrupt or does not contain a gd format
+	image). <gdImageCreateFromGd> does not close the file. You can
+	inspect the sx and sy members of the image to determine its
+	size. The image must eventually be destroyed using
+	<gdImageDestroy>.
 
   Variants:
 
-    <gdImageCreateFromGdPtr> creates an image from GD data (i.e. the
-    contents of a GD file) already in memory.
+	<gdImageCreateFromGdPtr> creates an image from GD data (i.e. the
+	contents of a GD file) already in memory.
 
-    <gdImageCreateFromGdCtx> reads in an image using the functions in
-    a <gdIOCtx> struct.
+	<gdImageCreateFromGdCtx> reads in an image using the functions in
+	a <gdIOCtx> struct.
 
   Parameters:
 
-    infile - The input FILE pointer
+	infile - The input FILE pointer
 
   Returns:
 
-    A pointer to the new image or NULL if an error occurred.
+	A pointer to the new image or NULL if an error occurred.
 
   Example:
 
-    > gdImagePtr im;
-    > FILE *in;
-    > in = fopen("mygd.gd", "rb");
-    > im = gdImageCreateFromGd(in);
-    > fclose(in);
-    > // ... Use the image ...
-    > gdImageDestroy(im);
+	> gdImagePtr im;
+	> FILE *in;
+	> in = fopen("mygd.gd", "rb");
+	> im = gdImageCreateFromGd(in);
+	> fclose(in);
+	> // ... Use the image ...
+	> gdImageDestroy(im);
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGd (FILE * inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGd(FILE *inFile) {
 	gdImagePtr im;
 	gdIOCtx *in;
 
-	in = gdNewFileCtx (inFile);
-	if (in == NULL) return NULL;
-	im = gdImageCreateFromGdCtx (in);
+	in = gdNewFileCtx(inFile);
+	if (in == NULL)
+		return NULL;
+	im = gdImageCreateFromGdCtx(in);
 
-	in->gd_free (in);
+	in->gd_free(in);
 
 	return im;
 }
@@ -256,19 +252,18 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGd (FILE * inFile)
 
   Parameters:
 
-    size - size of GD data in bytes.
-    data - GD data (i.e. contents of a GIF file).
+	size - size of GD data in bytes.
+	data - GD data (i.e. contents of a GIF file).
 
   Reads in GD data from memory. See <gdImageCreateFromGd>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGdPtr (int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGdPtr(int size, void *data) {
 	gdImagePtr im;
-	gdIOCtx *in = gdNewDynamicCtxEx (size, data, 0);
-	if(!in)
+	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
+	if (!in)
 		return 0;
-	im = gdImageCreateFromGdCtx (in);
-	in->gd_free (in);
+	im = gdImageCreateFromGdCtx(in);
+	in->gd_free(in);
 	return im;
 }
 
@@ -278,14 +273,13 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGdPtr (int size, void *data)
   Reads in a GD image via a <gdIOCtx> struct.  See
   <gdImageCreateFromGd>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx (gdIOCtxPtr in)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx(gdIOCtxPtr in) {
 	int sx, sy;
 	int x, y;
 	gdImagePtr im;
 
 	/* Read the header */
-	im = _gdCreateFromFile (in, &sx, &sy);
+	im = _gdCreateFromFile(in, &sx, &sy);
 
 	if (im == NULL) {
 		goto fail1;
@@ -298,7 +292,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx (gdIOCtxPtr in)
 		for (y = 0; (y < sy); y++) {
 			for (x = 0; (x < sx); x++) {
 				int pix;
-				if (!gdGetInt (&pix, in)) {
+				if (!gdGetInt(&pix, in)) {
 					goto fail2;
 				}
 				im->tpixels[y][x] = pix;
@@ -308,7 +302,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx (gdIOCtxPtr in)
 		for (y = 0; (y < sy); y++) {
 			for (x = 0; (x < sx); x++) {
 				int ch;
-				ch = gdGetC (in);
+				ch = gdGetC(in);
 				if (ch == EOF) {
 					goto fail2;
 				}
@@ -320,62 +314,55 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx (gdIOCtxPtr in)
 	return im;
 
 fail2:
-	gdImageDestroy (im);
+	gdImageDestroy(im);
 fail1:
 	return 0;
 }
 
-void
-_gdPutColors (gdImagePtr im, gdIOCtx * out)
-{
+void _gdPutColors(gdImagePtr im, gdIOCtx *out) {
 	int i;
 
-	gdPutC (im->trueColor, out);
+	gdPutC(im->trueColor, out);
 	if (!im->trueColor) {
-		gdPutWord (im->colorsTotal, out);
+		gdPutWord(im->colorsTotal, out);
 	}
-	gdPutInt (im->transparent, out);
+	gdPutInt(im->transparent, out);
 	if (!im->trueColor) {
 		for (i = 0; (i < gdMaxColors); i++) {
-			gdPutC ((unsigned char) im->red[i], out);
-			gdPutC ((unsigned char) im->green[i], out);
-			gdPutC ((unsigned char) im->blue[i], out);
-			gdPutC ((unsigned char) im->alpha[i], out);
+			gdPutC((unsigned char)im->red[i], out);
+			gdPutC((unsigned char)im->green[i], out);
+			gdPutC((unsigned char)im->blue[i], out);
+			gdPutC((unsigned char)im->alpha[i], out);
 		}
 	}
 }
 
-static void
-_gdPutHeader (gdImagePtr im, gdIOCtx * out)
-{
+static void _gdPutHeader(gdImagePtr im, gdIOCtx *out) {
 	/* 65535 indicates this is a gd 2.x .gd file.
 	   2.0.12: 65534 indicates truecolor. */
 	if (im->trueColor) {
-		gdPutWord (65534, out);
+		gdPutWord(65534, out);
 	} else {
-		gdPutWord (65535, out);
+		gdPutWord(65535, out);
 	}
-	gdPutWord (im->sx, out);
-	gdPutWord (im->sy, out);
+	gdPutWord(im->sx, out);
+	gdPutWord(im->sy, out);
 
-	_gdPutColors (im, out);
-
+	_gdPutColors(im, out);
 }
 
-static void
-_gdImageGd (gdImagePtr im, gdIOCtx * out)
-{
+static void _gdImageGd(gdImagePtr im, gdIOCtx *out) {
 	int x, y;
 
-	_gdPutHeader (im, out);
+	_gdPutHeader(im, out);
 
 	for (y = 0; (y < im->sy); y++) {
 		for (x = 0; (x < im->sx); x++) {
 			/* ROW-MAJOR IN GD 1.3 */
 			if (im->trueColor) {
-				gdPutInt (im->tpixels[y][x], out);
+				gdPutInt(im->tpixels[y][x], out);
 			} else {
-				gdPutC ((unsigned char) im->pixels[y][x], out);
+				gdPutC((unsigned char)im->pixels[y][x], out);
 			}
 		}
 	}
@@ -384,66 +371,60 @@ _gdImageGd (gdImagePtr im, gdIOCtx * out)
 /*
 	Function: gdImageGd
  */
-BGD_DECLARE(void) gdImageGd (gdImagePtr im, FILE * outFile)
-{
-	gdIOCtx *out = gdNewFileCtx (outFile);
-	if (out == NULL) return;
-	_gdImageGd (im, out);
-	out->gd_free (out);
+BGD_DECLARE(void) gdImageGd(gdImagePtr im, FILE *outFile) {
+	gdIOCtx *out = gdNewFileCtx(outFile);
+	if (out == NULL)
+		return;
+	_gdImageGd(im, out);
+	out->gd_free(out);
 }
 
 /*
 	Function: gdImageGdPtr
  */
-BGD_DECLARE(void *) gdImageGdPtr (gdImagePtr im, int *size)
-{
+BGD_DECLARE(void *) gdImageGdPtr(gdImagePtr im, int *size) {
 	void *rv;
-	gdIOCtx *out = gdNewDynamicCtx (2048, NULL);
-	if (out == NULL) return NULL;
-	_gdImageGd (im, out);
-	rv = gdDPExtractData (out, size);
-	out->gd_free (out);
+	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
+	if (out == NULL)
+		return NULL;
+	_gdImageGd(im, out);
+	rv = gdDPExtractData(out, size);
+	out->gd_free(out);
 	return rv;
 }
 
 #else /* no HAVE_LIBZ or !ENABLE_GD_FORMATS */
 
-static void _noGdError (void)
-{
+static void _noGdError(void) {
 	gd_error("GD image support has been disabled\n");
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGd (FILE * inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGd(FILE *inFile) {
 	ARG_NOT_USED(inFile);
 	_noGdError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGdPtr (int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGdPtr(int size, void *data) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	_noGdError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx (gdIOCtxPtr in)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromGdCtx(gdIOCtxPtr in) {
 	ARG_NOT_USED(in);
 	_noGdError();
 	return NULL;
 }
 
-BGD_DECLARE(void) gdImageGd (gdImagePtr im, FILE * outFile)
-{
+BGD_DECLARE(void) gdImageGd(gdImagePtr im, FILE *outFile) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outFile);
 	_noGdError();
 }
 
-BGD_DECLARE(void *) gdImageGdPtr (gdImagePtr im, int *size)
-{
+BGD_DECLARE(void *) gdImageGdPtr(gdImagePtr im, int *size) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(size);
 	_noGdError();

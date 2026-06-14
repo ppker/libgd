@@ -5,14 +5,9 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
-	float matrix[3][3] = {
-		{1, 0, 1},
-		{0, 5, 0},
-		{1, 0, 0}
-	};
+	float matrix[3][3] = {{1, 0, 1}, {0, 5, 0}, {1, 0, 0}};
 
 	im = gdImageCreateTrueColor(40, 40);
 	gdImageAlphaBlending(im, gdEffectReplace);

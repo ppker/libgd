@@ -17,12 +17,13 @@
 #include "gd.h"
 
 static void usage() {
-	fprintf(stderr, "Usage: jpeg2avifex [-q quality] [-s speed] infile.jpg outfile.avif\n");
+	fprintf(
+		stderr,
+		"Usage: jpeg2avifex [-q quality] [-s speed] infile.jpg outfile.avif\n");
 	exit(1);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	gdImagePtr im;
 	FILE *in, *out;
 	int c;
@@ -36,16 +37,16 @@ int main(int argc, char **argv)
 
 	while ((c = getopt(argc, argv, "q:s:")) != -1) {
 		switch (c) {
-			case 'q':
-				quality = atoi(optarg);
-				break;
+		case 'q':
+			quality = atoi(optarg);
+			break;
 
-			case 's':
-				speed = atoi(optarg);
-				break;
+		case 's':
+			speed = atoi(optarg);
+			break;
 
-			default:
-				usage();
+		default:
+			usage();
 		}
 	}
 
@@ -67,7 +68,8 @@ int main(int argc, char **argv)
 	im = gdImageCreateFromJpeg(in);
 	fclose(in);
 	if (!im) {
-		fprintf(stderr, "\nError: input file %s is not in JPEG format.\n", infile);
+		fprintf(stderr, "\nError: input file %s is not in JPEG format.\n",
+				infile);
 		failed = 1;
 		goto cleanup;
 	}

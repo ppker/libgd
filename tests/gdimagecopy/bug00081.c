@@ -1,10 +1,9 @@
 #include "gd.h"
+#include "gdtest.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im, im2;
 	int error = 0;
 
@@ -25,7 +24,7 @@ int main()
 		return 1;
 	}
 
-	gdImageCopy(im2, im, 2, 2 , 0, 0, gdImageSX(im), gdImageSY(im));
+	gdImageCopy(im2, im, 2, 2, 0, 0, gdImageSX(im), gdImageSY(im));
 
 	if (!gdAssertImageEqualsToFile("gdimagecopy/bug00081_exp.png", im2)) {
 		error = 1;

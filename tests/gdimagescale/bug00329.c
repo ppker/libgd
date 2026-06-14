@@ -6,19 +6,18 @@
  * expected color.
  */
 
-#include <string.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <string.h>
 
-static void test(const char *mode)
-{
+static void test(const char *mode) {
 	gdImagePtr src, dst;
 	int expected, actual;
 
 	if (strcmp(mode, "palette")) {
 		src = gdImageCreateTrueColor(100, 100);
 		expected = gdTrueColorAlpha(255, 255, 255, gdAlphaOpaque);
-		gdImageFilledRectangle(src, 0,0, 99,99, expected);
+		gdImageFilledRectangle(src, 0, 0, 99, 99, expected);
 	} else {
 		src = gdImageCreate(100, 100);
 		gdImageColorAllocate(src, 255, 255, 255);
@@ -29,20 +28,27 @@ static void test(const char *mode)
 	dst = gdImageScale(src, 200, 200);
 
 	actual = gdImageGetPixel(dst, 0, 0);
-	gdTestAssertMsg(actual == expected, "%s: wrong color; expected %x, but got %x", mode, expected, actual);
+	gdTestAssertMsg(actual == expected,
+					"%s: wrong color; expected %x, but got %x", mode, expected,
+					actual);
 	actual = gdImageGetPixel(dst, 0, 199);
-	gdTestAssertMsg(actual == expected, "%s: wrong color; expected %x, but got %x", mode, expected, actual);
+	gdTestAssertMsg(actual == expected,
+					"%s: wrong color; expected %x, but got %x", mode, expected,
+					actual);
 	actual = gdImageGetPixel(dst, 199, 199);
-	gdTestAssertMsg(actual == expected, "%s: wrong color; expected %x, but got %x", mode, expected, actual);
+	gdTestAssertMsg(actual == expected,
+					"%s: wrong color; expected %x, but got %x", mode, expected,
+					actual);
 	actual = gdImageGetPixel(dst, 199, 0);
-	gdTestAssertMsg(actual == expected, "%s: wrong color; expected %x, but got %x", mode, expected, actual);
+	gdTestAssertMsg(actual == expected,
+					"%s: wrong color; expected %x, but got %x", mode, expected,
+					actual);
 
 	gdImageDestroy(src);
 	gdImageDestroy(dst);
 }
 
-int main()
-{
+int main() {
 	test("palette");
 	test("truecolor");
 

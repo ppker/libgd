@@ -3,15 +3,12 @@
 #include "gd.h"
 #include "gdtest.h"
 
+#define EXP_RED 66
+#define EXP_GREEN 66
+#define EXP_BLUE 133
+#define EXP_ALPHA 32
 
-#define EXP_RED    66
-#define EXP_GREEN  66
-#define EXP_BLUE  133
-#define EXP_ALPHA  32
-
-
-int main()
-{
+int main() {
 	gdImagePtr im, copy;
 	int solid, transparent, color;
 	int red, green, blue, alpha;
@@ -26,7 +23,7 @@ int main()
 	/* draw a checker pattern */
 	for (i = 0; i < gdImageSX(im); i++) {
 		for (j = 0; j < gdImageSY(im); j++) {
-			gdImageSetPixel(im, i, j, (i%2 != j%2 ? solid : transparent));
+			gdImageSetPixel(im, i, j, (i % 2 != j % 2 ? solid : transparent));
 		}
 	}
 
@@ -34,7 +31,7 @@ int main()
 	copy = gdImageCreateTrueColor(5, 5);
 	gdImageAlphaBlending(copy, 0);
 	gdImageSaveAlpha(copy, 1);
-	gdImageCopyResampled(copy, im, 0,0, 0,0, 5,5, 10, 10);
+	gdImageCopyResampled(copy, im, 0, 0, 0, 0, 5, 5, 10, 10);
 
 	/* assert all pixels have the same color */
 	color = gdImageTrueColorPixel(copy, 3, 3);

@@ -1,8 +1,7 @@
 #include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
-gdImagePtr loadImage(const char *name)
-{
+gdImagePtr loadImage(const char *name) {
 	FILE *fp;
 	gdImagePtr im;
 
@@ -17,8 +16,7 @@ gdImagePtr loadImage(const char *name)
 	return im;
 }
 
-int savePngImage(gdImagePtr im, const char *name)
-{
+int savePngImage(gdImagePtr im, const char *name) {
 	FILE *fp;
 	fp = fopen(name, "wb");
 	if (!fp) {
@@ -30,8 +28,7 @@ int savePngImage(gdImagePtr im, const char *name)
 	return 1;
 }
 
-int main(int argc, char **arg)
-{
+int main(int argc, char **arg) {
 	gdImagePtr im;
 	int returncode = 0;
 
@@ -41,7 +38,8 @@ int main(int argc, char **arg)
 	}
 
 	im = loadImage(arg[1]);
-	if (!im) goto error;
+	if (!im)
+		goto error;
 	gdImageFlipHorizontal(im);
 	if (!savePngImage(im, "flip_horizontal.png")) {
 		goto error;
@@ -49,7 +47,8 @@ int main(int argc, char **arg)
 	gdImageDestroy(im);
 
 	im = loadImage(arg[1]);
-	if (!im) goto error;
+	if (!im)
+		goto error;
 	gdImageFlipVertical(im);
 	if (!savePngImage(im, "flip_vertical.png")) {
 		goto error;
@@ -57,7 +56,8 @@ int main(int argc, char **arg)
 	gdImageDestroy(im);
 
 	im = loadImage(arg[1]);
-	if (!im) goto error;
+	if (!im)
+		goto error;
 	gdImageFlipBoth(im);
 	if (!savePngImage(im, "flip_both.png")) {
 		goto error;

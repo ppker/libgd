@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void save_png(gdImagePtr im, const char *filename)
-{
+void save_png(gdImagePtr im, const char *filename) {
 	FILE *fp;
 	fp = fopen(filename, "wb");
 	if (!fp) {
@@ -14,9 +13,8 @@ void save_png(gdImagePtr im, const char *filename)
 	fclose(fp);
 }
 
-gdImagePtr read_png(const char *filename)
-{
-	FILE * fp;
+gdImagePtr read_png(const char *filename) {
+	FILE *fp;
 	gdImagePtr im;
 
 	fp = fopen(filename, "rb");
@@ -29,8 +27,7 @@ gdImagePtr read_png(const char *filename)
 	return im;
 }
 
-int main()
-{
+int main() {
 	gdImagePtr im, im2;
 
 	im = gdImageCreateTrueColor(400, 400);

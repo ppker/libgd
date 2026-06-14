@@ -2,12 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef _WIN32
-# include <unistd.h>
+#include <unistd.h>
 #endif
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 
@@ -17,9 +16,9 @@ int main()
 	}
 
 	fp = gdTestTempFp();
-    gdImageWebp(im, fp);
-    fclose(fp);
+	gdImageWebp(im, fp);
+	fclose(fp);
 
 	gdImageDestroy(im);
-    return 0;
+	return 0;
 }

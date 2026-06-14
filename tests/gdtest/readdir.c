@@ -1,7 +1,7 @@
+#include "readdir.h"
+#include <errno.h>
 #include <malloc.h>
 #include <string.h>
-#include <errno.h>
-#include "readdir.h"
 
 /**********************************************************************
  * Implement dirent-style opendir/readdir/rewinddir/closedir on Win32
@@ -17,8 +17,7 @@
  * The DIR typedef is not compatible with Unix.
  **********************************************************************/
 
-DIR *opendir(const char *path)
-{
+DIR *opendir(const char *path) {
 	DIR *dp;
 	char *filespec;
 	HANDLE handle;
@@ -35,11 +34,12 @@ DIR *opendir(const char *path)
 	strcpy(filespec, path);
 	index = (int)strlen(filespec) - 1;
 	if (index >= 0 && (filespec[index] == '/' ||
-	   (filespec[index] == '\\' && (index == 0 || !IsDBCSLeadByte(filespec[index-1])))))
+					   (filespec[index] == '\\' &&
+						(index == 0 || !IsDBCSLeadByte(filespec[index - 1])))))
 		filespec[index] = '\0';
 	strcat(filespec, "\\*");
 
-	dp = (DIR *) malloc(sizeof(DIR));
+	dp = (DIR *)malloc(sizeof(DIR));
 	if (dp == NULL) {
 		free(filespec);
 		return NULL;
@@ -47,7 +47,8 @@ DIR *opendir(const char *path)
 	dp->offset = 0;
 	dp->finished = 0;
 
-	if ((handle = FindFirstFile(filespec, &(dp->fileinfo))) == INVALID_HANDLE_VALUE) {
+	if ((handle = FindFirstFile(filespec, &(dp->fileinfo))) ==
+		INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
 		if (err == ERROR_NO_MORE_FILES || err == ERROR_FILE_NOT_FOUND) {
 			dp->finished = 1;
@@ -64,8 +65,7 @@ DIR *opendir(const char *path)
 	return dp;
 }
 
-size_t gd_strlcpy(char *dst, const char *src, size_t siz)
-{
+size_t gd_strlcpy(char *dst, const char *src, size_t siz) {
 	register char *d = dst;
 	register const char *s = src;
 	register size_t n = siz;
@@ -81,16 +81,15 @@ size_t gd_strlcpy(char *dst, const char *src, size_t siz)
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0) {
 		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
+			*d = '\0'; /* NUL-terminate dst */
 		while (*s++)
 			;
 	}
 
-	return(s - src - 1);	/* count does not include NUL */
+	return (s - src - 1); /* count does not include NUL */
 }
 
-struct dirent *readdir(DIR *dp)
-{
+struct dirent *readdir(DIR *dp) {
 	if (!dp || dp->finished)
 		return NULL;
 
@@ -102,7 +101,7 @@ struct dirent *readdir(DIR *dp)
 	}
 	dp->offset++;
 
-	gd_strlcpy(dp->dent.d_name, dp->fileinfo.cFileName, _MAX_FNAME+1);
+	gd_strlcpy(dp->dent.d_name, dp->fileinfo.cFileName, _MAX_FNAME + 1);
 	dp->dent.d_ino = 1;
 	dp->dent.d_reclen = (unsigned short)strlen(dp->dent.d_name);
 	dp->dent.d_off = dp->offset;
@@ -110,8 +109,7 @@ struct dirent *readdir(DIR *dp)
 	return &(dp->dent);
 }
 
-int readdir_r(DIR *dp, struct dirent *entry, struct dirent **result)
-{
+int readdir_r(DIR *dp, struct dirent *entry, struct dirent **result) {
 	if (!dp || dp->finished) {
 		*result = NULL;
 		return 0;
@@ -126,7 +124,7 @@ int readdir_r(DIR *dp, struct dirent *entry, struct dirent **result)
 	}
 	dp->offset++;
 
-	gd_strlcpy(dp->dent.d_name, dp->fileinfo.cFileName, _MAX_FNAME+1);
+	gd_strlcpy(dp->dent.d_name, dp->fileinfo.cFileName, _MAX_FNAME + 1);
 	dp->dent.d_ino = 1;
 	dp->dent.d_reclen = (unsigned short)strlen(dp->dent.d_name);
 	dp->dent.d_off = dp->offset;
@@ -138,8 +136,7 @@ int readdir_r(DIR *dp, struct dirent *entry, struct dirent **result)
 	return 0;
 }
 
-int closedir(DIR *dp)
-{
+int closedir(DIR *dp) {
 	if (!dp)
 		return 0;
 	/* It is valid to scan an empty directory but we have an invalid
@@ -155,8 +152,7 @@ int closedir(DIR *dp)
 	return 0;
 }
 
-int rewinddir(DIR *dp)
-{
+int rewinddir(DIR *dp) {
 	/* Re-set to the beginning */
 	char *filespec;
 	HANDLE handle;
@@ -175,11 +171,13 @@ int rewinddir(DIR *dp)
 	strcpy(filespec, dp->dir);
 	index = (int)strlen(filespec) - 1;
 	if (index >= 0 && (filespec[index] == '/' ||
-	   (filespec[index] == '\\' && (index == 0 || !IsDBCSLeadByte(filespec[index-1])))))
+					   (filespec[index] == '\\' &&
+						(index == 0 || !IsDBCSLeadByte(filespec[index - 1])))))
 		filespec[index] = '\0';
 	strcat(filespec, "/*");
 
-	if ((handle = FindFirstFile(filespec, &(dp->fileinfo))) == INVALID_HANDLE_VALUE) {
+	if ((handle = FindFirstFile(filespec, &(dp->fileinfo))) ==
+		INVALID_HANDLE_VALUE) {
 		dp->finished = 1;
 	}
 

@@ -6,34 +6,29 @@
 /* Test gdImageScale() with bicubic interpolation on a simple
  * all-white image. */
 
-gdImagePtr mkwhite(int x, int y)
-{
+gdImagePtr mkwhite(int x, int y) {
 	gdImagePtr im;
 
 	im = gdImageCreateTrueColor(x, y);
-	gdImageFilledRectangle(im, 0, 0, x-1, y-1,
+	gdImageFilledRectangle(im, 0, 0, x - 1, y - 1,
 						   gdImageColorExactAlpha(im, 255, 255, 255, 0));
 
 	gdTestAssert(im != NULL);
 
-	gdImageSetInterpolationMethod(im, GD_BILINEAR_FIXED);    // FP interp'n
+	gdImageSetInterpolationMethod(im, GD_BILINEAR_FIXED); // FP interp'n
 
 	return im;
-}/* mkwhite*/
-
+} /* mkwhite*/
 
 /* Fill with almost-black. */
-void mkblack(gdImagePtr ptr)
-{
+void mkblack(gdImagePtr ptr) {
 	gdImageFilledRectangle(ptr, 0, 0, ptr->sx - 1, ptr->sy - 1,
 						   gdImageColorExactAlpha(ptr, 2, 2, 2, 0));
-}/* mkblack*/
-
+} /* mkblack*/
 
 #define CLOSE_ENOUGH 15
 
-void scaletest(int x, int y, int nx, int ny)
-{
+void scaletest(int x, int y, int nx, int ny) {
 	gdImagePtr im, imref, tmp, same;
 
 	imref = mkwhite(x, y);
@@ -54,10 +49,9 @@ void scaletest(int x, int y, int nx, int ny)
 	gdImageDestroy(imref);
 	gdImageDestroy(tmp);
 	gdImageDestroy(same);
-}/* scaletest*/
+} /* scaletest*/
 
-void do_test(int x, int y, int nx, int ny)
-{
+void do_test(int x, int y, int nx, int ny) {
 	gdImagePtr im, imref, same;
 	im = mkwhite(x, y);
 	imref = mkwhite(x, y);
@@ -84,8 +78,7 @@ void do_test(int x, int y, int nx, int ny)
 	scaletest(x, y, nx, ny);
 }
 
-int main()
-{
+int main() {
 	do_test(300, 300, 600, 600);
 	do_test(1500, 1000, 600, 400);
 

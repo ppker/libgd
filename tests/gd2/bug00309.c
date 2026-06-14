@@ -5,33 +5,30 @@
  * GD2 image header when the chunk size is 64.
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
+int main() {
+	gdImagePtr im;
+	unsigned char *buf;
+	int size, word;
 
-int main()
-{
-    gdImagePtr im;
-    unsigned char *buf;
-    int size, word;
+	im = gdImageCreate(64, 64);
+	gdImageColorAllocate(im, 0, 0, 0);
 
-    im = gdImageCreate(64, 64);
-    gdImageColorAllocate(im, 0, 0, 0);
+	buf = gdImageGd2Ptr(im, 64, 1, &size);
 
-    buf = gdImageGd2Ptr(im, 64, 1, &size);
+	gdImageDestroy(im);
 
-    gdImageDestroy(im);
+	word = buf[10] << 8 | buf[11];
+	gdTestAssertMsg(word == 64, "chunk size is %d, but expected 64\n", word);
+	word = buf[14] << 8 | buf[15];
+	gdTestAssertMsg(word == 1, "x chunk count is %d, but expected 1\n", word);
+	word = buf[16] << 8 | buf[17];
+	gdTestAssertMsg(word == 1, "y chunk count is %d, but expected 1\n", word);
+	gdTestAssertMsg(size == 5145, "file size is %d, but expected 5145\n", size);
 
-    word = buf[10] << 8 | buf[11];
-    gdTestAssertMsg(word == 64, "chunk size is %d, but expected 64\n", word);
-    word = buf[14] << 8 | buf[15];
-    gdTestAssertMsg(word == 1, "x chunk count is %d, but expected 1\n", word);
-    word = buf[16] << 8 | buf[17];
-    gdTestAssertMsg(word == 1, "y chunk count is %d, but expected 1\n", word);
-    gdTestAssertMsg(size == 5145, "file size is %d, but expected 5145\n", size);
+	gdFree(buf);
 
-    gdFree(buf);
-
-    return gdNumFailures();
+	return gdNumFailures();
 }

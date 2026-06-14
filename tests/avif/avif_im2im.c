@@ -2,8 +2,9 @@
  * File: avif_im2im
  *
  * Sanity check for AVIF encoding and decoding.
- * We create a simple gd image, we encode it to AVIF, and we decode it back to gd.
- * Then we make sure the image we started with and the image we finish with are the same.
+ * We create a simple gd image, we encode it to AVIF, and we decode it back to
+ * gd. Then we make sure the image we started with and the image we finish with
+ * are the same.
  *
  */
 
@@ -11,8 +12,7 @@
 #include "gdtest.h"
 #include <stdio.h>
 
-int main()
-{
+int main() {
 	gdImagePtr srcGdIm = NULL, destGdIm = NULL;
 	void *avifImageDataPtr = NULL;
 	FILE *fp;
@@ -33,14 +33,18 @@ int main()
 
 	// Encode the gd image to a test AVIF file.
 	fp = gdTestTempFp();
-	if (!gdTestAssertMsg(fp != NULL, "could not create temp file\n")) goto exit;
+	if (!gdTestAssertMsg(fp != NULL, "could not create temp file\n"))
+		goto exit;
 	gdImageAvif(srcGdIm, fp);
 	fclose(fp);
 
 	// Encode the gd image to an AVIF image in memory.
 	avifImageDataPtr = gdImageAvifPtrEx(srcGdIm, &size, 100, 10);
-	if (!gdTestAssertMsg(avifImageDataPtr != NULL, "gdImageAvifPtr() returned null\n")) goto exit;
-	gdTestAssertMsg(size > 0, "gdImageAvifPtr() returned a non-positive size\n");
+	if (!gdTestAssertMsg(avifImageDataPtr != NULL,
+						 "gdImageAvifPtr() returned null\n"))
+		goto exit;
+	gdTestAssertMsg(size > 0,
+					"gdImageAvifPtr() returned a non-positive size\n");
 
 	// Encode the AVIF image back into a gd image.
 	destGdIm = gdImageCreateFromAvifPtr(size, avifImageDataPtr);
@@ -48,13 +52,16 @@ int main()
 
 	// Encode that gd image to a test AVIF file.
 	fp = gdTestTempFp();
-	if (!gdTestAssertMsg(fp != NULL, "could not create temp file\n")) goto exit;
+	if (!gdTestAssertMsg(fp != NULL, "could not create temp file\n"))
+		goto exit;
 	gdImageAvif(destGdIm, fp);
 	fclose(fp);
 
-	// Make sure the image we started with is the same as the image after two conversions.
-	 gdTestImageDiff(srcGdIm, destGdIm, NULL, &result);
-	 gdTestAssertMsg(result.pixels_changed == 0, "pixels changed: %d\n", result.pixels_changed);
+	// Make sure the image we started with is the same as the image after two
+	// conversions.
+	gdTestImageDiff(srcGdIm, destGdIm, NULL, &result);
+	gdTestAssertMsg(result.pixels_changed == 0, "pixels changed: %d\n",
+					result.pixels_changed);
 
 exit:
 	if (srcGdIm)

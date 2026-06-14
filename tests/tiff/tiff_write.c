@@ -6,8 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static gdImagePtr create_truecolor(int w, int h)
-{
+static gdImagePtr create_truecolor(int w, int h) {
 	gdImagePtr im;
 
 	im = gdImageCreateTrueColor(w, h);
@@ -19,8 +18,7 @@ static gdImagePtr create_truecolor(int w, int h)
 	return im;
 }
 
-static gdImagePtr create_page(int w, int h, int r, int g, int b)
-{
+static gdImagePtr create_page(int w, int h, int r, int g, int b) {
 	gdImagePtr im;
 	int color;
 
@@ -30,12 +28,12 @@ static gdImagePtr create_page(int w, int h, int r, int g, int b)
 	}
 	color = gdTrueColorAlpha(r, g, b, gdAlphaOpaque);
 	gdImageFilledRectangle(im, 0, 0, w - 1, h - 1, color);
-	gdImageSetPixel(im, w - 1, h - 1, gdTrueColorAlpha(255 - r, 255 - g, 255 - b, gdAlphaOpaque));
+	gdImageSetPixel(im, w - 1, h - 1,
+					gdTrueColorAlpha(255 - r, 255 - g, 255 - b, gdAlphaOpaque));
 	return im;
 }
 
-static gdImagePtr create_pattern_image(int w, int h)
-{
+static gdImagePtr create_pattern_image(int w, int h) {
 	gdImagePtr im;
 	int x, y;
 
@@ -45,17 +43,18 @@ static gdImagePtr create_pattern_image(int w, int h)
 	}
 	for (y = 0; y < h; y++) {
 		for (x = 0; x < w; x++) {
-			gdImageSetPixel(im, x, y, gdTrueColorAlpha((x * 37 + y * 19) & 255,
-			                                           (x * 11 + y * 47) & 255,
-			                                           (x * 67 + y * 5) & 255,
-			                                           gdAlphaOpaque));
+			gdImageSetPixel(im, x, y,
+							gdTrueColorAlpha((x * 37 + y * 19) & 255,
+											 (x * 11 + y * 47) & 255,
+											 (x * 67 + y * 5) & 255,
+											 gdAlphaOpaque));
 		}
 	}
 	return im;
 }
 
-static void *write_image_ptr(gdImagePtr im, const gdTiffWriteOptions *opts, int *size)
-{
+static void *write_image_ptr(gdImagePtr im, const gdTiffWriteOptions *opts,
+							 int *size) {
 	gdTiffWritePtr writer;
 	void *data;
 
@@ -72,8 +71,7 @@ static void *write_image_ptr(gdImagePtr im, const gdTiffWriteOptions *opts, int 
 	return data;
 }
 
-static TIFF *open_tiff_from_data(void *data, int size, char **path)
-{
+static TIFF *open_tiff_from_data(void *data, int size, char **path) {
 	FILE *fp;
 	TIFF *tif;
 
@@ -87,7 +85,8 @@ static TIFF *open_tiff_from_data(void *data, int size, char **path)
 	if (fp == NULL) {
 		return NULL;
 	}
-	gdTestAssertMsg(fwrite(data, 1, (size_t)size, fp) == (size_t)size, "could not write temporary TIFF");
+	gdTestAssertMsg(fwrite(data, 1, (size_t)size, fp) == (size_t)size,
+					"could not write temporary TIFF");
 	fclose(fp);
 
 	tif = TIFFOpen(*path, "r");
@@ -95,8 +94,7 @@ static TIFF *open_tiff_from_data(void *data, int size, char **path)
 	return tif;
 }
 
-static void close_temp_tiff(TIFF *tif, char *path)
-{
+static void close_temp_tiff(TIFF *tif, char *path) {
 	if (tif != NULL) {
 		TIFFClose(tif);
 	}
@@ -106,8 +104,7 @@ static void close_temp_tiff(TIFF *tif, char *path)
 	}
 }
 
-static int close_enough(int a, int b, int tolerance)
-{
+static int close_enough(int a, int b, int tolerance) {
 	int d = a - b;
 
 	if (d < 0) {
@@ -116,17 +113,18 @@ static int close_enough(int a, int b, int tolerance)
 	return d <= tolerance;
 }
 
-static void assert_pixel_rgb(gdImagePtr im, int x, int y, int r, int g, int b)
-{
+static void assert_pixel_rgb(gdImagePtr im, int x, int y, int r, int g, int b) {
 	int c = gdImageGetPixel(im, x, y);
 
-	gdTestAssertMsg(gdImageRed(im, c) == r && gdImageGreen(im, c) == g && gdImageBlue(im, c) == b,
-	                "pixel (%d,%d) is %d,%d,%d, expected %d,%d,%d",
-	                x, y, gdImageRed(im, c), gdImageGreen(im, c), gdImageBlue(im, c), r, g, b);
+	gdTestAssertMsg(gdImageRed(im, c) == r && gdImageGreen(im, c) == g &&
+						gdImageBlue(im, c) == b,
+					"pixel (%d,%d) is %d,%d,%d, expected %d,%d,%d", x, y,
+					gdImageRed(im, c), gdImageGreen(im, c), gdImageBlue(im, c),
+					r, g, b);
 }
 
-static void assert_roundtrip_close(gdImagePtr src, void *data, int size, int tolerance)
-{
+static void assert_roundtrip_close(gdImagePtr src, void *data, int size,
+								   int tolerance) {
 	gdImagePtr dst;
 	int x, y;
 
@@ -135,18 +133,25 @@ static void assert_roundtrip_close(gdImagePtr src, void *data, int size, int tol
 	if (dst == NULL) {
 		return;
 	}
-	gdTestAssertMsg(gdImageSX(dst) == gdImageSX(src) && gdImageSY(dst) == gdImageSY(src),
-	                "roundtrip dimensions changed");
+	gdTestAssertMsg(gdImageSX(dst) == gdImageSX(src) &&
+						gdImageSY(dst) == gdImageSY(src),
+					"roundtrip dimensions changed");
 	for (y = 0; y < gdImageSY(src) && y < gdImageSY(dst); y++) {
 		for (x = 0; x < gdImageSX(src) && x < gdImageSX(dst); x++) {
 			int s = gdImageGetPixel(src, x, y);
 			int d = gdImageGetPixel(dst, x, y);
-			if (!gdTestAssertMsg(close_enough(gdImageRed(src, s), gdImageRed(dst, d), tolerance) &&
-			                     close_enough(gdImageGreen(src, s), gdImageGreen(dst, d), tolerance) &&
-			                     close_enough(gdImageBlue(src, s), gdImageBlue(dst, d), tolerance),
-			                     "roundtrip pixel (%d,%d) is %d,%d,%d, expected near %d,%d,%d",
-			                     x, y, gdImageRed(dst, d), gdImageGreen(dst, d), gdImageBlue(dst, d),
-			                     gdImageRed(src, s), gdImageGreen(src, s), gdImageBlue(src, s))) {
+			if (!gdTestAssertMsg(
+					close_enough(gdImageRed(src, s), gdImageRed(dst, d),
+								 tolerance) &&
+						close_enough(gdImageGreen(src, s), gdImageGreen(dst, d),
+									 tolerance) &&
+						close_enough(gdImageBlue(src, s), gdImageBlue(dst, d),
+									 tolerance),
+					"roundtrip pixel (%d,%d) is %d,%d,%d, expected near "
+					"%d,%d,%d",
+					x, y, gdImageRed(dst, d), gdImageGreen(dst, d),
+					gdImageBlue(dst, d), gdImageRed(src, s),
+					gdImageGreen(src, s), gdImageBlue(src, s))) {
 				gdImageDestroy(dst);
 				return;
 			}
@@ -155,8 +160,7 @@ static void assert_roundtrip_close(gdImagePtr src, void *data, int size, int tol
 	gdImageDestroy(dst);
 }
 
-static void test_multipage_rgb_ptr(void)
-{
+static void test_multipage_rgb_ptr(void) {
 	gdTiffWriteOptions opts = {0};
 	gdTiffWritePtr writer;
 	gdTiffReadPtr reader;
@@ -204,18 +208,22 @@ static void test_multipage_rgb_ptr(void)
 	}
 
 	gdTestAssert(gdTiffReadGetInfo(reader, &info) == 1);
-	gdTestAssertMsg(info.pageCount == 2, "expected 2 pages, got %d", info.pageCount);
-	gdTestAssertMsg(info.width == 7 && info.height == 5, "unexpected first page dimensions");
+	gdTestAssertMsg(info.pageCount == 2, "expected 2 pages, got %d",
+					info.pageCount);
+	gdTestAssertMsg(info.width == 7 && info.height == 5,
+					"unexpected first page dimensions");
 	gdTestAssertMsg(info.xResolution == 123.0f && info.yResolution == 234.0f,
-	                "unexpected first page resolution %.2f x %.2f", info.xResolution, info.yResolution);
+					"unexpected first page resolution %.2f x %.2f",
+					info.xResolution, info.yResolution);
 
 	gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
 	gdTestAssertMsg(page.pageIndex == 0 && page.width == 7 && page.height == 5,
-	                "unexpected page 0 info");
+					"unexpected page 0 info");
 	gdTestAssertMsg(page.bitsPerSample == 8 && page.samplesPerPixel == 3,
-	                "unexpected page 0 sample layout");
-	gdTestAssertMsg(page.compression == COMPRESSION_NONE && page.photometric == PHOTOMETRIC_RGB,
-	                "unexpected page 0 tags");
+					"unexpected page 0 sample layout");
+	gdTestAssertMsg(page.compression == COMPRESSION_NONE &&
+						page.photometric == PHOTOMETRIC_RGB,
+					"unexpected page 0 tags");
 	if (im != NULL) {
 		assert_pixel_rgb(im, 0, 0, 255, 0, 0);
 		assert_pixel_rgb(im, 6, 4, 0, 255, 255);
@@ -223,7 +231,7 @@ static void test_multipage_rgb_ptr(void)
 
 	gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
 	gdTestAssertMsg(page.pageIndex == 1 && page.width == 3 && page.height == 4,
-	                "unexpected page 1 info");
+					"unexpected page 1 info");
 	if (im != NULL) {
 		assert_pixel_rgb(im, 0, 0, 0, 128, 255);
 		assert_pixel_rgb(im, 2, 3, 255, 127, 0);
@@ -234,12 +242,13 @@ static void test_multipage_rgb_ptr(void)
 	gdFree(data);
 
 cleanup_images:
-	if (page0 != NULL) gdImageDestroy(page0);
-	if (page1 != NULL) gdImageDestroy(page1);
+	if (page0 != NULL)
+		gdImageDestroy(page0);
+	if (page1 != NULL)
+		gdImageDestroy(page1);
 }
 
-static void test_options_and_formats(void)
-{
+static void test_options_and_formats(void) {
 	gdTiffWriteOptions opts = {0};
 	gdTiffWritePtr writer;
 	gdTiffReadPtr reader;
@@ -272,12 +281,14 @@ static void test_options_and_formats(void)
 			gdTestAssert(reader != NULL);
 			if (reader != NULL) {
 				gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
-				gdTestAssertMsg(page.bitsPerSample == 16 && page.samplesPerPixel == 1,
-				                "unexpected 16-bit gray layout");
+				gdTestAssertMsg(page.bitsPerSample == 16 &&
+									page.samplesPerPixel == 1,
+								"unexpected 16-bit gray layout");
 				gdTestAssertMsg(page.photometric == PHOTOMETRIC_MINISBLACK,
-				                "unexpected gray photometric");
+								"unexpected gray photometric");
 				gdTestAssertMsg(page.resolutionUnit == RESUNIT_CENTIMETER,
-				                "unexpected resolution unit %d", page.resolutionUnit);
+								"unexpected resolution unit %d",
+								page.resolutionUnit);
 				gdTiffReadClose(reader);
 			}
 			gdFree(data);
@@ -301,12 +312,13 @@ static void test_options_and_formats(void)
 			gdTestAssert(reader != NULL);
 			if (reader != NULL) {
 				gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
-				gdTestAssertMsg(page.bitsPerSample == 1 && page.samplesPerPixel == 1,
-				                "unexpected bilevel layout");
+				gdTestAssertMsg(page.bitsPerSample == 1 &&
+									page.samplesPerPixel == 1,
+								"unexpected bilevel layout");
 				gdTestAssertMsg(page.compression == COMPRESSION_CCITTFAX4,
-				                "unexpected bilevel compression");
+								"unexpected bilevel compression");
 				gdTestAssertMsg(page.photometric == PHOTOMETRIC_MINISWHITE,
-				                "unexpected bilevel photometric");
+								"unexpected bilevel photometric");
 				gdTiffReadClose(reader);
 			}
 			gdFree(data);
@@ -320,7 +332,8 @@ static void test_options_and_formats(void)
 	gdSetErrorMethod(gdSilence);
 	writer = gdTiffWriteOpenPtr(&opts);
 	gdClearErrorMethod();
-	gdTestAssertMsg(writer == NULL, "JPEG compression should reject 16-bit output");
+	gdTestAssertMsg(writer == NULL,
+					"JPEG compression should reject 16-bit output");
 	if (writer != NULL) {
 		gdTiffWriteClose(writer);
 	}
@@ -328,8 +341,7 @@ static void test_options_and_formats(void)
 	gdImageDestroy(src);
 }
 
-static void test_exact_uncompressed_samples(void)
-{
+static void test_exact_uncompressed_samples(void) {
 	gdTiffWriteOptions opts = {0};
 	gdImagePtr src;
 	void *data;
@@ -349,7 +361,8 @@ static void test_exact_uncompressed_samples(void)
 	}
 	gdImageSetPixel(src, 0, 0, gdTrueColorAlpha(10, 20, 30, gdAlphaOpaque));
 	gdImageSetPixel(src, 1, 0, gdTrueColorAlpha(40, 50, 60, 64));
-	gdImageSetPixel(src, 2, 0, gdTrueColorAlpha(70, 80, 90, gdAlphaTransparent));
+	gdImageSetPixel(src, 2, 0,
+					gdTrueColorAlpha(70, 80, 90, gdAlphaTransparent));
 
 	opts.colorspace = GD_TIFF_RGBA;
 	opts.compression = COMPRESSION_NONE;
@@ -359,17 +372,21 @@ static void test_exact_uncompressed_samples(void)
 		if (tif != NULL) {
 			gdTestAssert(TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps) == 1);
 			gdTestAssert(TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp) == 1);
-			gdTestAssert(TIFFGetField(tif, TIFFTAG_EXTRASAMPLES, &extra, &extra_types) == 1);
+			gdTestAssert(TIFFGetField(tif, TIFFTAG_EXTRASAMPLES, &extra,
+									  &extra_types) == 1);
 			gdTestAssertMsg(bps == 8 && spp == 4 && extra == 1 &&
-			                extra_types[0] == EXTRASAMPLE_UNASSALPHA,
-			                "unexpected RGBA sample tags");
+								extra_types[0] == EXTRASAMPLE_UNASSALPHA,
+							"unexpected RGBA sample tags");
 			gdTestAssert(TIFFReadScanline(tif, rgba, 0, 0) == 1);
-			gdTestAssertMsg(rgba[0] == 10 && rgba[1] == 20 && rgba[2] == 30 && rgba[3] == 255,
-			                "unexpected opaque RGBA sample");
-			gdTestAssertMsg(rgba[4] == 40 && rgba[5] == 50 && rgba[6] == 60 && rgba[7] == 126,
-			                "unexpected half-alpha RGBA sample");
-			gdTestAssertMsg(rgba[8] == 70 && rgba[9] == 80 && rgba[10] == 90 && rgba[11] == 0,
-			                "unexpected transparent RGBA sample");
+			gdTestAssertMsg(rgba[0] == 10 && rgba[1] == 20 && rgba[2] == 30 &&
+								rgba[3] == 255,
+							"unexpected opaque RGBA sample");
+			gdTestAssertMsg(rgba[4] == 40 && rgba[5] == 50 && rgba[6] == 60 &&
+								rgba[7] == 126,
+							"unexpected half-alpha RGBA sample");
+			gdTestAssertMsg(rgba[8] == 70 && rgba[9] == 80 && rgba[10] == 90 &&
+								rgba[11] == 0,
+							"unexpected transparent RGBA sample");
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -383,9 +400,11 @@ static void test_exact_uncompressed_samples(void)
 	if (data != NULL) {
 		tif = open_tiff_from_data(data, size, &path);
 		if (tif != NULL) {
-			gdTestAssert(TIFFGetField(tif, TIFFTAG_EXTRASAMPLES, &extra, &extra_types) == 1);
-			gdTestAssertMsg(extra == 1 && extra_types[0] == EXTRASAMPLE_ASSOCALPHA,
-			                "expected associated alpha extrasample");
+			gdTestAssert(TIFFGetField(tif, TIFFTAG_EXTRASAMPLES, &extra,
+									  &extra_types) == 1);
+			gdTestAssertMsg(extra == 1 &&
+								extra_types[0] == EXTRASAMPLE_ASSOCALPHA,
+							"expected associated alpha extrasample");
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -410,12 +429,15 @@ static void test_exact_uncompressed_samples(void)
 		tif = open_tiff_from_data(data, size, &path);
 		if (tif != NULL) {
 			gdTestAssert(TIFFReadScanline(tif, rgb16, 0, 0) == 1);
-			gdTestAssertMsg(rgb16[0] == 257 && rgb16[1] == 514 && rgb16[2] == 771,
-			                "unexpected first RGB16 sample");
-			gdTestAssertMsg(rgb16[3] == 32896 && rgb16[4] == 33153 && rgb16[5] == 33410,
-			                "unexpected middle RGB16 sample");
-			gdTestAssertMsg(rgb16[6] == 65535 && rgb16[7] == 65278 && rgb16[8] == 65021,
-			                "unexpected last RGB16 sample");
+			gdTestAssertMsg(rgb16[0] == 257 && rgb16[1] == 514 &&
+								rgb16[2] == 771,
+							"unexpected first RGB16 sample");
+			gdTestAssertMsg(rgb16[3] == 32896 && rgb16[4] == 33153 &&
+								rgb16[5] == 33410,
+							"unexpected middle RGB16 sample");
+			gdTestAssertMsg(rgb16[6] == 65535 && rgb16[7] == 65278 &&
+								rgb16[8] == 65021,
+							"unexpected last RGB16 sample");
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -440,8 +462,9 @@ static void test_exact_uncompressed_samples(void)
 		tif = open_tiff_from_data(data, size, &path);
 		if (tif != NULL) {
 			gdTestAssert(TIFFReadScanline(tif, gray16, 0, 0) == 1);
-			gdTestAssertMsg(gray16[0] == 0 && gray16[1] == 32896 && gray16[2] == 65535,
-			                "unexpected gray16 samples");
+			gdTestAssertMsg(gray16[0] == 0 && gray16[1] == 32896 &&
+								gray16[2] == 65535,
+							"unexpected gray16 samples");
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -458,7 +481,7 @@ static void test_exact_uncompressed_samples(void)
 			uint8_t gray8[3];
 			gdTestAssert(TIFFReadScanline(tif, gray8, 0, 0) == 1);
 			gdTestAssertMsg(gray8[0] == 255 && gray8[1] == 127 && gray8[2] == 0,
-			                "unexpected min-is-white gray8 samples");
+							"unexpected min-is-white gray8 samples");
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -488,11 +511,14 @@ static void test_exact_uncompressed_samples(void)
 		tif = open_tiff_from_data(data, size, &path);
 		if (tif != NULL) {
 			gdTestAssert(TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps) == 1);
-			gdTestAssert(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric) == 1);
+			gdTestAssert(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric) ==
+						 1);
 			gdTestAssertMsg(bps == 1 && photometric == PHOTOMETRIC_MINISBLACK,
-			                "unexpected bilevel min-is-black tags");
+							"unexpected bilevel min-is-black tags");
 			gdTestAssert(TIFFReadScanline(tif, bilevel, 0, 0) == 1);
-			gdTestAssertMsg(bilevel[0] == 0x5a, "unexpected bilevel min-is-black byte 0x%02x", bilevel[0]);
+			gdTestAssertMsg(bilevel[0] == 0x5a,
+							"unexpected bilevel min-is-black byte 0x%02x",
+							bilevel[0]);
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -507,11 +533,14 @@ static void test_exact_uncompressed_samples(void)
 	if (data != NULL) {
 		tif = open_tiff_from_data(data, size, &path);
 		if (tif != NULL) {
-			gdTestAssert(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric) == 1);
+			gdTestAssert(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric) ==
+						 1);
 			gdTestAssertMsg(photometric == PHOTOMETRIC_MINISWHITE,
-			                "unexpected bilevel min-is-white photometric");
+							"unexpected bilevel min-is-white photometric");
 			gdTestAssert(TIFFReadScanline(tif, bilevel, 0, 0) == 1);
-			gdTestAssertMsg(bilevel[0] == 0xa5, "unexpected bilevel min-is-white byte 0x%02x", bilevel[0]);
+			gdTestAssertMsg(bilevel[0] == 0xa5,
+							"unexpected bilevel min-is-white byte 0x%02x",
+							bilevel[0]);
 		}
 		close_temp_tiff(tif, path);
 		gdFree(data);
@@ -519,15 +548,10 @@ static void test_exact_uncompressed_samples(void)
 	gdImageDestroy(src);
 }
 
-static void test_compression_matrix(void)
-{
+static void test_compression_matrix(void) {
 	static const uint16_t lossless_compressions[] = {
-		COMPRESSION_NONE,
-		COMPRESSION_LZW,
-		COMPRESSION_ADOBE_DEFLATE,
-		COMPRESSION_DEFLATE,
-		COMPRESSION_PACKBITS
-	};
+		COMPRESSION_NONE, COMPRESSION_LZW, COMPRESSION_ADOBE_DEFLATE,
+		COMPRESSION_DEFLATE, COMPRESSION_PACKBITS};
 	gdImagePtr src;
 	gdTiffWriteOptions opts = {0};
 	void *data;
@@ -541,7 +565,9 @@ static void test_compression_matrix(void)
 	}
 
 	opts.colorspace = GD_TIFF_RGB;
-	for (i = 0; i < sizeof(lossless_compressions) / sizeof(lossless_compressions[0]); i++) {
+	for (i = 0;
+		 i < sizeof(lossless_compressions) / sizeof(lossless_compressions[0]);
+		 i++) {
 		gdTiffReadPtr reader;
 		gdTiffPageInfo page;
 		gdImagePtr im;
@@ -556,14 +582,15 @@ static void test_compression_matrix(void)
 		if (reader != NULL) {
 			gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
 			gdTestAssertMsg(page.compression == lossless_compressions[i],
-			                "compression tag %d did not roundtrip, got %d",
-			                lossless_compressions[i], page.compression);
+							"compression tag %d did not roundtrip, got %d",
+							lossless_compressions[i], page.compression);
 			if (im != NULL) {
 				CuTestImageResult result = {0, 0};
 				gdTestImageDiff(src, im, NULL, &result);
 				gdTestAssertMsg(result.pixels_changed == 0,
-				                "lossless compression %d changed %u pixels",
-				                lossless_compressions[i], result.pixels_changed);
+								"lossless compression %d changed %u pixels",
+								lossless_compressions[i],
+								result.pixels_changed);
 			}
 			gdTiffReadClose(reader);
 		}
@@ -583,7 +610,8 @@ static void test_compression_matrix(void)
 			gdImagePtr im;
 			gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
 			gdTestAssertMsg(page.compression == COMPRESSION_JPEG,
-			                "unexpected JPEG compression tag %d", page.compression);
+							"unexpected JPEG compression tag %d",
+							page.compression);
 			assert_roundtrip_close(src, data, size, 80);
 			gdTiffReadClose(reader);
 		}
@@ -597,8 +625,10 @@ static void test_compression_matrix(void)
 	if (src == NULL) {
 		return;
 	}
-	gdImageFilledRectangle(src, 0, 0, 3, 1, gdTrueColorAlpha(0, 0, 0, gdAlphaOpaque));
-	gdImageFilledRectangle(src, 4, 0, 7, 1, gdTrueColorAlpha(255, 255, 255, gdAlphaOpaque));
+	gdImageFilledRectangle(src, 0, 0, 3, 1,
+						   gdTrueColorAlpha(0, 0, 0, gdAlphaOpaque));
+	gdImageFilledRectangle(src, 4, 0, 7, 1,
+						   gdTrueColorAlpha(255, 255, 255, gdAlphaOpaque));
 
 	memset(&opts, 0, sizeof(opts));
 	opts.colorspace = GD_TIFF_BILEVEL;
@@ -608,7 +638,8 @@ static void test_compression_matrix(void)
 		gdTiffPageInfo page;
 		gdImagePtr im;
 
-		opts.compression = (i == 0) ? COMPRESSION_CCITTFAX3 : COMPRESSION_CCITTFAX4;
+		opts.compression =
+			(i == 0) ? COMPRESSION_CCITTFAX3 : COMPRESSION_CCITTFAX4;
 		data = write_image_ptr(src, &opts, &size);
 		if (data == NULL) {
 			continue;
@@ -617,10 +648,12 @@ static void test_compression_matrix(void)
 		gdTestAssert(reader != NULL);
 		if (reader != NULL) {
 			gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
-			gdTestAssertMsg(page.bitsPerSample == 1 && page.samplesPerPixel == 1,
-			                "unexpected CCITT sample layout");
+			gdTestAssertMsg(page.bitsPerSample == 1 &&
+								page.samplesPerPixel == 1,
+							"unexpected CCITT sample layout");
 			gdTestAssertMsg(page.compression == opts.compression,
-			                "unexpected CCITT compression tag %d", page.compression);
+							"unexpected CCITT compression tag %d",
+							page.compression);
 			gdTiffReadClose(reader);
 		}
 		gdFree(data);
@@ -628,8 +661,7 @@ static void test_compression_matrix(void)
 	gdImageDestroy(src);
 }
 
-static void test_writer_entry_points_and_validation(void)
-{
+static void test_writer_entry_points_and_validation(void) {
 	gdImagePtr src, palette;
 	gdTiffWriteOptions opts = {0};
 	gdTiffWritePtr writer;
@@ -673,15 +705,19 @@ static void test_writer_entry_points_and_validation(void)
 					int pages = 0;
 
 					gdTestAssert(gdTiffReadGetInfo(reader, &info) == 1);
-					gdTestAssertMsg(info.pageCount == 2, "FILE writer should create 2 pages, got %d", info.pageCount);
+					gdTestAssertMsg(info.pageCount == 2,
+									"FILE writer should create 2 pages, got %d",
+									info.pageCount);
 					while (gdTiffReadNextImage(reader, &page, &dst) == 1) {
-						gdTestAssertMsg(page.pageIndex == pages, "unexpected FILE writer page index");
+						gdTestAssertMsg(page.pageIndex == pages,
+										"unexpected FILE writer page index");
 						if (dst != NULL) {
 							assert_pixel_rgb(dst, 0, 0, 12, 34, 56);
 						}
 						pages++;
 					}
-					gdTestAssertMsg(pages == 2, "FILE writer decoded %d pages", pages);
+					gdTestAssertMsg(pages == 2, "FILE writer decoded %d pages",
+									pages);
 					gdTiffReadClose(reader);
 				}
 				fclose(fp);
@@ -725,8 +761,9 @@ static void test_writer_entry_points_and_validation(void)
 		gdTestAssert(writer != NULL);
 		if (writer != NULL) {
 			gdSetErrorMethod(gdSilence);
-			gdTestAssertMsg(gdTiffWriteAddImage(writer, palette) == 0,
-			                "palette image should be rejected by new TIFF writer");
+			gdTestAssertMsg(
+				gdTiffWriteAddImage(writer, palette) == 0,
+				"palette image should be rejected by new TIFF writer");
 			gdClearErrorMethod();
 			data = gdTiffWritePtrFinish(writer, &size);
 			if (data != NULL) {
@@ -757,8 +794,7 @@ static void test_writer_entry_points_and_validation(void)
 	gdImageDestroy(src);
 }
 
-int main(void)
-{
+int main(void) {
 	test_multipage_rgb_ptr();
 	test_options_and_formats();
 	test_exact_uncompressed_samples();

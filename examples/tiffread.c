@@ -7,8 +7,7 @@
 #include <gd.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp;
 	char path[9][2048];
@@ -39,7 +38,6 @@ int main()
 			fprintf(stderr, "Can't load TIFF image %s\n", path[i]);
 			return 1;
 		}
-
 
 		sprintf(dst, "%i.png", i);
 

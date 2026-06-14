@@ -1,17 +1,16 @@
-#include <stdlib.h>
 #include "gd.h"
 #include "gdhelpers.h"
 #include "gdtest.h"
+#include <stdlib.h>
 
-int
-main(void)
-{
+int main(void) {
 	gdImagePtr im;
 	int white, black, r;
 	gdPointPtr points;
 
 	im = gdImageCreate(100, 100);
-	if (!im) exit(EXIT_FAILURE);
+	if (!im)
+		exit(EXIT_FAILURE);
 	white = gdImageColorAllocate(im, 0xff, 0xff, 0xff);
 	black = gdImageColorAllocate(im, 0, 0, 0);
 	gdImageFilledRectangle(im, 0, 0, 99, 99, white);
@@ -27,9 +26,11 @@ main(void)
 	points[2].x = 90;
 	points[2].y = 30;
 	gdImageOpenPolygon(im, points, 3, black);
-	r = gdAssertImageEqualsToFile("gdimageopenpolygon/gdimageopenpolygon3.png", im);
+	r = gdAssertImageEqualsToFile("gdimageopenpolygon/gdimageopenpolygon3.png",
+								  im);
 	free(points);
 	gdImageDestroy(im);
-	if (!r) exit(EXIT_FAILURE);
+	if (!r)
+		exit(EXIT_FAILURE);
 	return EXIT_SUCCESS;
 }

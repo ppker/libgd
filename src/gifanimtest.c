@@ -4,8 +4,7 @@
 
 #include "gd.h"
 
-int main(void)
-{
+int main(void) {
 	gdImagePtr im;
 	gdImagePtr last, cim;
 	int blue;

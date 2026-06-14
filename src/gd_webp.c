@@ -8,15 +8,14 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gd.h"
 #include "gd_errors.h"
-#include "gdhelpers.h"
 #include "gd_intern.h"
+#include "gdhelpers.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_LIBWEBP
 #include "webp/decode.h"
@@ -24,7 +23,7 @@
 #include "webp/encode.h"
 #include "webp/mux.h"
 
-#define GD_WEBP_ALLOC_STEP (4*1024)
+#define GD_WEBP_ALLOC_STEP (4 * 1024)
 
 struct gdWebpReadStruct {
 	uint8_t *data;
@@ -54,8 +53,7 @@ struct gdWebpWriteStruct {
 	int finalized;
 };
 
-static uint8_t *WebpReadCtxData(gdIOCtx *infile, size_t *size)
-{
+static uint8_t *WebpReadCtxData(gdIOCtx *infile, size_t *size) {
 	uint8_t *filedata = NULL, *temp, *read;
 	ssize_t n;
 
@@ -83,21 +81,19 @@ static uint8_t *WebpReadCtxData(gdIOCtx *infile, size_t *size)
 	return filedata;
 }
 
-static int WebpGdAlphaToWebp(int alpha)
-{
+static int WebpGdAlphaToWebp(int alpha) {
 	if (alpha == gdAlphaTransparent) {
 		return 0;
 	}
 	return 255 - ((alpha << 1) + (alpha >> 6));
 }
 
-static int WebpWebpAlphaToGd(uint8_t alpha)
-{
+static int WebpWebpAlphaToGd(uint8_t alpha) {
 	return gdAlphaMax - (alpha >> 1);
 }
 
-static gdImagePtr WebpImageFromRGBA(const uint8_t *rgba, int width, int height)
-{
+static gdImagePtr WebpImageFromRGBA(const uint8_t *rgba, int width,
+									int height) {
 	gdImagePtr im;
 	const uint8_t *p;
 	int x, y;
@@ -123,8 +119,8 @@ static gdImagePtr WebpImageFromRGBA(const uint8_t *rgba, int width, int height)
 	return im;
 }
 
-static gdImagePtr WebpImageFromARGB(const uint8_t *argb, int width, int height)
-{
+static gdImagePtr WebpImageFromARGB(const uint8_t *argb, int width,
+									int height) {
 	gdImagePtr im;
 	const uint8_t *p;
 	int x, y;
@@ -150,8 +146,7 @@ static gdImagePtr WebpImageFromARGB(const uint8_t *argb, int width, int height)
 	return im;
 }
 
-static gdImagePtr WebpCloneImage(gdImagePtr src)
-{
+static gdImagePtr WebpCloneImage(gdImagePtr src) {
 	gdImagePtr dst;
 	int x, y;
 
@@ -172,21 +167,20 @@ static gdImagePtr WebpCloneImage(gdImagePtr src)
 	return dst;
 }
 
-static void WebpFillInfo(const WebPDemuxer *demux, gdWebpInfo *info)
-{
+static void WebpFillInfo(const WebPDemuxer *demux, gdWebpInfo *info) {
 	if (info == NULL) {
 		return;
 	}
-	info->width = (int) WebPDemuxGetI(demux, WEBP_FF_CANVAS_WIDTH);
-	info->height = (int) WebPDemuxGetI(demux, WEBP_FF_CANVAS_HEIGHT);
-	info->frameCount = (int) WebPDemuxGetI(demux, WEBP_FF_FRAME_COUNT);
-	info->loopCount = (int) WebPDemuxGetI(demux, WEBP_FF_LOOP_COUNT);
-	info->backgroundColor = (int) WebPDemuxGetI(demux, WEBP_FF_BACKGROUND_COLOR);
-	info->formatFlags = (int) WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
+	info->width = (int)WebPDemuxGetI(demux, WEBP_FF_CANVAS_WIDTH);
+	info->height = (int)WebPDemuxGetI(demux, WEBP_FF_CANVAS_HEIGHT);
+	info->frameCount = (int)WebPDemuxGetI(demux, WEBP_FF_FRAME_COUNT);
+	info->loopCount = (int)WebPDemuxGetI(demux, WEBP_FF_LOOP_COUNT);
+	info->backgroundColor = (int)WebPDemuxGetI(demux, WEBP_FF_BACKGROUND_COLOR);
+	info->formatFlags = (int)WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
 }
 
-static void WebpFillFrameInfo(const WebPIterator *iter, int frameIndex, int timestamp, gdWebpFrameInfo *info)
-{
+static void WebpFillFrameInfo(const WebPIterator *iter, int frameIndex,
+							  int timestamp, gdWebpFrameInfo *info) {
 	if (info == NULL || iter == NULL) {
 		return;
 	}
@@ -203,8 +197,7 @@ static void WebpFillFrameInfo(const WebPIterator *iter, int frameIndex, int time
 	info->complete = iter->complete;
 }
 
-static int WebpProbeData(const uint8_t *data, size_t size)
-{
+static int WebpProbeData(const uint8_t *data, size_t size) {
 	WebPData webpData;
 	WebPDemuxer *demux;
 	uint32_t flags;
@@ -220,13 +213,12 @@ static int WebpProbeData(const uint8_t *data, size_t size)
 		return -1;
 	}
 	flags = WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
-	frameCount = (int) WebPDemuxGetI(demux, WEBP_FF_FRAME_COUNT);
+	frameCount = (int)WebPDemuxGetI(demux, WEBP_FF_FRAME_COUNT);
 	WebPDemuxDelete(demux);
 	return ((flags & ANIMATION_FLAG) != 0 || frameCount > 1) ? 1 : 0;
 }
 
-static gdImagePtr WebpDecodeFirstImage(const uint8_t *filedata, size_t size)
-{
+static gdImagePtr WebpDecodeFirstImage(const uint8_t *filedata, size_t size) {
 	WebPData webpData;
 	WebPAnimDecoderOptions options;
 	WebPAnimDecoder *decoder;
@@ -254,7 +246,8 @@ static gdImagePtr WebpDecodeFirstImage(const uint8_t *filedata, size_t size)
 			WebPAnimDecoderDelete(decoder);
 			return NULL;
 		}
-		im = WebpImageFromRGBA(rgba, (int) info.canvas_width, (int) info.canvas_height);
+		im = WebpImageFromRGBA(rgba, (int)info.canvas_width,
+							   (int)info.canvas_height);
 	}
 	WebPAnimDecoderDelete(decoder);
 	return im;
@@ -263,41 +256,40 @@ static gdImagePtr WebpDecodeFirstImage(const uint8_t *filedata, size_t size)
 /*
   Function: gdImageCreateFromWebp
 
-    <gdImageCreateFromWebp> is called to load truecolor images from
-    WebP format files. Invoke <gdImageCreateFromWebp> with an
-    already opened pointer to a file containing the desired
-    image. <gdImageCreateFromWebp> returns a <gdImagePtr> to the new
-    truecolor image, or NULL if unable to load the image (most often
-    because the file is corrupt or does not contain a WebP
-    image). <gdImageCreateFromWebp> does not close the file.
+	<gdImageCreateFromWebp> is called to load truecolor images from
+	WebP format files. Invoke <gdImageCreateFromWebp> with an
+	already opened pointer to a file containing the desired
+	image. <gdImageCreateFromWebp> returns a <gdImagePtr> to the new
+	truecolor image, or NULL if unable to load the image (most often
+	because the file is corrupt or does not contain a WebP
+	image). <gdImageCreateFromWebp> does not close the file.
 
-    You can inspect the sx and sy members of the image to determine
-    its size. The image must eventually be destroyed using
-    <gdImageDestroy>.
+	You can inspect the sx and sy members of the image to determine
+	its size. The image must eventually be destroyed using
+	<gdImageDestroy>.
 
-    *The returned image is always a truecolor image.*
+	*The returned image is always a truecolor image.*
 
   Variants:
 
-    <gdImageCreateFromWebpPtr> creates an image from WebP data
-    already in memory.
+	<gdImageCreateFromWebpPtr> creates an image from WebP data
+	already in memory.
 
-    <gdImageCreateFromWebpCtx> reads its data via the function
-    pointers in a <gdIOCtx> structure.
+	<gdImageCreateFromWebpCtx> reads its data via the function
+	pointers in a <gdIOCtx> structure.
 
   Parameters:
 
-    infile - The input FILE pointer.
+	infile - The input FILE pointer.
 
   Returns:
 
-    A pointer to the new *truecolor* image.  This will need to be
-    destroyed with <gdImageDestroy> once it is no longer needed.
+	A pointer to the new *truecolor* image.  This will need to be
+	destroyed with <gdImageDestroy> once it is no longer needed.
 
-    On error, returns NULL.
+	On error, returns NULL.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebp (FILE * inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebp(FILE *inFile) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewFileCtx(inFile);
 	if (!in) {
@@ -309,19 +301,17 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromWebp (FILE * inFile)
 	return im;
 }
 
-
 /*
   Function: gdImageCreateFromWebpPtr
 
-    See <gdImageCreateFromWebp>.
+	See <gdImageCreateFromWebp>.
 
   Parameters:
 
-    size            - size of WebP data in bytes.
-    data            - pointer to WebP data.
+	size            - size of WebP data in bytes.
+	data            - pointer to WebP data.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpPtr (int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpPtr(int size, void *data) {
 	gdImagePtr im;
 	gdIOCtx *in = gdNewDynamicCtxEx(size, data, 0);
 	if (!in)
@@ -334,13 +324,12 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpPtr (int size, void *data)
 /*
   Function: gdImageCreateFromWebpCtx
 
-    See <gdImageCreateFromWebp>.
+	See <gdImageCreateFromWebp>.
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx (gdIOCtx * infile)
-{
-	int    width, height;
-	uint8_t   *filedata = NULL;
-	uint8_t    *argb = NULL;
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx(gdIOCtx *infile) {
+	int width, height;
+	uint8_t *filedata = NULL;
+	uint8_t *argb = NULL;
 	size_t size = 0;
 	gdImagePtr im;
 
@@ -349,7 +338,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx (gdIOCtx * infile)
 		return NULL;
 	}
 
-	if (WebPGetInfo(filedata,size, &width, &height) == 0) {
+	if (WebPGetInfo(filedata, size, &width, &height) == 0) {
 		im = WebpDecodeFirstImage(filedata, size);
 		if (im == NULL) {
 			gd_error("gd-webp cannot get webp info");
@@ -367,14 +356,14 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx (gdIOCtx * infile)
 		return im;
 	}
 	im = WebpImageFromARGB(argb, width, height);
-	/* do not use gdFree here, in case gdFree/alloc is mapped to something else than libc */
+	/* do not use gdFree here, in case gdFree/alloc is mapped to something else
+	 * than libc */
 	WebPFree(argb);
 	gdFree(filedata);
 	return im;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimated(FILE *fdFile)
-{
+BGD_DECLARE(int) gdWebpIsAnimated(FILE *fdFile) {
 	gdIOCtx *fd;
 	uint8_t *data;
 	size_t size;
@@ -387,7 +376,7 @@ BGD_DECLARE(int) gdWebpIsAnimated(FILE *fdFile)
 	if (fd == NULL) {
 		return -1;
 	}
-	pos = (int) gdTell(fd);
+	pos = (int)gdTell(fd);
 	if (pos < 0) {
 		fd->gd_free(fd);
 		return -1;
@@ -402,8 +391,7 @@ BGD_DECLARE(int) gdWebpIsAnimated(FILE *fdFile)
 	return result;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in) {
 	uint8_t *data;
 	size_t size;
 	int result, pos;
@@ -411,7 +399,7 @@ BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in)
 	if (in == NULL || in->tell == NULL || in->seek == NULL) {
 		return -1;
 	}
-	pos = (int) gdTell(in);
+	pos = (int)gdTell(in);
 	if (pos < 0) {
 		return -1;
 	}
@@ -424,16 +412,14 @@ BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in)
 	return result;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimatedPtr(int size, void *data)
-{
+BGD_DECLARE(int) gdWebpIsAnimatedPtr(int size, void *data) {
 	if (size <= 0 || data == NULL) {
 		return -1;
 	}
-	return WebpProbeData((const uint8_t *) data, (size_t) size);
+	return WebpProbeData((const uint8_t *)data, (size_t)size);
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpen(FILE *fdFile)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpen(FILE *fdFile) {
 	gdIOCtx *fd;
 	gdWebpReadPtr webp;
 
@@ -449,8 +435,7 @@ BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpen(FILE *fdFile)
 	return webp;
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenPtr(int size, void *data)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenPtr(int size, void *data) {
 	gdIOCtx *in;
 	gdWebpReadPtr webp;
 
@@ -466,8 +451,7 @@ BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenPtr(int size, void *data)
 	return webp;
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in) {
 	gdWebpReadPtr webp;
 	WebPData webpData;
 	WebPAnimDecoderOptions decOptions;
@@ -475,7 +459,7 @@ BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in)
 	if (in == NULL) {
 		return NULL;
 	}
-	webp = (gdWebpReadPtr) gdCalloc(1, sizeof(struct gdWebpReadStruct));
+	webp = (gdWebpReadPtr)gdCalloc(1, sizeof(struct gdWebpReadStruct));
 	if (webp == NULL) {
 		return NULL;
 	}
@@ -500,8 +484,7 @@ BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in)
 	return webp;
 }
 
-BGD_DECLARE(void) gdWebpReadClose(gdWebpReadPtr webp)
-{
+BGD_DECLARE(void) gdWebpReadClose(gdWebpReadPtr webp) {
 	if (webp == NULL) {
 		return;
 	}
@@ -524,8 +507,7 @@ BGD_DECLARE(void) gdWebpReadClose(gdWebpReadPtr webp)
 	gdFree(webp);
 }
 
-BGD_DECLARE(int) gdWebpReadGetInfo(gdWebpReadPtr webp, gdWebpInfo *info)
-{
+BGD_DECLARE(int) gdWebpReadGetInfo(gdWebpReadPtr webp, gdWebpInfo *info) {
 	if (webp == NULL || info == NULL || webp->demux == NULL) {
 		return 0;
 	}
@@ -533,8 +515,9 @@ BGD_DECLARE(int) gdWebpReadGetInfo(gdWebpReadPtr webp, gdWebpInfo *info)
 	return 1;
 }
 
-BGD_DECLARE(int) gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info, gdImagePtr *frame)
-{
+BGD_DECLARE(int)
+gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info,
+					gdImagePtr *frame) {
 	uint8_t *rgba;
 	int width, height;
 
@@ -558,7 +541,8 @@ BGD_DECLARE(int) gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 		gdImageDestroy(webp->rawFrame);
 		webp->rawFrame = NULL;
 	}
-	rgba = WebPDecodeRGBA(webp->iter.fragment.bytes, webp->iter.fragment.size, &width, &height);
+	rgba = WebPDecodeRGBA(webp->iter.fragment.bytes, webp->iter.fragment.size,
+						  &width, &height);
 	if (rgba == NULL) {
 		return -1;
 	}
@@ -576,8 +560,9 @@ BGD_DECLARE(int) gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 	return 1;
 }
 
-BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, gdImagePtr *image)
-{
+BGD_DECLARE(int)
+gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info,
+					gdImagePtr *image) {
 	uint8_t *rgba;
 	int timestamp, duration;
 	WebPIterator iter;
@@ -610,8 +595,8 @@ BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 	} else if (info != NULL) {
 		memset(info, 0, sizeof(*info));
 		info->frameIndex = webp->imageIndex;
-		info->width = (int) animInfo.canvas_width;
-		info->height = (int) animInfo.canvas_height;
+		info->width = (int)animInfo.canvas_width;
+		info->height = (int)animInfo.canvas_height;
 		info->duration = duration;
 		info->timestamp = webp->imageTimestamp;
 	}
@@ -619,7 +604,8 @@ BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 		gdImageDestroy(webp->canvas);
 		webp->canvas = NULL;
 	}
-	webp->canvas = WebpImageFromRGBA(rgba, (int) animInfo.canvas_width, (int) animInfo.canvas_height);
+	webp->canvas = WebpImageFromRGBA(rgba, (int)animInfo.canvas_width,
+									 (int)animInfo.canvas_height);
 	if (webp->canvas == NULL) {
 		return -1;
 	}
@@ -634,24 +620,21 @@ BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 	return 1;
 }
 
-BGD_DECLARE(gdImagePtr) gdWebpReadCloneImage(gdWebpReadPtr webp)
-{
+BGD_DECLARE(gdImagePtr) gdWebpReadCloneImage(gdWebpReadPtr webp) {
 	if (webp == NULL || webp->canvas == NULL) {
 		return NULL;
 	}
 	return WebpCloneImage(webp->canvas);
 }
 
-
 /* returns 0 on success, 1 on failure */
-static int _gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
-{
+static int _gdImageWebpCtx(gdImagePtr im, gdIOCtx *outfile, int quality) {
 	uint8_t *argb;
 	int x, y;
 	uint8_t *p;
 	uint8_t *out;
 	size_t out_size;
-    int ret = 0;
+	int ret = 0;
 
 	if (im == NULL) {
 		return 1;
@@ -697,19 +680,21 @@ static int _gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
 		}
 	}
 	if (quality >= gdWebpLossless) {
-		out_size = WebPEncodeLosslessRGBA(argb, gdImageSX(im), gdImageSY(im), gdImageSX(im) * 4, &out);
+		out_size = WebPEncodeLosslessRGBA(argb, gdImageSX(im), gdImageSY(im),
+										  gdImageSX(im) * 4, &out);
 	} else {
-		out_size = WebPEncodeRGBA(argb, gdImageSX(im), gdImageSY(im), gdImageSX(im) * 4, quality, &out);
+		out_size = WebPEncodeRGBA(argb, gdImageSX(im), gdImageSY(im),
+								  gdImageSX(im) * 4, quality, &out);
 	}
 	if (out_size == 0) {
 		gd_error("gd-webp encoding failed");
-        ret = 1;
+		ret = 1;
 		goto freeargb;
 	}
 
 	int res = gdPutBuf(out, out_size, outfile);
 	WebPFree(out);
-	if (res < 0 || (size_t) res != out_size) {
+	if (res < 0 || (size_t)res != out_size) {
 		gd_error("gd-webp write error\n");
 		ret = 1;
 	}
@@ -717,40 +702,38 @@ static int _gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
 freeargb:
 	gdFree(argb);
 
-    return ret;
+	return ret;
 }
-
 
 /*
   Function: gdImageWebpCtx
 
-    Write the image as WebP data via a <gdIOCtx>. See <gdImageWebpEx>
-    for more details.
+	Write the image as WebP data via a <gdIOCtx>. See <gdImageWebpEx>
+	for more details.
 
   Parameters:
 
-    im      - The image to write.
-    outfile - The output sink.
-    quality - Image quality.
+	im      - The image to write.
+	outfile - The output sink.
+	quality - Image quality.
 
   Returns:
 
-    Nothing.
+	Nothing.
 */
-BGD_DECLARE(void) gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
-{
+BGD_DECLARE(void) gdImageWebpCtx(gdImagePtr im, gdIOCtx *outfile, int quality) {
 	_gdImageWebpCtx(im, outfile, quality);
 }
 
 /*
   Function: gdImageWebpEx
 
-    <gdImageWebpEx> outputs the specified image to the specified file in
-    WebP format. The file must be open for writing. Under MSDOS and
-    all versions of Windows, it is important to use "wb" as opposed to
-    simply "w" as the mode when opening the file, and under Unix there
-    is no penalty for doing so. <gdImageWebpEx> does not close the file;
-    your code must do so.
+	<gdImageWebpEx> outputs the specified image to the specified file in
+	WebP format. The file must be open for writing. Under MSDOS and
+	all versions of Windows, it is important to use "wb" as opposed to
+	simply "w" as the mode when opening the file, and under Unix there
+	is no penalty for doing so. <gdImageWebpEx> does not close the file;
+	your code must do so.
 
 	If _quality_ is -1, a reasonable quality value (which should yield a
 	good general quality / size tradeoff for most situations) is used. Otherwise
@@ -762,22 +745,21 @@ BGD_DECLARE(void) gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
 
   Variants:
 
-    <gdImageWebpCtx> stores the image using a <gdIOCtx> struct.
+	<gdImageWebpCtx> stores the image using a <gdIOCtx> struct.
 
-    <gdImageWebpPtrEx> stores the image to RAM.
+	<gdImageWebpPtrEx> stores the image to RAM.
 
   Parameters:
 
-    im      - The image to save.
-    outFile - The FILE pointer to write to.
-    quality - Compression quality (0-100).
+	im      - The image to save.
+	outFile - The FILE pointer to write to.
+	quality - Compression quality (0-100).
 
   Returns:
 
-    Nothing.
+	Nothing.
 */
-BGD_DECLARE(void) gdImageWebpEx (gdImagePtr im, FILE * outFile, int quality)
-{
+BGD_DECLARE(void) gdImageWebpEx(gdImagePtr im, FILE *outFile, int quality) {
 	gdIOCtx *out = gdNewFileCtx(outFile);
 	if (out == NULL) {
 		return;
@@ -789,19 +771,18 @@ BGD_DECLARE(void) gdImageWebpEx (gdImagePtr im, FILE * outFile, int quality)
 /*
   Function: gdImageWebp
 
-    Variant of <gdImageWebpEx> which uses the default quality (-1).
+	Variant of <gdImageWebpEx> which uses the default quality (-1).
 
   Parameters:
 
-    im      - The image to save
-    outFile - The FILE pointer to write to.
+	im      - The image to save
+	outFile - The FILE pointer to write to.
 
   Returns:
 
-    Nothing.
+	Nothing.
 */
-BGD_DECLARE(void) gdImageWebp (gdImagePtr im, FILE * outFile)
-{
+BGD_DECLARE(void) gdImageWebp(gdImagePtr im, FILE *outFile) {
 	gdIOCtx *out = gdNewFileCtx(outFile);
 	if (out == NULL) {
 		return;
@@ -813,10 +794,9 @@ BGD_DECLARE(void) gdImageWebp (gdImagePtr im, FILE * outFile)
 /*
   Function: gdImageWebpPtr
 
-    See <gdImageWebpEx>.
+	See <gdImageWebpEx>.
 */
-BGD_DECLARE(void *) gdImageWebpPtr (gdImagePtr im, int *size)
-{
+BGD_DECLARE(void *) gdImageWebpPtr(gdImagePtr im, int *size) {
 	void *rv;
 	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
 	if (out == NULL) {
@@ -835,10 +815,9 @@ BGD_DECLARE(void *) gdImageWebpPtr (gdImagePtr im, int *size)
 /*
   Function: gdImageWebpPtrEx
 
-    See <gdImageWebpEx>.
+	See <gdImageWebpEx>.
 */
-BGD_DECLARE(void *) gdImageWebpPtrEx (gdImagePtr im, int *size, int quality)
-{
+BGD_DECLARE(void *) gdImageWebpPtrEx(gdImagePtr im, int *size, int quality) {
 	void *rv;
 
 	gdIOCtx *out = gdNewDynamicCtx(2048, NULL);
@@ -846,16 +825,15 @@ BGD_DECLARE(void *) gdImageWebpPtrEx (gdImagePtr im, int *size, int quality)
 		return NULL;
 	}
 	if (_gdImageWebpCtx(im, out, quality)) {
-        rv = NULL;
-    } else {
-        rv = gdDPExtractData(out, size);
-    }
+		rv = NULL;
+	} else {
+		rv = gdDPExtractData(out, size);
+	}
 	out->gd_free(out);
 	return rv;
 }
 
-static void WebpWriteFree(gdWebpWritePtr webp)
-{
+static void WebpWriteFree(gdWebpWritePtr webp) {
 	if (webp == NULL) {
 		return;
 	}
@@ -868,8 +846,7 @@ static void WebpWriteFree(gdWebpWritePtr webp)
 	gdFree(webp);
 }
 
-static int WebpWriteEnsureEncoder(gdWebpWritePtr webp, gdImagePtr image)
-{
+static int WebpWriteEnsureEncoder(gdWebpWritePtr webp, gdImagePtr image) {
 	WebPAnimEncoderOptions encOptions;
 
 	if (webp->encoder != NULL) {
@@ -878,8 +855,12 @@ static int WebpWriteEnsureEncoder(gdWebpWritePtr webp, gdImagePtr image)
 	if (image == NULL) {
 		return 0;
 	}
-	webp->canvasWidth = webp->options.canvasWidth > 0 ? webp->options.canvasWidth : gdImageSX(image);
-	webp->canvasHeight = webp->options.canvasHeight > 0 ? webp->options.canvasHeight : gdImageSY(image);
+	webp->canvasWidth = webp->options.canvasWidth > 0
+							? webp->options.canvasWidth
+							: gdImageSX(image);
+	webp->canvasHeight = webp->options.canvasHeight > 0
+							 ? webp->options.canvasHeight
+							 : gdImageSY(image);
 	if (webp->canvasWidth <= 0 || webp->canvasHeight <= 0) {
 		return 0;
 	}
@@ -887,7 +868,7 @@ static int WebpWriteEnsureEncoder(gdWebpWritePtr webp, gdImagePtr image)
 		return 0;
 	}
 	encOptions.anim_params.loop_count = webp->options.loopCount;
-	encOptions.anim_params.bgcolor = (uint32_t) webp->options.backgroundColor;
+	encOptions.anim_params.bgcolor = (uint32_t)webp->options.backgroundColor;
 	if (webp->options.minimizeSize) {
 		encOptions.minimize_size = webp->options.minimizeSize;
 	}
@@ -898,12 +879,12 @@ static int WebpWriteEnsureEncoder(gdWebpWritePtr webp, gdImagePtr image)
 	if (webp->options.allowMixed) {
 		encOptions.allow_mixed = webp->options.allowMixed;
 	}
-	webp->encoder = WebPAnimEncoderNew(webp->canvasWidth, webp->canvasHeight, &encOptions);
+	webp->encoder =
+		WebPAnimEncoderNew(webp->canvasWidth, webp->canvasHeight, &encOptions);
 	return webp->encoder != NULL;
 }
 
-static int WebpImageToRGBA(gdImagePtr im, uint8_t **rgba)
-{
+static int WebpImageToRGBA(gdImagePtr im, uint8_t **rgba) {
 	uint8_t *p;
 	int x, y;
 
@@ -912,10 +893,11 @@ static int WebpImageToRGBA(gdImagePtr im, uint8_t **rgba)
 		gd_error("Palette image not supported by webp");
 		return 0;
 	}
-	if (overflow2(gdImageSX(im), 4) || overflow2(gdImageSX(im) * 4, gdImageSY(im))) {
+	if (overflow2(gdImageSX(im), 4) ||
+		overflow2(gdImageSX(im) * 4, gdImageSY(im))) {
 		return 0;
 	}
-	*rgba = (uint8_t *) gdMalloc(gdImageSX(im) * 4 * gdImageSY(im));
+	*rgba = (uint8_t *)gdMalloc(gdImageSX(im) * 4 * gdImageSY(im));
 	if (*rgba == NULL) {
 		return 0;
 	}
@@ -932,8 +914,7 @@ static int WebpImageToRGBA(gdImagePtr im, uint8_t **rgba)
 	return 1;
 }
 
-static int WebpWriteAssemble(gdWebpWritePtr webp)
-{
+static int WebpWriteAssemble(gdWebpWritePtr webp) {
 	WebPData webpData;
 	int ok = 0;
 
@@ -946,14 +927,17 @@ static int WebpWriteAssemble(gdWebpWritePtr webp)
 	}
 	WebPDataInit(&webpData);
 	if (!WebPAnimEncoderAdd(webp->encoder, NULL, webp->timestamp, NULL)) {
-		gd_error("gd-webp animation flush failed: %s", WebPAnimEncoderGetError(webp->encoder));
+		gd_error("gd-webp animation flush failed: %s",
+				 WebPAnimEncoderGetError(webp->encoder));
 		goto done;
 	}
 	if (!WebPAnimEncoderAssemble(webp->encoder, &webpData)) {
-		gd_error("gd-webp animation assembly failed: %s", WebPAnimEncoderGetError(webp->encoder));
+		gd_error("gd-webp animation assembly failed: %s",
+				 WebPAnimEncoderGetError(webp->encoder));
 		goto done;
 	}
-	if ((size_t) gdPutBuf(webpData.bytes, webpData.size, webp->out) != webpData.size) {
+	if ((size_t)gdPutBuf(webpData.bytes, webpData.size, webp->out) !=
+		webpData.size) {
 		gd_error("gd-webp animation write error");
 		goto done;
 	}
@@ -964,8 +948,8 @@ done:
 	return ok;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpen(FILE *outFile, const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpen(FILE *outFile, const gdWebpWriteOptions *options) {
 	gdIOCtx *out;
 	gdWebpWritePtr webp;
 
@@ -985,14 +969,14 @@ BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpen(FILE *outFile, const gdWebpWriteOpti
 	return webp;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenCtx(gdIOCtxPtr out, const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpenCtx(gdIOCtxPtr out, const gdWebpWriteOptions *options) {
 	gdWebpWritePtr webp;
 
 	if (out == NULL) {
 		return NULL;
 	}
-	webp = (gdWebpWritePtr) gdCalloc(1, sizeof(struct gdWebpWriteStruct));
+	webp = (gdWebpWritePtr)gdCalloc(1, sizeof(struct gdWebpWriteStruct));
 	if (webp == NULL) {
 		return NULL;
 	}
@@ -1007,8 +991,8 @@ BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenCtx(gdIOCtxPtr out, const gdWebpWrite
 	return webp;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenPtr(const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpenPtr(const gdWebpWriteOptions *options) {
 	gdIOCtx *out;
 	gdWebpWritePtr webp;
 
@@ -1026,8 +1010,8 @@ BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenPtr(const gdWebpWriteOptions *options
 	return webp;
 }
 
-BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int durationMs)
-{
+BGD_DECLARE(int)
+gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int durationMs) {
 	WebPConfig config;
 	WebPPicture picture;
 	uint8_t *rgba = NULL;
@@ -1039,7 +1023,8 @@ BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int 
 	if (!WebpWriteEnsureEncoder(webp, image)) {
 		return 0;
 	}
-	if (gdImageSX(image) != webp->canvasWidth || gdImageSY(image) != webp->canvasHeight) {
+	if (gdImageSX(image) != webp->canvasWidth ||
+		gdImageSY(image) != webp->canvasHeight) {
 		gd_error("gd-webp animation frames must match canvas size");
 		return 0;
 	}
@@ -1049,7 +1034,8 @@ BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int 
 	if (!WebPConfigInit(&config) || !WebPPictureInit(&picture)) {
 		goto done;
 	}
-	config.quality = webp->options.quality == -1 ? 80.0f : (float) webp->options.quality;
+	config.quality =
+		webp->options.quality == -1 ? 80.0f : (float)webp->options.quality;
 	if (webp->options.lossless || webp->options.quality >= gdWebpLossless) {
 		config.lossless = 1;
 		if (config.quality > 100.0f) {
@@ -1069,8 +1055,10 @@ BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int 
 	if (!WebPPictureImportRGBA(&picture, rgba, gdImageSX(image) * 4)) {
 		goto free_picture;
 	}
-	if (!WebPAnimEncoderAdd(webp->encoder, &picture, webp->timestamp, &config)) {
-		gd_error("gd-webp animation add frame failed: %s", WebPAnimEncoderGetError(webp->encoder));
+	if (!WebPAnimEncoderAdd(webp->encoder, &picture, webp->timestamp,
+							&config)) {
+		gd_error("gd-webp animation add frame failed: %s",
+				 WebPAnimEncoderGetError(webp->encoder));
 		goto free_picture;
 	}
 	webp->timestamp += durationMs;
@@ -1083,8 +1071,7 @@ done:
 	return ok;
 }
 
-BGD_DECLARE(void) gdWebpWriteClose(gdWebpWritePtr webp)
-{
+BGD_DECLARE(void) gdWebpWriteClose(gdWebpWritePtr webp) {
 	if (webp == NULL) {
 		return;
 	}
@@ -1094,8 +1081,7 @@ BGD_DECLARE(void) gdWebpWriteClose(gdWebpWritePtr webp)
 	WebpWriteFree(webp);
 }
 
-BGD_DECLARE(void *) gdWebpWritePtrFinish(gdWebpWritePtr webp, int *size)
-{
+BGD_DECLARE(void *) gdWebpWritePtrFinish(gdWebpWritePtr webp, int *size) {
 	void *rv = NULL;
 
 	if (size != NULL) {
@@ -1114,66 +1100,57 @@ BGD_DECLARE(void *) gdWebpWritePtrFinish(gdWebpWritePtr webp, int *size)
 
 #else /* !HAVE_LIBWEBP */
 
-static void _noWebpError(void)
-{
+static void _noWebpError(void) {
 	gd_error("WEBP image support has been disabled\n");
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebp (FILE * inFile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebp(FILE *inFile) {
 	ARG_NOT_USED(inFile);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpPtr (int size, void *data)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpPtr(int size, void *data) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx (gdIOCtx * infile)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromWebpCtx(gdIOCtx *infile) {
 	ARG_NOT_USED(infile);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(void) gdImageWebpCtx (gdImagePtr im, gdIOCtx * outfile, int quality)
-{
+BGD_DECLARE(void) gdImageWebpCtx(gdImagePtr im, gdIOCtx *outfile, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outfile);
 	ARG_NOT_USED(quality);
 	_noWebpError();
 }
 
-BGD_DECLARE(void) gdImageWebpEx (gdImagePtr im, FILE * outFile, int quality)
-{
+BGD_DECLARE(void) gdImageWebpEx(gdImagePtr im, FILE *outFile, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outFile);
 	ARG_NOT_USED(quality);
 	_noWebpError();
 }
 
-BGD_DECLARE(void) gdImageWebp (gdImagePtr im, FILE * outFile)
-{
+BGD_DECLARE(void) gdImageWebp(gdImagePtr im, FILE *outFile) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(outFile);
 	_noWebpError();
 }
 
-BGD_DECLARE(void *) gdImageWebpPtr (gdImagePtr im, int *size)
-{
+BGD_DECLARE(void *) gdImageWebpPtr(gdImagePtr im, int *size) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(size);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(void *) gdImageWebpPtrEx (gdImagePtr im, int *size, int quality)
-{
+BGD_DECLARE(void *) gdImageWebpPtrEx(gdImagePtr im, int *size, int quality) {
 	ARG_NOT_USED(im);
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(quality);
@@ -1181,66 +1158,59 @@ BGD_DECLARE(void *) gdImageWebpPtrEx (gdImagePtr im, int *size, int quality)
 	return NULL;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimated(FILE *fd)
-{
+BGD_DECLARE(int) gdWebpIsAnimated(FILE *fd) {
 	ARG_NOT_USED(fd);
 	_noWebpError();
 	return -1;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(int) gdWebpIsAnimatedCtx(gdIOCtxPtr in) {
 	ARG_NOT_USED(in);
 	_noWebpError();
 	return -1;
 }
 
-BGD_DECLARE(int) gdWebpIsAnimatedPtr(int size, void *data)
-{
+BGD_DECLARE(int) gdWebpIsAnimatedPtr(int size, void *data) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	_noWebpError();
 	return -1;
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpen(FILE *fd)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpen(FILE *fd) {
 	ARG_NOT_USED(fd);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenCtx(gdIOCtxPtr in) {
 	ARG_NOT_USED(in);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenPtr(int size, void *data)
-{
+BGD_DECLARE(gdWebpReadPtr) gdWebpReadOpenPtr(int size, void *data) {
 	ARG_NOT_USED(size);
 	ARG_NOT_USED(data);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(void) gdWebpReadClose(gdWebpReadPtr webp)
-{
+BGD_DECLARE(void) gdWebpReadClose(gdWebpReadPtr webp) {
 	ARG_NOT_USED(webp);
 	_noWebpError();
 }
 
-BGD_DECLARE(int) gdWebpReadGetInfo(gdWebpReadPtr webp, gdWebpInfo *info)
-{
+BGD_DECLARE(int) gdWebpReadGetInfo(gdWebpReadPtr webp, gdWebpInfo *info) {
 	ARG_NOT_USED(webp);
 	ARG_NOT_USED(info);
 	_noWebpError();
 	return 0;
 }
 
-BGD_DECLARE(int) gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info, gdImagePtr *frame)
-{
+BGD_DECLARE(int)
+gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info,
+					gdImagePtr *frame) {
 	ARG_NOT_USED(webp);
 	ARG_NOT_USED(info);
 	ARG_NOT_USED(frame);
@@ -1248,8 +1218,9 @@ BGD_DECLARE(int) gdWebpReadNextFrame(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 	return -1;
 }
 
-BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, gdImagePtr *image)
-{
+BGD_DECLARE(int)
+gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info,
+					gdImagePtr *image) {
 	ARG_NOT_USED(webp);
 	ARG_NOT_USED(info);
 	ARG_NOT_USED(image);
@@ -1257,38 +1228,37 @@ BGD_DECLARE(int) gdWebpReadNextImage(gdWebpReadPtr webp, gdWebpFrameInfo *info, 
 	return -1;
 }
 
-BGD_DECLARE(gdImagePtr) gdWebpReadCloneImage(gdWebpReadPtr webp)
-{
+BGD_DECLARE(gdImagePtr) gdWebpReadCloneImage(gdWebpReadPtr webp) {
 	ARG_NOT_USED(webp);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpen(FILE *outFile, const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpen(FILE *outFile, const gdWebpWriteOptions *options) {
 	ARG_NOT_USED(outFile);
 	ARG_NOT_USED(options);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenCtx(gdIOCtxPtr out, const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpenCtx(gdIOCtxPtr out, const gdWebpWriteOptions *options) {
 	ARG_NOT_USED(out);
 	ARG_NOT_USED(options);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(gdWebpWritePtr) gdWebpWriteOpenPtr(const gdWebpWriteOptions *options)
-{
+BGD_DECLARE(gdWebpWritePtr)
+gdWebpWriteOpenPtr(const gdWebpWriteOptions *options) {
 	ARG_NOT_USED(options);
 	_noWebpError();
 	return NULL;
 }
 
-BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int durationMs)
-{
+BGD_DECLARE(int)
+gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int durationMs) {
 	ARG_NOT_USED(webp);
 	ARG_NOT_USED(image);
 	ARG_NOT_USED(durationMs);
@@ -1296,14 +1266,12 @@ BGD_DECLARE(int) gdWebpWriteAddImage(gdWebpWritePtr webp, gdImagePtr image, int 
 	return 0;
 }
 
-BGD_DECLARE(void) gdWebpWriteClose(gdWebpWritePtr webp)
-{
+BGD_DECLARE(void) gdWebpWriteClose(gdWebpWritePtr webp) {
 	ARG_NOT_USED(webp);
 	_noWebpError();
 }
 
-BGD_DECLARE(void *) gdWebpWritePtrFinish(gdWebpWritePtr webp, int *size)
-{
+BGD_DECLARE(void *) gdWebpWritePtrFinish(gdWebpWritePtr webp, int *size) {
 	ARG_NOT_USED(webp);
 	ARG_NOT_USED(size);
 	_noWebpError();

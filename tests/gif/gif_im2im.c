@@ -1,8 +1,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int r, g, b;
 	void *p;
@@ -22,10 +21,11 @@ int main()
 	gdImageRectangle(src, 20, 20, 79, 79, g);
 	gdImageEllipse(src, 70, 25, 30, 20, b);
 
-#define OUTPUT_GIF(name) do {							\
-		FILE *fp = gdTestTempFp();						\
-		gdImageGif(name, fp);							\
-		fclose(fp);										\
+#define OUTPUT_GIF(name)                                                       \
+	do {                                                                       \
+		FILE *fp = gdTestTempFp();                                             \
+		gdImageGif(name, fp);                                                  \
+		fclose(fp);                                                            \
 	} while (0)
 
 	OUTPUT_GIF(src);

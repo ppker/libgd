@@ -5,13 +5,10 @@
  * GD_QUANT_NEUQUANT has its trueColor flag unset.
  */
 
-
 #include "gd.h"
 #include "gdtest.h"
 
-
-int main()
-{
+int main() {
 	gdImagePtr im;
 
 	im = gdImageCreateTrueColor(100, 100);

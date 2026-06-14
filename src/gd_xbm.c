@@ -5,63 +5,61 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#include "config.h"
 #endif
 
-#include <ctype.h>
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include "gd.h"
 #include "gd_errors.h"
 #include "gdhelpers.h"
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_XBM_LINE_SIZE 255
-
 
 /*
   Function: gdImageCreateFromXbm
 
-    <gdImageCreateFromXbm> is called to load images from X bitmap
-    format files. Invoke <gdImageCreateFromXbm> with an already opened
-    pointer to a file containing the desired
-    image. <gdImageCreateFromXbm> returns a <gdImagePtr> to the new
-    image, or NULL if unable to load the image (most often because the
-    file is corrupt or does not contain an X bitmap format
-    image). <gdImageCreateFromXbm> does not close the file.
+	<gdImageCreateFromXbm> is called to load images from X bitmap
+	format files. Invoke <gdImageCreateFromXbm> with an already opened
+	pointer to a file containing the desired
+	image. <gdImageCreateFromXbm> returns a <gdImagePtr> to the new
+	image, or NULL if unable to load the image (most often because the
+	file is corrupt or does not contain an X bitmap format
+	image). <gdImageCreateFromXbm> does not close the file.
 
-    You can inspect the sx and sy members of the image to determine
-    its size. The image must eventually be destroyed using
-    <gdImageDestroy>.
+	You can inspect the sx and sy members of the image to determine
+	its size. The image must eventually be destroyed using
+	<gdImageDestroy>.
 
-    X11 X bitmaps (which define a char[]) as well as X10 X bitmaps (which define
-    a short[]) are supported.
+	X11 X bitmaps (which define a char[]) as well as X10 X bitmaps (which define
+	a short[]) are supported.
 
   Parameters:
 
-    fd - The input FILE pointer
+	fd - The input FILE pointer
 
   Returns:
 
-    A pointer to the new image or NULL if an error occurred.
+	A pointer to the new image or NULL if an error occurred.
 
   Example:
-    (start code)
+	(start code)
 
-    gdImagePtr im;
-    FILE *in;
-    in = fopen("myxbm.xbm", "rb");
-    im = gdImageCreateFromXbm(in);
-    fclose(in);
-    // ... Use the image ...
-    gdImageDestroy(im);
+	gdImagePtr im;
+	FILE *in;
+	in = fopen("myxbm.xbm", "rb");
+	im = gdImageCreateFromXbm(in);
+	fclose(in);
+	// ... Use the image ...
+	gdImageDestroy(im);
 
-    (end code)
+	(end code)
 */
-BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
-{
+BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE *fd) {
 	char fline[MAX_XBM_LINE_SIZE];
 	char iname[MAX_XBM_LINE_SIZE];
 	char *type;
@@ -79,8 +77,8 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 
 	rewind(fd);
 	while (fgets(fline, MAX_XBM_LINE_SIZE, fd)) {
-		fline[MAX_XBM_LINE_SIZE-1] = '\0';
-		if (strlen(fline) == MAX_XBM_LINE_SIZE-1) {
+		fline[MAX_XBM_LINE_SIZE - 1] = '\0';
+		if (strlen(fline) == MAX_XBM_LINE_SIZE - 1) {
 			return 0;
 		}
 		if (sscanf(fline, "#define %s %d", iname, &value) == 2) {
@@ -91,23 +89,22 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 			}
 
 			if (!strcmp("width", type)) {
-				width = (unsigned int) value;
+				width = (unsigned int)value;
 			}
 			if (!strcmp("height", type)) {
-				height = (unsigned int) value;
+				height = (unsigned int)value;
 			}
 		} else {
-			if ( sscanf(fline, "static unsigned char %s = {", iname) == 1
-			  || sscanf(fline, "static char %s = {", iname) == 1)
-			{
+			if (sscanf(fline, "static unsigned char %s = {", iname) == 1 ||
+				sscanf(fline, "static char %s = {", iname) == 1) {
 				max_bit = 128;
-			} else if (sscanf(fline, "static unsigned short %s = {", iname) == 1
-					|| sscanf(fline, "static short %s = {", iname) == 1)
-			{
+			} else if (sscanf(fline, "static unsigned short %s = {", iname) ==
+						   1 ||
+					   sscanf(fline, "static short %s = {", iname) == 1) {
 				max_bit = 32768;
 			}
 			if (max_bit) {
-                bytes = (width + 7) / 8 * height;
+				bytes = (width + 7) / 8 * height;
 				if (!bytes) {
 					return 0;
 				}
@@ -120,13 +117,13 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 					break;
 				}
 			}
- 		}
+		}
 	}
 	if (!bytes || !max_bit) {
 		return 0;
 	}
 
-	if(!(im = gdImageCreate(width, height))) {
+	if (!(im = gdImageCreate(width, height))) {
 		return 0;
 	}
 	gdImageColorAllocate(im, 255, 255, 255);
@@ -135,7 +132,7 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 	h[4] = '\0';
 	for (i = 0; i < bytes; i++) {
 		while (1) {
-			if ((ch=getc(fd)) == EOF) {
+			if ((ch = getc(fd)) == EOF) {
 				fail = 1;
 				break;
 			}
@@ -147,20 +144,20 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 			break;
 		}
 		/* Get hex value */
-		if ((ch=getc(fd)) == EOF) {
+		if ((ch = getc(fd)) == EOF) {
 			break;
 		}
 		h[0] = ch;
-		if ((ch=getc(fd)) == EOF) {
+		if ((ch = getc(fd)) == EOF) {
 			break;
 		}
 		h[1] = ch;
 		if (max_bit == 32768) {
-			if ((ch=getc(fd)) == EOF) {
+			if ((ch = getc(fd)) == EOF) {
 				break;
 			}
 			h[2] = ch;
-			if ((ch=getc(fd)) == EOF) {
+			if ((ch = getc(fd)) == EOF) {
 				break;
 			}
 			h[3] = ch;
@@ -188,16 +185,14 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromXbm(FILE * fd)
 	return 0;
 }
 
-
 /* {{{ gdCtxPrintf */
-static void gdCtxPrintf(gdIOCtx * out, const char *format, ...)
-{
+static void gdCtxPrintf(gdIOCtx *out, const char *format, ...) {
 	char buf[1024];
 	int len;
 	va_list args;
 
 	va_start(args, format);
-	len = vsnprintf(buf, sizeof(buf)-1, format, args);
+	len = vsnprintf(buf, sizeof(buf) - 1, format, args);
 	va_end(args);
 	out->putBuf(out, buf, len);
 }
@@ -205,7 +200,6 @@ static void gdCtxPrintf(gdIOCtx * out, const char *format, ...)
 
 /* The compiler will optimize strlen(constant) to a constant number. */
 #define gdCtxPuts(out, s) out->putBuf(out, s, strlen(s))
-
 
 /**
  * Function: gdImageXbmCtx
@@ -222,32 +216,34 @@ static void gdCtxPrintf(gdIOCtx * out, const char *format, ...)
  *  out       - The <gdIOCtx> to write the image file to.
  *
  */
-BGD_DECLARE(void) gdImageXbmCtx(gdImagePtr image, char* file_name, int fg, gdIOCtx * out)
-{
+BGD_DECLARE(void)
+gdImageXbmCtx(gdImagePtr image, char *file_name, int fg, gdIOCtx *out) {
 	int x, y, c, b, sx, sy, p;
 	char *name, *f;
 	size_t i, l;
 
 	name = file_name;
-	if ((f = strrchr(name, '/')) != NULL) name = f+1;
-	if ((f = strrchr(name, '\\')) != NULL) name = f+1;
+	if ((f = strrchr(name, '/')) != NULL)
+		name = f + 1;
+	if ((f = strrchr(name, '\\')) != NULL)
+		name = f + 1;
 	name = strdup(name);
-	if ((f = strrchr(name, '.')) != NULL && !strcasecmp(f, ".XBM")) *f = '\0';
+	if ((f = strrchr(name, '.')) != NULL && !strcasecmp(f, ".XBM"))
+		*f = '\0';
 	if ((l = strlen(name)) == 0) {
 		free(name);
 		name = strdup("image");
 	} else {
-		for (i=0; i<l; i++) {
+		for (i = 0; i < l; i++) {
 			char c = name[i];
-				// Explicitly check for valid ASCII ranges and the underscore
-				if (!((c >= 'a' && c <= 'z') || 
-					(c >= 'A' && c <= 'Z') || 
-					(c >= '0' && c <= '9') || 
-					(c == '_'))) {
-					
-					// Anything else (spaces, punctuation, accents, UTF-8 bytes) becomes '_'
-					name[i] = '_';
-				}
+			// Explicitly check for valid ASCII ranges and the underscore
+			if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+				  (c >= '0' && c <= '9') || (c == '_'))) {
+
+				// Anything else (spaces, punctuation, accents, UTF-8 bytes)
+				// becomes '_'
+				name[i] = '_';
+			}
 		}
 	}
 
@@ -288,7 +284,7 @@ BGD_DECLARE(void) gdImageXbmCtx(gdImagePtr image, char* file_name, int fg, gdIOC
 				b = 1;
 				if (p) {
 					gdCtxPuts(out, ", ");
-					if (!(p%12)) {
+					if (!(p % 12)) {
 						gdCtxPuts(out, "\n  ");
 						p = 12;
 					}

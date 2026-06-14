@@ -13,19 +13,14 @@
 
 #include <sys/stat.h>
 
-typedef enum {
-	WEBP_EXPECT_DECODE,
-	WEBP_EXPECT_ROBUST
-} webp_expectation;
+typedef enum { WEBP_EXPECT_DECODE, WEBP_EXPECT_ROBUST } webp_expectation;
 
-static int has_webp_suffix(const char *name)
-{
+static int has_webp_suffix(const char *name) {
 	size_t len = strlen(name);
 	return len > 5 && strcmp(name + len - 5, ".webp") == 0;
 }
 
-static int is_directory(const char *path)
-{
+static int is_directory(const char *path) {
 #if defined(_WIN32) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	WIN32_FILE_ATTRIBUTE_DATA data;
 
@@ -39,8 +34,7 @@ static int is_directory(const char *path)
 #endif
 }
 
-static unsigned char *read_file(const char *path, int *size)
-{
+static unsigned char *read_file(const char *path, int *size) {
 	FILE *fp;
 	long len;
 	unsigned char *data;
@@ -74,8 +68,8 @@ static unsigned char *read_file(const char *path, int *size)
 	return data;
 }
 
-static void assert_animation_iterator(const char *path, int size, unsigned char *data)
-{
+static void assert_animation_iterator(const char *path, int size,
+									  unsigned char *data) {
 	gdWebpReadPtr webp;
 	gdWebpInfo info;
 	gdWebpFrameInfo frameInfo;
@@ -84,29 +78,38 @@ static void assert_animation_iterator(const char *path, int size, unsigned char 
 	int result;
 
 	webp = gdWebpReadOpenPtr(size, data);
-	gdTestAssertMsg(webp != NULL, "animated WebP reader rejected valid file: %s\n", path);
+	gdTestAssertMsg(webp != NULL,
+					"animated WebP reader rejected valid file: %s\n", path);
 	if (webp == NULL) {
 		return;
 	}
-	gdTestAssertMsg(gdWebpReadGetInfo(webp, &info), "cannot read WebP animation info: %s\n", path);
-	gdTestAssertMsg(info.width > 0 && info.height > 0, "invalid WebP canvas dimensions: %s\n", path);
-	gdTestAssertMsg(info.frameCount > 0, "invalid WebP frame count: %s\n", path);
+	gdTestAssertMsg(gdWebpReadGetInfo(webp, &info),
+					"cannot read WebP animation info: %s\n", path);
+	gdTestAssertMsg(info.width > 0 && info.height > 0,
+					"invalid WebP canvas dimensions: %s\n", path);
+	gdTestAssertMsg(info.frameCount > 0, "invalid WebP frame count: %s\n",
+					path);
 	while ((result = gdWebpReadNextImage(webp, &frameInfo, &image)) == 1) {
-		gdTestAssertMsg(image != NULL, "WebP animation returned NULL frame image: %s\n", path);
-		gdTestAssertMsg(gdImageSX(image) == info.width, "WebP animation frame width mismatch: %s\n", path);
-		gdTestAssertMsg(gdImageSY(image) == info.height, "WebP animation frame height mismatch: %s\n", path);
-		gdTestAssertMsg(frameInfo.duration >= 0, "WebP animation frame has negative duration: %s\n", path);
+		gdTestAssertMsg(image != NULL,
+						"WebP animation returned NULL frame image: %s\n", path);
+		gdTestAssertMsg(gdImageSX(image) == info.width,
+						"WebP animation frame width mismatch: %s\n", path);
+		gdTestAssertMsg(gdImageSY(image) == info.height,
+						"WebP animation frame height mismatch: %s\n", path);
+		gdTestAssertMsg(frameInfo.duration >= 0,
+						"WebP animation frame has negative duration: %s\n",
+						path);
 		frames++;
 	}
-	gdTestAssertMsg(result == 0, "WebP animation iterator failed before EOF: %s\n", path);
+	gdTestAssertMsg(result == 0,
+					"WebP animation iterator failed before EOF: %s\n", path);
 	gdTestAssertMsg(frames == info.frameCount,
-	                "WebP animation yielded %d frames, expected %d: %s\n",
-	                frames, info.frameCount, path);
+					"WebP animation yielded %d frames, expected %d: %s\n",
+					frames, info.frameCount, path);
 	gdWebpReadClose(webp);
 }
 
-static void assert_valid_file(const char *path)
-{
+static void assert_valid_file(const char *path) {
 	unsigned char *data;
 	int size;
 	int animated;
@@ -124,7 +127,8 @@ static void assert_valid_file(const char *path)
 	im = gdImageCreateFromWebpPtr(size, data);
 	gdTestAssertMsg(im != NULL, "valid WebP failed to decode: %s\n", path);
 	if (im != NULL) {
-		gdTestAssertMsg(gdImageSX(im) > 0 && gdImageSY(im) > 0, "decoded WebP has invalid dimensions: %s\n", path);
+		gdTestAssertMsg(gdImageSX(im) > 0 && gdImageSY(im) > 0,
+						"decoded WebP has invalid dimensions: %s\n", path);
 		gdImageDestroy(im);
 	}
 
@@ -135,20 +139,20 @@ static void assert_valid_file(const char *path)
 	free(data);
 }
 
-static void assert_robust_file(const char *path)
-{
+static void assert_robust_file(const char *path) {
 	unsigned char *data;
 	int size;
 	gdImagePtr im;
 	gdWebpReadPtr webp;
 
 	data = read_file(path, &size);
-	gdTestAssertMsg(data != NULL, "cannot read WebP robustness file: %s\n", path);
+	gdTestAssertMsg(data != NULL, "cannot read WebP robustness file: %s\n",
+					path);
 	if (data == NULL) {
 		return;
 	}
 
-	(void) gdWebpIsAnimatedPtr(size, data);
+	(void)gdWebpIsAnimatedPtr(size, data);
 	im = gdImageCreateFromWebpPtr(size, data);
 	if (im != NULL) {
 		gdImageDestroy(im);
@@ -161,8 +165,7 @@ static void assert_robust_file(const char *path)
 	free(data);
 }
 
-static int scan_directory(const char *dir, webp_expectation expectation)
-{
+static int scan_directory(const char *dir, webp_expectation expectation) {
 	DIR *handle;
 	struct dirent *entry;
 	int files = 0;
@@ -176,11 +179,14 @@ static int scan_directory(const char *dir, webp_expectation expectation)
 	while ((entry = readdir(handle)) != NULL) {
 		char path[4096];
 
-		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+		if (strcmp(entry->d_name, ".") == 0 ||
+			strcmp(entry->d_name, "..") == 0) {
 			continue;
 		}
-		if (snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name) >= (int)sizeof(path)) {
-			gdTestErrorMsg("WebP corpus path is too long: %s/%s\n", dir, entry->d_name);
+		if (snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name) >=
+			(int)sizeof(path)) {
+			gdTestErrorMsg("WebP corpus path is too long: %s/%s\n", dir,
+						   entry->d_name);
 			continue;
 		}
 		if (is_directory(path)) {
@@ -202,11 +208,12 @@ static int scan_directory(const char *dir, webp_expectation expectation)
 	return files;
 }
 
-int main(void)
-{
+int main(void) {
 	char *valid = gdTestFilePathX("webp", "webp-conformance", "valid", NULL);
-	char *non_conformant = gdTestFilePathX("webp", "webp-conformance", "non-conformant", NULL);
-	char *invalid = gdTestFilePathX("webp", "webp-conformance", "invalid", NULL);
+	char *non_conformant =
+		gdTestFilePathX("webp", "webp-conformance", "non-conformant", NULL);
+	char *invalid =
+		gdTestFilePathX("webp", "webp-conformance", "invalid", NULL);
 	int valid_files;
 	int non_conformant_files;
 	int invalid_files;
@@ -218,9 +225,9 @@ int main(void)
 	gdClearErrorMethod();
 
 	gdTestAssertMsg(valid_files > 0,
-	                "WebP conformance valid corpus has no .webp files in %s "
-	                "(valid=%d non-conformant=%d invalid=%d)\n",
-	                valid, valid_files, non_conformant_files, invalid_files);
+					"WebP conformance valid corpus has no .webp files in %s "
+					"(valid=%d non-conformant=%d invalid=%d)\n",
+					valid, valid_files, non_conformant_files, invalid_files);
 
 	free(valid);
 	free(non_conformant);

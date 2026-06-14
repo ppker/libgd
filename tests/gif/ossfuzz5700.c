@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <stdio.h>
 
 /*
  * This file is truncated immediately after the LZW minimum code size byte; it
@@ -14,8 +14,7 @@
  *  - LZW minimum code size: 12
  *  - then EOF immediately
  */
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *fp = gdTestFileOpen("gif/ossfuzz5700.gif");
 	im = gdImageCreateFromGif(fp);

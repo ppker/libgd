@@ -1,16 +1,14 @@
 #include <gd.h>
-#include <tiffio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tiffio.h>
 
-static void usage(const char *prog)
-{
+static void usage(const char *prog) {
 	fprintf(stderr, "Usage: %s output.tif\n", prog);
 	fprintf(stderr, "Creates a three-page TIFF using the gdTiffWrite* API.\n");
 }
 
-static gdImagePtr create_page(int page, int width, int height)
-{
+static gdImagePtr create_page(int page, int width, int height) {
 	gdImagePtr im;
 	int background;
 	int accent;
@@ -26,25 +24,25 @@ static gdImagePtr create_page(int page, int width, int height)
 	gdImageSaveAlpha(im, 1);
 
 	background = gdTrueColor(248 - page * 30, 248 - page * 15, 240);
-	accent = gdTrueColor((page == 0) ? 220 : 40,
-	                     (page == 1) ? 150 : 70,
-	                     (page == 2) ? 220 : 80);
+	accent = gdTrueColor((page == 0) ? 220 : 40, (page == 1) ? 150 : 70,
+						 (page == 2) ? 220 : 80);
 	dark = gdTrueColor(25, 35, 45);
 	light = gdTrueColor(255, 255, 255);
 
 	gdImageFilledRectangle(im, 0, 0, width - 1, height - 1, background);
-	gdImageFilledRectangle(im, 18 + page * 8, 18 + page * 6,
-	                       width - 20, height / 2, accent);
+	gdImageFilledRectangle(im, 18 + page * 8, 18 + page * 6, width - 20,
+						   height / 2, accent);
 	gdImageRectangle(im, 8, 8, width - 9, height - 9, dark);
 	gdImageLine(im, 12, height - 18, width - 12, 18 + page * 10, dark);
-	gdImageFilledEllipse(im, width / 2, height / 2 + 22, 46 + page * 14, 28 + page * 10, light);
-	gdImageEllipse(im, width / 2, height / 2 + 22, 46 + page * 14, 28 + page * 10, dark);
+	gdImageFilledEllipse(im, width / 2, height / 2 + 22, 46 + page * 14,
+						 28 + page * 10, light);
+	gdImageEllipse(im, width / 2, height / 2 + 22, 46 + page * 14,
+				   28 + page * 10, dark);
 
 	return im;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	FILE *out;
 	gdTiffWritePtr writer;
 	gdTiffWriteOptions options = {0};

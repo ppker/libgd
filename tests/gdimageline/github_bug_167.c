@@ -16,8 +16,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static void setStyleAndThickness(gdImagePtr im, int color, int thickness)
-{
+static void setStyleAndThickness(gdImagePtr im, int color, int thickness) {
 	int style[192], i = 0;
 
 	while (i < 16 * thickness) {
@@ -36,8 +35,7 @@ static void setStyleAndThickness(gdImagePtr im, int color, int thickness)
 	gdImageSetThickness(im, thickness);
 }
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	int error = 0, black;
 
@@ -46,9 +44,9 @@ int main()
 	black = gdImageColorAllocate(im, 0, 0, 0);
 
 	setStyleAndThickness(im, black, 1);
-	gdImageLine(im,  50, 250, 550, 250, gdStyled);
+	gdImageLine(im, 50, 250, 550, 250, gdStyled);
 	gdImageLine(im, 550, 250, 550, 750, gdStyled);
-	gdImageLine(im, 550, 750,  50, 250, gdStyled);
+	gdImageLine(im, 550, 750, 50, 250, gdStyled);
 
 	setStyleAndThickness(im, black, 2);
 	gdImageLine(im, 100, 200, 600, 200, gdStyled);

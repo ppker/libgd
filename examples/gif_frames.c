@@ -1,20 +1,20 @@
+#include <gd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gd.h>
 
-static void usage(const char *prog)
-{
+static void usage(const char *prog) {
 	fprintf(stderr, "Usage: %s input.gif output-prefix\n", prog);
-	fprintf(stderr, "Writes output-prefix_000.png, output-prefix_001.png, ...\n");
+	fprintf(stderr,
+			"Writes output-prefix_000.png, output-prefix_001.png, ...\n");
 }
 
-static int write_png(gdImagePtr im, const char *prefix, int frame)
-{
+static int write_png(gdImagePtr im, const char *prefix, int frame) {
 	char filename[1024];
 	FILE *out;
 
-	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, frame) >= (int) sizeof(filename)) {
+	if (snprintf(filename, sizeof(filename), "%s_%03d.png", prefix, frame) >=
+		(int)sizeof(filename)) {
 		fprintf(stderr, "output filename is too long\n");
 		return 0;
 	}
@@ -31,8 +31,7 @@ static int write_png(gdImagePtr im, const char *prefix, int frame)
 	return 1;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	FILE *in;
 	gdGifReadPtr gif;
 	gdGifInfo gifInfo;
@@ -69,17 +68,20 @@ int main(int argc, char **argv)
 
 	if (gdGifReadGetInfo(gif, &gifInfo)) {
 		printf("canvas: %dx%d, background index: %d, loop count: %d\n",
-		       gifInfo.width, gifInfo.height, gifInfo.backgroundIndex, gifInfo.loopCount);
+			   gifInfo.width, gifInfo.height, gifInfo.backgroundIndex,
+			   gifInfo.loopCount);
 	}
 
 	while (gdGifReadNextImage(gif, &frameInfo, &frameImage) == 1) {
-		printf("frame %d: rect=%d,%d %dx%d delay=%dcs disposal=%d transparent=%d local-palette=%d interlace=%d\n",
-		       frameInfo.frameIndex, frameInfo.x, frameInfo.y,
-		       frameInfo.width, frameInfo.height, frameInfo.delay,
-		       frameInfo.disposal, frameInfo.transparentIndex,
-		       frameInfo.localColorTable, frameInfo.interlace);
+		printf("frame %d: rect=%d,%d %dx%d delay=%dcs disposal=%d "
+			   "transparent=%d local-palette=%d interlace=%d\n",
+			   frameInfo.frameIndex, frameInfo.x, frameInfo.y, frameInfo.width,
+			   frameInfo.height, frameInfo.delay, frameInfo.disposal,
+			   frameInfo.transparentIndex, frameInfo.localColorTable,
+			   frameInfo.interlace);
 
-		/* frameImage is borrowed from the reader and is valid until the next iterator call. */
+		/* frameImage is borrowed from the reader and is valid until the next
+		 * iterator call. */
 		if (!write_png(frameImage, argv[2], frameCount)) {
 			gdGifReadClose(gif);
 			fclose(in);

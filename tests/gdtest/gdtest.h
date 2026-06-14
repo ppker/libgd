@@ -9,7 +9,6 @@ struct CuTestImageResult {
 	unsigned int max_diff;
 };
 
-
 /* Internal versions of assert functions -- use the public versions */
 gdImagePtr gdTestImageFromPng(const char *filename);
 
@@ -33,53 +32,63 @@ FILE *gdTestTempFp(void);
  */
 char *gdTestFilePathV(const char *path, va_list args);
 char *gdTestFilePathX(const char *path, ...);
-#define gdTestFilePath(p)       gdTestFilePathX(p, NULL)
+#define gdTestFilePath(p) gdTestFilePathX(p, NULL)
 #define gdTestFilePath2(p1, p2) gdTestFilePathX(p1, p2, NULL)
 
 /* Return an open (read-only) file handle to a test file.
  * The path should be relative to the tests/ dir.
  */
 FILE *gdTestFileOpenX(const char *path, ...);
-#define gdTestFileOpen(p)       gdTestFileOpenX(p, NULL)
+#define gdTestFileOpen(p) gdTestFileOpenX(p, NULL)
 #define gdTestFileOpen2(p1, p2) gdTestFileOpenX(p1, p2, NULL)
 
-void gdTestImageDiff(gdImagePtr buf_a, gdImagePtr buf_b,
-                     gdImagePtr buf_diff, CuTestImageResult *result_ret);
+void gdTestImageDiff(gdImagePtr buf_a, gdImagePtr buf_b, gdImagePtr buf_diff,
+					 CuTestImageResult *result_ret);
 
 void gdTestImagePerceptualDiff(gdImagePtr img1, gdImagePtr img2,
-                               gdImagePtr buf_diff, CuTestImageResult *result_ret,
-                               double threshold);
+							   gdImagePtr buf_diff,
+							   CuTestImageResult *result_ret, double threshold);
 
-int gdTestImageCompareToImage(const char* file, unsigned int line, const char* message,
-                              gdImagePtr expected, gdImagePtr actual);
+int gdTestImageCompareToImage(const char *file, unsigned int line,
+							  const char *message, gdImagePtr expected,
+							  gdImagePtr actual);
 
-int gdTestImageCompareToFile(const char* file, unsigned int line, const char* message,
-                             const char *expected_file, gdImagePtr actual);
+int gdTestImageCompareToFile(const char *file, unsigned int line,
+							 const char *message, const char *expected_file,
+							 gdImagePtr actual);
 
-int gdTestImagePerceptualCompareToFile(const char* file, unsigned int line, const char* message,
-                                       const char *expected_file, gdImagePtr actual,
-                                       double threshold, unsigned int max_pixels_changed);
+int gdTestImagePerceptualCompareToFile(const char *file, unsigned int line,
+									   const char *message,
+									   const char *expected_file,
+									   gdImagePtr actual, double threshold,
+									   unsigned int max_pixels_changed);
 
 unsigned int gdMaxPixelDiff(gdImagePtr a, gdImagePtr b);
 
-int _gdTestAssert(const char* file, unsigned int line, int condition);
+int _gdTestAssert(const char *file, unsigned int line, int condition);
 
-int _gdTestAssertMsg(const char* file, unsigned int line, int condition, const char* message, ...);
+int _gdTestAssertMsg(const char *file, unsigned int line, int condition,
+					 const char *message, ...);
 
-
-int _gdTestErrorMsg(const char* file, unsigned int line, const char* string, ...);
+int _gdTestErrorMsg(const char *file, unsigned int line, const char *string,
+					...);
 
 /* public assert functions */
-#define gdAssertImageEqualsToFile(ex,ac) gdTestImageCompareToFile(__FILE__,__LINE__,NULL,(ex),(ac))
+#define gdAssertImageEqualsToFile(ex, ac)                                      \
+	gdTestImageCompareToFile(__FILE__, __LINE__, NULL, (ex), (ac))
 
-#define gdAssertImageEqualsToFilePerceptual(ex,ac,threshold,max_pixels_changed) gdTestImagePerceptualCompareToFile(__FILE__,__LINE__,NULL,(ex),(ac),(threshold),(max_pixels_changed))
+#define gdAssertImageEqualsToFilePerceptual(ex, ac, threshold,                 \
+											max_pixels_changed)                \
+	gdTestImagePerceptualCompareToFile(__FILE__, __LINE__, NULL, (ex), (ac),   \
+									   (threshold), (max_pixels_changed))
 
-#define gdAssertImageEquals(ex,ac) gdTestImageCompareToImage(__FILE__,__LINE__,NULL,(ex),(ac))
+#define gdAssertImageEquals(ex, ac)                                            \
+	gdTestImageCompareToImage(__FILE__, __LINE__, NULL, (ex), (ac))
 
 #define gdTestAssert(cond) _gdTestAssert(__FILE__, __LINE__, (cond))
 
-#define gdTestAssertMsg(cond, message, ...) _gdTestAssertMsg(__FILE__, __LINE__, (cond), (message), ## __VA_ARGS__)
-
+#define gdTestAssertMsg(cond, message, ...)                                    \
+	_gdTestAssertMsg(__FILE__, __LINE__, (cond), (message), ##__VA_ARGS__)
 
 #define gdTestErrorMsg(...) _gdTestErrorMsg(__FILE__, __LINE__, __VA_ARGS__)
 

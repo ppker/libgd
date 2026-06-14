@@ -7,8 +7,7 @@
 #include "gd.h"
 #include "gdtest.h"
 
-int main()
-{
+int main() {
 	gdImagePtr src, dst;
 	int r, res_x, res_y;
 	void *p;
@@ -31,10 +30,11 @@ int main()
 	src->res_x = res_x;
 	src->res_y = res_y;
 
-#define OUTPUT_TIFF(name) do {							\
-		FILE *fp = gdTestTempFp();						\
-		gdImageTiff(name, fp);							\
-		fclose(fp);										\
+#define OUTPUT_TIFF(name)                                                      \
+	do {                                                                       \
+		FILE *fp = gdTestTempFp();                                             \
+		gdImageTiff(name, fp);                                                 \
+		fclose(fp);                                                            \
 	} while (0)
 
 	OUTPUT_TIFF(src);
@@ -59,12 +59,14 @@ int main()
 
 	if (dst->res_x != (unsigned int)res_x) {
 		status = 1;
-		gdTestErrorMsg("mismatch in res_x (got %d, expected %d)\n", dst->res_x, res_x);
+		gdTestErrorMsg("mismatch in res_x (got %d, expected %d)\n", dst->res_x,
+					   res_x);
 	}
 
 	if (dst->res_y != (unsigned int)res_y) {
 		status = 1;
-		gdTestErrorMsg("mismatch in res_y (got %d, expected %d)\n", dst->res_y, res_y);
+		gdTestErrorMsg("mismatch in res_y (got %d, expected %d)\n", dst->res_y,
+					   res_y);
 	}
 
 	gdImageDestroy(dst);

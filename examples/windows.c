@@ -2,25 +2,25 @@
 Sample usage of GD on windows. This little program opens a window, fetch its DIB
 and assigns to a GD truecolor image.
 
-Thanks to Mateusz Loskot (http://mateusz.loskot.net) for the AttachBuffer function!
+Thanks to Mateusz Loskot (http://mateusz.loskot.net) for the AttachBuffer
+function!
 */
-#include <windows.h>
 #include <gd.h>
 #include <gdfontg.h>
 #include <gdfontl.h>
+#include <windows.h>
 
-
-gdImagePtr gdImageTrueColorAttachBuffer(int* buffer, int sx, int sy, int stride)
-{
+gdImagePtr gdImageTrueColorAttachBuffer(int *buffer, int sx, int sy,
+										int stride) {
 	int i;
 	int height;
-	int* rowptr;
+	int *rowptr;
 	gdImagePtr im;
-	im = (gdImage *) malloc (sizeof (gdImage));
+	im = (gdImage *)malloc(sizeof(gdImage));
 	if (!im) {
 		return 0;
 	}
-	memset (im, 0, sizeof (gdImage));
+	memset(im, 0, sizeof(gdImage));
 
 #if 0
 	if (overflow2(sizeof (int *), sy)) {
@@ -28,7 +28,7 @@ gdImagePtr gdImageTrueColorAttachBuffer(int* buffer, int sx, int sy, int stride)
 	}
 #endif
 
-	im->tpixels = (int **) malloc (sizeof (int *) * sy);
+	im->tpixels = (int **)malloc(sizeof(int *) * sy);
 	if (!im->tpixels) {
 		free(im);
 		return 0;
@@ -70,15 +70,12 @@ gdImagePtr gdImageTrueColorAttachBuffer(int* buffer, int sx, int sy, int stride)
 	return im;
 }
 
-void gdImageDetachBuffer(gdImagePtr im)
-{
+void gdImageDetachBuffer(gdImagePtr im) {
 	free(im->tpixels);
 	free(im);
 }
 
-
-BITMAPINFO gdCreateBmp(int width, int height)
-{
+BITMAPINFO gdCreateBmp(int width, int height) {
 	BITMAPINFO bmp_info;
 
 	// Configure bitmap properties
@@ -98,67 +95,63 @@ BITMAPINFO gdCreateBmp(int width, int height)
 	return bmp_info;
 }
 
-LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM) ;
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                    PSTR szCmdLine, int iCmdShow)
-{
-	static TCHAR szAppName[] = TEXT ("Bezier") ;
-	HWND         hwnd ;
-	MSG          msg ;
-	WNDCLASS     wndclass ;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
+				   int iCmdShow) {
+	static TCHAR szAppName[] = TEXT("Bezier");
+	HWND hwnd;
+	MSG msg;
+	WNDCLASS wndclass;
 
-	wndclass.style         = CS_HREDRAW | CS_VREDRAW ;
-	wndclass.lpfnWndProc   = WndProc ;
-	wndclass.cbClsExtra    = 0 ;
-	wndclass.cbWndExtra    = 0 ;
-	wndclass.hInstance     = hInstance ;
-	wndclass.hIcon         = LoadIcon (NULL, IDI_APPLICATION) ;
-	wndclass.hCursor       = LoadCursor (NULL, IDC_ARROW) ;
-	wndclass.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH) ;
-	wndclass.lpszMenuName  = NULL ;
-	wndclass.lpszClassName = szAppName ;
+	wndclass.style = CS_HREDRAW | CS_VREDRAW;
+	wndclass.lpfnWndProc = WndProc;
+	wndclass.cbClsExtra = 0;
+	wndclass.cbWndExtra = 0;
+	wndclass.hInstance = hInstance;
+	wndclass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wndclass.lpszMenuName = NULL;
+	wndclass.lpszClassName = szAppName;
 
-	if (!RegisterClass (&wndclass)) {
+	if (!RegisterClass(&wndclass)) {
 		// UNICODE-Compilierung ist die einzige realistische Fehlermöglichkeit
-		MessageBox (NULL, TEXT ("Programm arbeitet mit Unicode und setzt Windows NT voraus!"),
-		            szAppName, MB_ICONERROR) ;
-		return 0 ;
+		MessageBox(
+			NULL,
+			TEXT("Programm arbeitet mit Unicode und setzt Windows NT voraus!"),
+			szAppName, MB_ICONERROR);
+		return 0;
 	}
 
-	hwnd = CreateWindow (szAppName, TEXT ("Bezierkurven"),
-	                     WS_OVERLAPPEDWINDOW,
-	                     CW_USEDEFAULT, CW_USEDEFAULT,
-	                     CW_USEDEFAULT, CW_USEDEFAULT,
-	                     NULL, NULL, hInstance, NULL) ;
+	hwnd = CreateWindow(szAppName, TEXT("Bezierkurven"), WS_OVERLAPPEDWINDOW,
+						CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+						CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
-	ShowWindow (hwnd, iCmdShow) ;
-	UpdateWindow (hwnd) ;
+	ShowWindow(hwnd, iCmdShow);
+	UpdateWindow(hwnd);
 
-	while (GetMessage (&msg, NULL, 0, 0)) {
-		TranslateMessage (&msg) ;
-		DispatchMessage (&msg) ;
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
-	return msg.wParam ;
+	return msg.wParam;
 }
 
-void DrawBezier (HDC hdc, POINT apt[])
-{
-	PolyBezier (hdc, apt, 4) ;
+void DrawBezier(HDC hdc, POINT apt[]) {
+	PolyBezier(hdc, apt, 4);
 
-	MoveToEx (hdc, apt[0].x, apt[0].y, NULL) ;
-	LineTo   (hdc, apt[1].x, apt[1].y) ;
+	MoveToEx(hdc, apt[0].x, apt[0].y, NULL);
+	LineTo(hdc, apt[1].x, apt[1].y);
 
-	MoveToEx (hdc, apt[2].x, apt[2].y, NULL) ;
-	LineTo   (hdc, apt[3].x, apt[3].y) ;
+	MoveToEx(hdc, apt[2].x, apt[2].y, NULL);
+	LineTo(hdc, apt[3].x, apt[3].y);
 }
 
-
-void gdDrawImage(HDC hdc, RECT *rc)
-{
-	HDC  mem_dc;
+void gdDrawImage(HDC hdc, RECT *rc) {
+	HDC mem_dc;
 	BITMAPINFO bmp_info;
-	void* bits;
+	void *bits;
 	HBITMAP bmp, temp;
 	gdImagePtr im;
 	int width, height, stride;
@@ -174,13 +167,15 @@ void gdDrawImage(HDC hdc, RECT *rc)
 	// Create memory device context
 	mem_dc = CreateCompatibleDC(hdc);
 	if (!mem_dc) {
-		MessageBox(NULL, "Can't create a compatible DC!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(NULL, "Can't create a compatible DC!", "Error!",
+				   MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
 	// bits points to a shared buffer of pixels
 	bits = NULL;
-	bmp = CreateDIBSection(mem_dc, &bmp_info, DIB_RGB_COLORS, (void**)&bits, 0, 0);
+	bmp = CreateDIBSection(mem_dc, &bmp_info, DIB_RGB_COLORS, (void **)&bits, 0,
+						   0);
 
 	// Selecting the object before doing anything allows you to use libgd
 	// together with native Windows GDI.
@@ -193,9 +188,10 @@ void gdDrawImage(HDC hdc, RECT *rc)
 
 	// Attach shared buffer of pixels to GD image
 	// Negative stride places 0,0 in upper-left corner
-	im = gdImageTrueColorAttachBuffer((int*)bits, width, height, -stride);
+	im = gdImageTrueColorAttachBuffer((int *)bits, width, height, -stride);
 	if (!im) {
-		MessageBox(NULL, "GD image creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(NULL, "GD image creation failed!", "Error!",
+				   MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
@@ -220,10 +216,8 @@ void gdDrawImage(HDC hdc, RECT *rc)
 	gdImageFilledRectangle(im, 50, 50, 75, 175, red);
 	gdImageLine(im, 0, 0, 150, 150, black);
 
-	gdImageString(im, gdFontGetLarge(),
-	              im->sx / 2 - (strlen(s) * lfont->w / 2),
-	              im->sy / 2 - lfont->h / 2,
-	              (unsigned char*)s, black);
+	gdImageString(im, gdFontGetLarge(), im->sx / 2 - (strlen(s) * lfont->w / 2),
+				  im->sy / 2 - lfont->h / 2, (unsigned char *)s, black);
 
 	// Copy drawing from memory context (shared bitmap buffer) to screen DC.
 	BitBlt(hdc, rc->left, rc->top, width, height, mem_dc, 0, 0, SRCCOPY);
@@ -235,76 +229,75 @@ void gdDrawImage(HDC hdc, RECT *rc)
 	DeleteObject(mem_dc);
 }
 
-LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	static POINT apt[4] ;
-	HDC          hdc ;
-	int          cxClient, cyClient ;
-	PAINTSTRUCT  ps ;
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam,
+						 LPARAM lParam) {
+	static POINT apt[4];
+	HDC hdc;
+	int cxClient, cyClient;
+	PAINTSTRUCT ps;
 	RECT rc;
 
 	GetClientRect(hwnd, &rc);
 
 	switch (message) {
 	case WM_SIZE:
-		cxClient = LOWORD (lParam) ;
-		cyClient = HIWORD (lParam) ;
+		cxClient = LOWORD(lParam);
+		cyClient = HIWORD(lParam);
 
-		apt[0].x = cxClient / 4 ;
-		apt[0].y = cyClient / 2 ;
+		apt[0].x = cxClient / 4;
+		apt[0].y = cyClient / 2;
 
-		apt[1].x = cxClient / 2 ;
-		apt[1].y = cyClient / 4 ;
+		apt[1].x = cxClient / 2;
+		apt[1].y = cyClient / 4;
 
-		apt[2].x =     cxClient / 2 ;
-		apt[2].y = 3 * cyClient / 4 ;
+		apt[2].x = cxClient / 2;
+		apt[2].y = 3 * cyClient / 4;
 
-		apt[3].x = 3 * cxClient / 4 ;
-		apt[3].y =     cyClient / 2 ;
-		return 0 ;
+		apt[3].x = 3 * cxClient / 4;
+		apt[3].y = cyClient / 2;
+		return 0;
 
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_MOUSEMOVE:
 		if (wParam & MK_LBUTTON || wParam & MK_RBUTTON) {
-			hdc = GetDC (hwnd) ;
+			hdc = GetDC(hwnd);
 
 			// alte Kurve löschen (mit Weiß übermalen)
-			SelectObject (hdc, GetStockObject (WHITE_PEN)) ;
-			DrawBezier (hdc, apt) ;
+			SelectObject(hdc, GetStockObject(WHITE_PEN));
+			DrawBezier(hdc, apt);
 
 			if (wParam & MK_LBUTTON) {
-				apt[1].x = LOWORD (lParam) ;
-				apt[1].y = HIWORD (lParam) ;
+				apt[1].x = LOWORD(lParam);
+				apt[1].y = HIWORD(lParam);
 			}
 
 			if (wParam & MK_RBUTTON) {
-				apt[2].x = LOWORD (lParam) ;
-				apt[2].y = HIWORD (lParam) ;
+				apt[2].x = LOWORD(lParam);
+				apt[2].y = HIWORD(lParam);
 			}
 
 			// neue Kurve (mit Schwarz) zeichnen
-			SelectObject (hdc, GetStockObject (BLACK_PEN)) ;
+			SelectObject(hdc, GetStockObject(BLACK_PEN));
 			gdDrawImage(hdc, &rc);
-			DrawBezier (hdc, apt) ;
-			ReleaseDC (hwnd, hdc) ;
+			DrawBezier(hdc, apt);
+			ReleaseDC(hwnd, hdc);
 		}
-		return 0 ;
-
+		return 0;
 
 	case WM_PAINT:
-		hdc = BeginPaint (hwnd, &ps) ;
+		hdc = BeginPaint(hwnd, &ps);
 
 		GetClientRect(hwnd, &rc);
 		gdDrawImage(hdc, &rc);
-		DrawBezier (hdc, apt) ;
+		DrawBezier(hdc, apt);
 
-		EndPaint (hwnd, &ps) ;
-		return 0 ;
+		EndPaint(hwnd, &ps);
+		return 0;
 
 	case WM_DESTROY:
-		PostQuitMessage (0) ;
-		return 0 ;
+		PostQuitMessage(0);
+		return 0;
 	}
-	return DefWindowProc (hwnd, message, wParam, lParam) ;
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }

@@ -1,9 +1,8 @@
-#include <string.h>
 #include "gd.h"
 #include "gdtest.h"
+#include <string.h>
 
-int main()
-{
+int main() {
 	gdFTStringExtra strex;
 	char *path;
 

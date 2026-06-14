@@ -6,8 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main()
-{
+int main() {
 	gdImagePtr im;
 	FILE *p;
 	int expected_color = 0xffffff;

@@ -13,8 +13,7 @@
 
 #include "gd.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	gdImagePtr im;
 	FILE *in, *out;
 
@@ -34,7 +33,8 @@ int main(int argc, char **argv)
 	im = gdImageCreateFromPng(in);
 	fclose(in);
 	if (!im) {
-		fprintf(stderr, "Error: input file %s is not in PNG format.\n", argv[1]);
+		fprintf(stderr, "Error: input file %s is not in PNG format.\n",
+				argv[1]);
 		exit(1);
 	}
 	gdImagePaletteToTrueColor(im);

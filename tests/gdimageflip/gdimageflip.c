@@ -5,8 +5,8 @@
 #include "gd.h"
 #include "gdtest.h"
 
-static void test_flip(void (BGD_STDCALL *func)(gdImagePtr), const char *filename)
-{
+static void test_flip(void(BGD_STDCALL *func)(gdImagePtr),
+					  const char *filename) {
 	gdImagePtr im;
 	FILE *fp;
 	char *path;
@@ -24,8 +24,7 @@ static void test_flip(void (BGD_STDCALL *func)(gdImagePtr), const char *filename
 	gdImageDestroy(im);
 }
 
-int main()
-{
+int main() {
 	test_flip(gdImageFlipVertical, "gdimageflipvertical_exp.png");
 	test_flip(gdImageFlipHorizontal, "gdimagefliphorizontal_exp.png");
 	test_flip(gdImageFlipBoth, "gdimageflipboth_exp.png");
