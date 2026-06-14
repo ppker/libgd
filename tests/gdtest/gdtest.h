@@ -2,6 +2,9 @@
 #define GD_TEST_H
 
 #include <stdarg.h>
+#include <stdio.h>
+
+#include "gd.h"
 
 typedef struct CuTestImageResult CuTestImageResult;
 struct CuTestImageResult {
