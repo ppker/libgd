@@ -915,6 +915,82 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTiff(FILE *inFile);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromTiffCtx(gdIOCtxPtr infile);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromTiffPtr(int size, void *data);
 
+typedef struct gdTiffReadStruct *gdTiffReadPtr;
+
+typedef struct {
+	int width;
+	int height;
+	int pageCount;
+	int bitsPerSample;
+	int samplesPerPixel;
+	int compression;
+	int photometric;
+	float xResolution;
+	float yResolution;
+	int resolutionUnit;
+} gdTiffInfo;
+
+typedef struct {
+	int pageIndex;
+	int width;
+	int height;
+	int bitsPerSample;
+	int samplesPerPixel;
+	int compression;
+	int photometric;
+	int planar;
+	int hasAlpha;
+	int isTiled;
+	float xResolution;
+	float yResolution;
+	int resolutionUnit;
+} gdTiffPageInfo;
+
+BGD_DECLARE(int) gdTiffIsMultiPage(FILE *fd);
+BGD_DECLARE(int) gdTiffIsMultiPageCtx(gdIOCtxPtr in);
+BGD_DECLARE(int) gdTiffIsMultiPagePtr(int size, void *data);
+BGD_DECLARE(gdTiffReadPtr) gdTiffReadOpen(FILE *fd);
+BGD_DECLARE(gdTiffReadPtr) gdTiffReadOpenCtx(gdIOCtxPtr in);
+BGD_DECLARE(gdTiffReadPtr) gdTiffReadOpenPtr(int size, void *data);
+BGD_DECLARE(void) gdTiffReadClose(gdTiffReadPtr tiff);
+BGD_DECLARE(int) gdTiffReadGetInfo(gdTiffReadPtr tiff, gdTiffInfo *info);
+BGD_DECLARE(int) gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image);
+BGD_DECLARE(gdImagePtr) gdTiffReadCloneImage(gdTiffReadPtr tiff);
+
+/* TIFF Write API */
+#define GD_TIFF_RGB       1
+#define GD_TIFF_RGBA      2
+#define GD_TIFF_GRAY      3
+#define GD_TIFF_BILEVEL   4
+
+#define GD_TIFF_RESUNIT_NONE        1
+#define GD_TIFF_RESUNIT_INCH        2
+#define GD_TIFF_RESUNIT_CENTIMETER  3
+
+#define GD_TIFF_ALPHA_UNASSOCIATED  1
+#define GD_TIFF_ALPHA_ASSOCIATED    2
+
+typedef struct {
+	int bitDepth;
+	int colorspace;
+	int compression;
+	int jpegQuality;
+	int minIsWhite;
+	int resolutionUnit;
+	float xResolution;
+	float yResolution;
+	int alphaType;
+} gdTiffWriteOptions;
+
+typedef struct gdTiffWriteStruct *gdTiffWritePtr;
+
+BGD_DECLARE(gdTiffWritePtr) gdTiffWriteOpen(FILE *outFile, const gdTiffWriteOptions *options);
+BGD_DECLARE(gdTiffWritePtr) gdTiffWriteOpenCtx(gdIOCtxPtr out, const gdTiffWriteOptions *options);
+BGD_DECLARE(gdTiffWritePtr) gdTiffWriteOpenPtr(const gdTiffWriteOptions *options);
+BGD_DECLARE(int) gdTiffWriteAddImage(gdTiffWritePtr write, gdImagePtr image);
+BGD_DECLARE(void) gdTiffWriteClose(gdTiffWritePtr write);
+BGD_DECLARE(void *) gdTiffWritePtrFinish(gdTiffWritePtr write, int *size);
+
 BGD_DECLARE(gdImagePtr) gdImageCreateFromTga( FILE * fp );
 BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaCtx(gdIOCtxPtr ctx);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaPtr(int size, void *data);
