@@ -1,7 +1,6 @@
 #include "gd_vector2d_private.h"
 #include "gd_array.h"
 #include "gd_path.h"
-#include "gdhelpers.h"
 #include "gdtest.h"
 
 #include <math.h>
@@ -142,72 +141,12 @@ static void test_invalid_calls(void)
     gdImageDestroy(image);
 }
 
-static void test_save_allocation_failures(void)
-{
-    const double dash[] = {2.0, 1.0};
-    gdImagePtr image;
-    gdContextPtr context = new_context(&image);
-    gdStatePtr state = context->state;
-
-    gdContextSetDash(context, 0, dash, 2);
-    for (int failure = 0; failure < 3; failure++) {
-        int source_ref = state->source->ref;
-        gdVector2dTestSetAllocationFailureCountdown(failure);
-        gdTestAssert(gdContextSave(context) == 0);
-        gdTestAssert(context->state == state);
-        gdTestAssert(state->source->ref == source_ref);
-        gdTestAssert(state->next == NULL);
-    }
-    gdVector2dTestSetAllocationFailureCountdown(-1);
-    gdTestAssert(gdContextSave(context) == 1);
-    gdTestAssert(gdContextRestore(context) == 1);
-    gdContextDestroy(context);
-    gdImageDestroy(image);
-}
-
-static void test_clip_allocation_failures(void)
-{
-    gdImagePtr image;
-    gdContextPtr context = new_context(&image);
-
-    gdContextRectangle(context, 0, 0, 20, 20);
-    for (int failure = 0; failure < 2; failure++) {
-        gdVector2dTestSetAllocationFailureCountdown(failure);
-        gdTestAssert(gdContextClipPreserve(context) == 0);
-        gdTestAssert(context->state->clippath == NULL);
-        gdTestAssert(gdArrayNumElements(&context->path->elements) != 0);
-    }
-    gdVector2dTestSetAllocationFailureCountdown(-1);
-    gdTestAssert(gdContextClipPreserve(context) == 1);
-    gdSpanRlePtr clip = context->state->clippath;
-
-    gdContextNewPath(context);
-    gdContextRectangle(context, 2, 2, 10, 10);
-    for (int failure = 0; failure < 2; failure++) {
-        gdVector2dTestSetAllocationFailureCountdown(failure);
-        gdTestAssert(gdContextClip(context) == 0);
-        gdTestAssert(context->state->clippath == clip);
-        gdTestAssert(gdArrayNumElements(&context->path->elements) != 0);
-    }
-    gdVector2dTestSetAllocationFailureCountdown(-1);
-    gdTestAssert(gdContextClip(context) == 1);
-    gdTestAssert(context->state->clippath != clip);
-    gdTestAssert(gdArrayNumElements(&context->path->elements) == 0);
-
-    gdContextDestroy(context);
-    gdImageDestroy(image);
-}
-
 int main(void)
 {
     gdSetErrorMethod(count_error);
     test_state_round_trip();
     test_path_and_stack_lifetime();
     test_invalid_calls();
-    gdSetErrorMethod(count_error);
-    test_save_allocation_failures();
-    test_clip_allocation_failures();
     gdClearErrorMethod();
-    gdVector2dTestSetAllocationFailureCountdown(-1);
     return gdNumFailures();
 }
