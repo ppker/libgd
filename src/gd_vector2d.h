@@ -36,8 +36,6 @@ typedef enum {
 typedef enum { gdLineCapButt, gdLineCapRound, gdLineCapSquare } gdLineCap;
 typedef enum { gdLineJoinMiter, gdLineJoinRound, gdLineJoinBevel } gdLineJoin;
 typedef enum { gdFillRuleNonZero, gdFillRuleEvenOdd } gdFillRule;
-/* Compatibility for the spelling used by the original experimental branch. */
-#define gdFillRulEvenOdd gdFillRuleEvenOdd
 
 typedef enum {
 	GD_OP_CLEAR, GD_OP_SOURCE, GD_OP_OVER, GD_OP_IN, GD_OP_OUT, GD_OP_ATOP,
