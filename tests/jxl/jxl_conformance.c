@@ -31,7 +31,7 @@ static unsigned char *read_file(const char *path, int *size) {
 	unsigned char *data;
 
 	*size = 0;
-	fp = fopen(path, "rb");
+	fp = gdTestFileOpen(path);
 	if (fp == NULL) {
 		return NULL;
 	}
@@ -156,6 +156,7 @@ static int scan_category(const char *root, const corpus_category *category) {
 
 	while ((entry = readdir(handle)) != NULL) {
 		char path[4096];
+		char relative_path[4096];
 
 		if (!has_jxl_suffix(entry->d_name)) {
 			continue;
@@ -166,11 +167,18 @@ static int scan_category(const char *root, const corpus_category *category) {
 						   entry->d_name);
 			continue;
 		}
+		if (snprintf(relative_path, sizeof(relative_path),
+					 "jxl/conformance/%s/%s", category->name,
+					 entry->d_name) >= (int)sizeof(relative_path)) {
+			gdTestErrorMsg("relative JXL corpus path is too long: %s/%s\n",
+						   category->name, entry->d_name);
+			continue;
+		}
 		files++;
 		if (category->expectation == JXL_EXPECT_VALID) {
-			assert_valid_file(path);
+			assert_valid_file(relative_path);
 		} else {
-			assert_invalid_file(path);
+			assert_invalid_file(relative_path);
 		}
 	}
 	closedir(handle);
@@ -214,4 +222,3 @@ int main(void) {
 	free(root);
 	return gdNumFailures();
 }
-

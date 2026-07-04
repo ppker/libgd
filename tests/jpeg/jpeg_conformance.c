@@ -59,7 +59,7 @@ static unsigned char *read_file(const char *path, int *size) {
 	unsigned char *data;
 
 	*size = 0;
-	fp = fopen(path, "rb");
+	fp = gdTestFileOpen(path);
 	if (fp == NULL) {
 		return NULL;
 	}
@@ -140,7 +140,7 @@ static void assert_file(const char *path, const char *name,
 		require_reject = 1;
 	}
 
-	fp = fopen(path, "rb");
+	fp = gdTestFileOpen(path);
 	gdTestAssertMsg(fp != NULL, "cannot reopen JPEG corpus file: %s\n", path);
 	if (fp != NULL) {
 		file_image = gdImageCreateFromJpeg(fp);
@@ -165,7 +165,8 @@ static void assert_file(const char *path, const char *name,
 	free(data);
 }
 
-static int scan_directory(const char *directory, jpeg_expectation expectation) {
+static int scan_directory(const char *directory, const char *relative_directory,
+						  jpeg_expectation expectation) {
 	DIR *handle;
 	struct dirent *entry;
 	int files = 0;
@@ -179,6 +180,7 @@ static int scan_directory(const char *directory, jpeg_expectation expectation) {
 
 	while ((entry = readdir(handle)) != NULL) {
 		char path[4096];
+		char relative_path[4096];
 
 		if (strcmp(entry->d_name, ".") == 0 ||
 			strcmp(entry->d_name, "..") == 0) {
@@ -190,15 +192,22 @@ static int scan_directory(const char *directory, jpeg_expectation expectation) {
 						   entry->d_name);
 			continue;
 		}
+		if (snprintf(relative_path, sizeof(relative_path), "%s/%s",
+					 relative_directory, entry->d_name) >=
+			(int)sizeof(relative_path)) {
+			gdTestErrorMsg("relative JPEG corpus path is too long: %s/%s\n",
+						   relative_directory, entry->d_name);
+			continue;
+		}
 		if (is_directory(path)) {
-			files += scan_directory(path, expectation);
+			files += scan_directory(path, relative_path, expectation);
 			continue;
 		}
 		if (!has_jpeg_suffix(entry->d_name)) {
 			continue;
 		}
 		files++;
-		assert_file(path, entry->d_name, expectation);
+		assert_file(relative_path, entry->d_name, expectation);
 	}
 	closedir(handle);
 	return files;
@@ -225,6 +234,7 @@ int main(void) {
 	gdSetErrorMethod(gdSilence);
 	for (i = 0; i < sizeof(categories) / sizeof(categories[0]); i++) {
 		char directory[4096];
+		char relative_directory[4096];
 		int count;
 
 		if (snprintf(directory, sizeof(directory), "%s/%s", root,
@@ -233,7 +243,15 @@ int main(void) {
 						   categories[i].path);
 			continue;
 		}
-		count = scan_directory(directory, categories[i].expectation);
+		if (snprintf(relative_directory, sizeof(relative_directory),
+					 "jpeg/conformance/%s", categories[i].path) >=
+			(int)sizeof(relative_directory)) {
+			gdTestErrorMsg("relative JPEG corpus path is too long: %s\n",
+						   categories[i].path);
+			continue;
+		}
+		count = scan_directory(directory, relative_directory,
+						   categories[i].expectation);
 		gdTestAssertMsg(count == categories[i].expected_count,
 						"JPEG category %s contains %d images, expected %d\n",
 						categories[i].path, count, categories[i].expected_count);
@@ -246,4 +264,3 @@ int main(void) {
 	free(root);
 	return gdNumFailures();
 }
-
