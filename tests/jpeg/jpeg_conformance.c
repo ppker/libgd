@@ -15,8 +15,6 @@
 #include <dirent.h>
 #endif
 
-#include <sys/stat.h>
-
 typedef enum {
 	JPEG_EXPECT_VALID,
 	JPEG_EXPECT_ROBUST,
@@ -24,7 +22,6 @@ typedef enum {
 } jpeg_expectation;
 
 typedef struct {
-	const char *path;
 	const char *directory;
 	const char *subdirectory;
 	int expected_count;
@@ -41,62 +38,26 @@ static int has_jpeg_suffix(const char *name) {
 			 strcmp(name + len - 5, ".JPEG") == 0));
 }
 
-static int is_directory(const char *path) {
-#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__MINGW64__)
-	WIN32_FILE_ATTRIBUTE_DATA data;
-
-	if (!GetFileAttributesEx(path, GetFileExInfoStandard, &data)) {
-		return 0;
-	}
-	return (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-#else
-	struct stat st;
-	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
-#endif
-}
-
-static FILE *open_corpus_file(const char *directory, const char *subdirectory,
-						  const char *filename) {
-	if (subdirectory == NULL) {
-		return gdTestFileOpenX("jpeg", "conformance", directory, filename,
-						   NULL);
-	}
-	return gdTestFileOpenX("jpeg", "conformance", directory, subdirectory,
-					   filename, NULL);
-}
-
-static unsigned char *read_file(const char *directory,
-								const char *subdirectory,
-								const char *filename, int *size) {
-	FILE *fp;
+static unsigned char *read_file(FILE *fp, int *size) {
 	long len;
 	unsigned char *data;
 
 	*size = 0;
-	fp = open_corpus_file(directory, subdirectory, filename);
-	if (fp == NULL) {
-		return NULL;
-	}
 	if (fseek(fp, 0, SEEK_END) != 0) {
-		fclose(fp);
 		return NULL;
 	}
 	len = ftell(fp);
 	if (len < 0 || len > INT_MAX || fseek(fp, 0, SEEK_SET) != 0) {
-		fclose(fp);
 		return NULL;
 	}
 	data = (unsigned char *)malloc(len > 0 ? (size_t)len : 1);
 	if (data == NULL) {
-		fclose(fp);
 		return NULL;
 	}
 	if (len > 0 && fread(data, 1, (size_t)len, fp) != (size_t)len) {
 		free(data);
-		fclose(fp);
 		return NULL;
 	}
-	fclose(fp);
 	*size = (int)len;
 	return data;
 }
@@ -137,15 +98,20 @@ static void assert_file(const char *directory, const char *subdirectory,
 	int require_decode = expectation == JPEG_EXPECT_VALID;
 	int require_reject = expectation == JPEG_EXPECT_INVALID;
 	int size;
-	char path[4096];
+	const char *path = name;
 
-	if (snprintf(path, sizeof(path), "%s/%s%s%s", directory,
-				 subdirectory != NULL ? subdirectory : "",
-				 subdirectory != NULL ? "/" : "", name) >= (int)sizeof(path)) {
-		gdTestErrorMsg("JPEG corpus path is too long: %s\n", name);
+	if (subdirectory == NULL) {
+		fp = gdTestFileOpenX("jpeg", "conformance", directory, name, NULL);
+	} else {
+		fp = gdTestFileOpenX("jpeg", "conformance", directory, subdirectory,
+						 name, NULL);
+	}
+	gdTestAssertMsg(fp != NULL, "cannot open JPEG corpus file: %s\n", name);
+	if (fp == NULL) {
 		return;
 	}
-	data = read_file(directory, subdirectory, name, &size);
+	data = read_file(fp, &size);
+	fclose(fp);
 	gdTestAssertMsg(data != NULL, "cannot read JPEG corpus file: %s\n", path);
 	if (data == NULL) {
 		return;
@@ -162,7 +128,12 @@ static void assert_file(const char *directory, const char *subdirectory,
 		require_reject = 1;
 	}
 
-	fp = open_corpus_file(directory, subdirectory, name);
+	if (subdirectory == NULL) {
+		fp = gdTestFileOpenX("jpeg", "conformance", directory, name, NULL);
+	} else {
+		fp = gdTestFileOpenX("jpeg", "conformance", directory, subdirectory,
+						 name, NULL);
+	}
 	gdTestAssertMsg(fp != NULL, "cannot reopen JPEG corpus file: %s\n", path);
 	if (fp != NULL) {
 		file_image = gdImageCreateFromJpeg(fp);
@@ -202,19 +173,8 @@ static int scan_directory(const char *path, const char *directory,
 	}
 
 	while ((entry = readdir(handle)) != NULL) {
-		char entry_path[4096];
-
 		if (strcmp(entry->d_name, ".") == 0 ||
 			strcmp(entry->d_name, "..") == 0) {
-			continue;
-		}
-		if (snprintf(entry_path, sizeof(entry_path), "%s/%s", path,
-					 entry->d_name) >= (int)sizeof(entry_path)) {
-			gdTestErrorMsg("JPEG corpus path is too long: %s/%s\n", path,
-						   entry->d_name);
-			continue;
-		}
-		if (is_directory(entry_path)) {
 			continue;
 		}
 		if (!has_jpeg_suffix(entry->d_name)) {
@@ -229,54 +189,51 @@ static int scan_directory(const char *path, const char *directory,
 
 int main(void) {
 	static const corpus_category categories[] = {
-		{"valid", "valid", NULL, 41, JPEG_EXPECT_VALID},
-		{"invalid", "invalid", NULL, 116, JPEG_EXPECT_ROBUST},
-		{"non-conformant/truncated", "non-conformant", "truncated", 12,
+		{"valid", NULL, 41, JPEG_EXPECT_VALID},
+		{"invalid", NULL, 116, JPEG_EXPECT_ROBUST},
+		{"non-conformant", "truncated", 12,
 		 JPEG_EXPECT_ROBUST},
-		{"non-conformant/extraneous-data", "non-conformant",
-		 "extraneous-data", 1, JPEG_EXPECT_ROBUST},
-		{"non-conformant/marker-quirks", "non-conformant", "marker-quirks",
+		{"non-conformant", "extraneous-data", 1, JPEG_EXPECT_ROBUST},
+		{"non-conformant", "marker-quirks",
 		 1, JPEG_EXPECT_ROBUST},
-		{"non-conformant/metadata-quirks", "non-conformant",
-		 "metadata-quirks", 5, JPEG_EXPECT_ROBUST},
-		{"non-conformant/progressive-quirks", "non-conformant",
-		 "progressive-quirks", 1, JPEG_EXPECT_ROBUST},
-		{"crash-repro/jpeg-decoder", "crash-repro", "jpeg-decoder", 15,
+		{"non-conformant", "metadata-quirks", 5, JPEG_EXPECT_ROBUST},
+		{"non-conformant", "progressive-quirks", 1, JPEG_EXPECT_ROBUST},
+		{"crash-repro", "jpeg-decoder", 15,
 		 JPEG_EXPECT_ROBUST},
-		{"crash-repro/jpeg-decoder-257", "crash-repro", "jpeg-decoder-257",
-		 27, JPEG_EXPECT_ROBUST},
-		{"crash-repro/libjpeg-turbo", "crash-repro", "libjpeg-turbo", 6,
+		{"crash-repro", "jpeg-decoder-257", 27, JPEG_EXPECT_ROBUST},
+		{"crash-repro", "libjpeg-turbo", 6,
 		 JPEG_EXPECT_ROBUST},
-		{"crash-repro/zune-jpeg", "crash-repro", "zune-jpeg", 29,
+		{"crash-repro", "zune-jpeg", 29,
 		 JPEG_EXPECT_ROBUST},
 	};
-	char *root = gdTestFilePathX("jpeg", "conformance", NULL);
 	int total = 0;
 	size_t i;
 
 	gdSetErrorMethod(gdSilence);
 	for (i = 0; i < sizeof(categories) / sizeof(categories[0]); i++) {
-		char directory[4096];
+		char *path;
 		int count;
 
-		if (snprintf(directory, sizeof(directory), "%s/%s", root,
-					 categories[i].path) >= (int)sizeof(directory)) {
-			gdTestErrorMsg("JPEG corpus path is too long: %s/%s\n", root,
-						   categories[i].path);
-			continue;
+		if (categories[i].subdirectory == NULL) {
+			path = gdTestFilePathX("jpeg", "conformance",
+							   categories[i].directory, NULL);
+		} else {
+			path = gdTestFilePathX("jpeg", "conformance",
+							   categories[i].directory,
+							   categories[i].subdirectory, NULL);
 		}
-		count = scan_directory(directory, categories[i].directory,
+		count = scan_directory(path, categories[i].directory,
 						   categories[i].subdirectory,
 						   categories[i].expectation);
 		gdTestAssertMsg(count == categories[i].expected_count,
 						"JPEG category %s contains %d images, expected %d\n",
-						categories[i].path, count, categories[i].expected_count);
+						path, count, categories[i].expected_count);
+		free(path);
 		total += count;
 	}
 	gdClearErrorMethod();
 
 	gdTestAssertMsg(total == 254,
 					"JPEG corpus contains %d images, expected 254\n", total);
-	free(root);
 	return gdNumFailures();
 }

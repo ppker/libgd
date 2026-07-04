@@ -25,37 +25,26 @@ static int has_jxl_suffix(const char *name) {
 	return len > 4 && strcmp(name + len - 4, ".jxl") == 0;
 }
 
-static unsigned char *read_file(const char *directory, const char *filename,
-								int *size) {
-	FILE *fp;
+static unsigned char *read_file(FILE *fp, int *size) {
 	long len;
 	unsigned char *data;
 
 	*size = 0;
-	fp = gdTestFileOpenX("jxl", "conformance", directory, filename, NULL);
-	if (fp == NULL) {
-		return NULL;
-	}
 	if (fseek(fp, 0, SEEK_END) != 0) {
-		fclose(fp);
 		return NULL;
 	}
 	len = ftell(fp);
 	if (len < 0 || len > INT_MAX || fseek(fp, 0, SEEK_SET) != 0) {
-		fclose(fp);
 		return NULL;
 	}
 	data = (unsigned char *)malloc(len > 0 ? (size_t)len : 1);
 	if (data == NULL) {
-		fclose(fp);
 		return NULL;
 	}
 	if (len > 0 && fread(data, 1, (size_t)len, fp) != (size_t)len) {
 		free(data);
-		fclose(fp);
 		return NULL;
 	}
-	fclose(fp);
 	*size = (int)len;
 	return data;
 }
@@ -67,37 +56,43 @@ static void assert_valid_file(const char *directory, const char *filename) {
 	int delay;
 	int frames = 0;
 	int size;
-	char path[4096];
+	FILE *fp;
 
-	snprintf(path, sizeof(path), "%s/%s", directory, filename);
-	data = read_file(directory, filename, &size);
-	gdTestAssertMsg(data != NULL, "cannot read JXL corpus file: %s\n", path);
+	fp = gdTestFileOpenX("jxl", "conformance", directory, filename, NULL);
+	gdTestAssertMsg(fp != NULL, "cannot open JXL corpus file: %s\n", filename);
+	if (fp == NULL) {
+		return;
+	}
+	data = read_file(fp, &size);
+	fclose(fp);
+	gdTestAssertMsg(data != NULL, "cannot read JXL corpus file: %s\n",
+					filename);
 	if (data == NULL) {
 		return;
 	}
 
 	image = gdImageCreateFromJxlPtr(size, data);
-	gdTestAssertMsg(image != NULL, "valid JXL failed to decode: %s\n", path);
+	gdTestAssertMsg(image != NULL, "valid JXL failed to decode: %s\n", filename);
 	if (image != NULL) {
 		gdTestAssertMsg(gdImageSX(image) > 0 && gdImageSY(image) > 0,
-						"decoded JXL has invalid dimensions: %s\n", path);
+						"decoded JXL has invalid dimensions: %s\n", filename);
 		gdImageDestroy(image);
 	}
 
 	reader = gdImageJxlAnimReaderCreatePtr(size, data);
 	gdTestAssertMsg(reader != NULL,
-					"animation reader rejected valid JXL: %s\n", path);
+					"animation reader rejected valid JXL: %s\n", filename);
 	if (reader != NULL) {
 		while ((image = gdJxlReadNextImage(reader, &delay)) != NULL) {
 			gdTestAssertMsg(gdImageSX(image) > 0 && gdImageSY(image) > 0,
-							"JXL frame has invalid dimensions: %s\n", path);
+							"JXL frame has invalid dimensions: %s\n", filename);
 			gdTestAssertMsg(delay >= 0,
-							"JXL frame has negative duration: %s\n", path);
+							"JXL frame has negative duration: %s\n", filename);
 			frames++;
 			gdImageDestroy(image);
 		}
 		gdTestAssertMsg(frames > 0, "valid JXL yielded no frames: %s\n",
-						path);
+						filename);
 		gdImageJxlAnimReaderDestroy(reader);
 	}
 
@@ -110,18 +105,24 @@ static void assert_invalid_file(const char *directory, const char *filename) {
 	gdImagePtr image;
 	int delay = -1;
 	int size;
-	char path[4096];
+	FILE *fp;
 
-	snprintf(path, sizeof(path), "%s/%s", directory, filename);
-	data = read_file(directory, filename, &size);
-	gdTestAssertMsg(data != NULL, "cannot read invalid JXL file: %s\n", path);
+	fp = gdTestFileOpenX("jxl", "conformance", directory, filename, NULL);
+	gdTestAssertMsg(fp != NULL, "cannot open invalid JXL file: %s\n", filename);
+	if (fp == NULL) {
+		return;
+	}
+	data = read_file(fp, &size);
+	fclose(fp);
+	gdTestAssertMsg(data != NULL, "cannot read invalid JXL file: %s\n",
+					filename);
 	if (data == NULL) {
 		return;
 	}
 
 	image = gdImageCreateFromJxlPtr(size, data);
 	gdTestAssertMsg(image == NULL, "invalid JXL decoded successfully: %s\n",
-					path);
+					filename);
 	if (image != NULL) {
 		gdImageDestroy(image);
 	}
@@ -130,7 +131,7 @@ static void assert_invalid_file(const char *directory, const char *filename) {
 	if (reader != NULL) {
 		image = gdJxlReadNextImage(reader, &delay);
 		gdTestAssertMsg(image == NULL,
-						"invalid JXL animation yielded a frame: %s\n", path);
+						"invalid JXL animation yielded a frame: %s\n", filename);
 		if (image != NULL) {
 			gdImageDestroy(image);
 		}
@@ -140,35 +141,23 @@ static void assert_invalid_file(const char *directory, const char *filename) {
 	free(data);
 }
 
-static int scan_category(const char *root, const corpus_category *category) {
-	char directory[4096];
+static int scan_category(const corpus_category *category) {
+	char *directory;
 	DIR *handle;
 	struct dirent *entry;
 	int files = 0;
 
-	if (snprintf(directory, sizeof(directory), "%s/%s", root,
-				 category->name) >= (int)sizeof(directory)) {
-		gdTestErrorMsg("JXL corpus path is too long: %s/%s\n", root,
-					   category->name);
-		return 0;
-	}
+	directory = gdTestFilePathX("jxl", "conformance", category->name, NULL);
 	handle = opendir(directory);
 	if (handle == NULL) {
 		gdTestErrorMsg("cannot open JXL conformance directory: %s\n",
 					   directory);
+		free(directory);
 		return 0;
 	}
 
 	while ((entry = readdir(handle)) != NULL) {
-		char path[4096];
-
 		if (!has_jxl_suffix(entry->d_name)) {
-			continue;
-		}
-		if (snprintf(path, sizeof(path), "%s/%s", directory,
-					 entry->d_name) >= (int)sizeof(path)) {
-			gdTestErrorMsg("JXL corpus path is too long: %s/%s\n", directory,
-						   entry->d_name);
 			continue;
 		}
 		files++;
@@ -183,6 +172,7 @@ static int scan_category(const char *root, const corpus_category *category) {
 	gdTestAssertMsg(files == category->expected_count,
 					"JXL category %s contains %d files, expected %d\n",
 					category->name, files, category->expected_count);
+	free(directory);
 	return files;
 }
 
@@ -194,14 +184,13 @@ int main(void) {
 		{"edge-cases", 13, JXL_EXPECT_VALID},
 		{"invalid", 4, JXL_EXPECT_INVALID},
 	};
-	char *root = gdTestFilePathX("jxl", "conformance", NULL);
 	int total_valid = 0;
 	int total_invalid = 0;
 	size_t i;
 
 	gdSetErrorMethod(gdSilence);
 	for (i = 0; i < sizeof(categories) / sizeof(categories[0]); i++) {
-		int count = scan_category(root, &categories[i]);
+		int count = scan_category(&categories[i]);
 		if (categories[i].expectation == JXL_EXPECT_VALID) {
 			total_valid += count;
 		} else {
@@ -216,6 +205,5 @@ int main(void) {
 	gdTestAssertMsg(total_invalid == 4,
 					"JXL invalid corpus contains %d files, expected 4\n",
 					total_invalid);
-	free(root);
 	return gdNumFailures();
 }
