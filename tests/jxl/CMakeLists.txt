@@ -2,6 +2,7 @@ IF(JXL_FOUND)
 ADD_DEFINITIONS(-DHAVE_LIBJXL)
 LIST(APPEND TESTS_FILES
 	jxl_null
+	jxl_conformance
 	jxl_im2im
 	jxl_lossless_im2im
 	jxl_alpha
