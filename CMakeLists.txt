@@ -469,7 +469,7 @@ INSTALL(FILES examples/flip.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MI
 INSTALL(FILES examples/gif.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
 INSTALL(FILES examples/gif_frames.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
 INSTALL(FILES examples/gif_rewrite.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
-INSTALL(FILES examples/jxl_create_anim.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
+INSTALL(FILES examples/jxl_create_anim.c examples/jxl_create_anim_vector.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
 INSTALL(FILES examples/jxl_frames.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
 INSTALL(FILES examples/nnquant.c DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
 INSTALL(FILES examples/noIcon.pic DESTINATION share/doc/gd-${GDLIB_MAJOR}.${GDLIB_MINOR})
