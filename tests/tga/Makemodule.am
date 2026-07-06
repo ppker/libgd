@@ -4,6 +4,7 @@ libgd_test_programs += \
 	tga/bug00247a \
 	tga/bug00248 \
 	tga/bug00248a \
+	tga/colormap_bits_stack_oob \
 	tga/heap_overflow \
 	tga/tga_null
 
@@ -20,6 +21,7 @@ EXTRA_DIST += \
 	tga/bug00247a.tga \
 	tga/bug00248.tga \
 	tga/bug00248a.tga \
+	tga/colormap_bits_stack_oob.tga \
 	tga/heap_overflow_1.tga \
 	tga/heap_overflow_2.tga \
 	tga/conformance/LICENSE \

@@ -4,6 +4,7 @@ LIST(APPEND TESTS_FILES
 	bug00247a
 	bug00248
 	bug00248a
+	colormap_bits_stack_oob
 	heap_overflow
 	tga_null
 )
