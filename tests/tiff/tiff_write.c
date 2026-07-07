@@ -166,7 +166,7 @@ static void test_multipage_rgb_ptr(void) {
 	gdTiffReadPtr reader;
 	gdTiffInfo info;
 	gdTiffPageInfo page;
-	gdImagePtr page0, page1, im;
+	gdImagePtr page0, page1, im0 = NULL, im1 = NULL;
 	void *data;
 	int size = 0;
 
@@ -216,7 +216,7 @@ static void test_multipage_rgb_ptr(void) {
 					"unexpected first page resolution %.2f x %.2f",
 					info.xResolution, info.yResolution);
 
-	gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
+	gdTestAssert(gdTiffReadNextImage(reader, &page, &im0) == 1);
 	gdTestAssertMsg(page.pageIndex == 0 && page.width == 7 && page.height == 5,
 					"unexpected page 0 info");
 	gdTestAssertMsg(page.bitsPerSample == 8 && page.samplesPerPixel == 3,
@@ -224,20 +224,28 @@ static void test_multipage_rgb_ptr(void) {
 	gdTestAssertMsg(page.compression == COMPRESSION_NONE &&
 						page.photometric == PHOTOMETRIC_RGB,
 					"unexpected page 0 tags");
-	if (im != NULL) {
-		assert_pixel_rgb(im, 0, 0, 255, 0, 0);
-		assert_pixel_rgb(im, 6, 4, 0, 255, 255);
+	if (im0 != NULL) {
+		assert_pixel_rgb(im0, 0, 0, 255, 0, 0);
+		assert_pixel_rgb(im0, 6, 4, 0, 255, 255);
 	}
 
-	gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 1);
+	gdTestAssert(gdTiffReadNextImage(reader, &page, &im1) == 1);
 	gdTestAssertMsg(page.pageIndex == 1 && page.width == 3 && page.height == 4,
 					"unexpected page 1 info");
-	if (im != NULL) {
-		assert_pixel_rgb(im, 0, 0, 0, 128, 255);
-		assert_pixel_rgb(im, 2, 3, 255, 127, 0);
+	if (im1 != NULL) {
+		assert_pixel_rgb(im1, 0, 0, 0, 128, 255);
+		assert_pixel_rgb(im1, 2, 3, 255, 127, 0);
 	}
-	gdTestAssert(gdTiffReadNextImage(reader, &page, &im) == 0);
+	if (im0 != NULL) {
+		assert_pixel_rgb(im0, 0, 0, 255, 0, 0);
+		assert_pixel_rgb(im0, 6, 4, 0, 255, 255);
+	}
+	gdTestAssert(gdTiffReadNextImage(reader, &page, NULL) == 0);
 
+	if (im0 != NULL)
+		gdImageDestroy(im0);
+	if (im1 != NULL)
+		gdImageDestroy(im1);
 	gdTiffReadClose(reader);
 	gdFree(data);
 
@@ -289,6 +297,8 @@ static void test_options_and_formats(void) {
 				gdTestAssertMsg(page.resolutionUnit == RESUNIT_CENTIMETER,
 								"unexpected resolution unit %d",
 								page.resolutionUnit);
+				if (im != NULL)
+					gdImageDestroy(im);
 				gdTiffReadClose(reader);
 			}
 			gdFree(data);
@@ -319,6 +329,8 @@ static void test_options_and_formats(void) {
 								"unexpected bilevel compression");
 				gdTestAssertMsg(page.photometric == PHOTOMETRIC_MINISWHITE,
 								"unexpected bilevel photometric");
+				if (im != NULL)
+					gdImageDestroy(im);
 				gdTiffReadClose(reader);
 			}
 			gdFree(data);
@@ -591,6 +603,7 @@ static void test_compression_matrix(void) {
 								"lossless compression %d changed %u pixels",
 								lossless_compressions[i],
 								result.pixels_changed);
+				gdImageDestroy(im);
 			}
 			gdTiffReadClose(reader);
 		}
@@ -613,6 +626,8 @@ static void test_compression_matrix(void) {
 							"unexpected JPEG compression tag %d",
 							page.compression);
 			assert_roundtrip_close(src, data, size, 80);
+			if (im != NULL)
+				gdImageDestroy(im);
 			gdTiffReadClose(reader);
 		}
 		gdFree(data);
@@ -654,6 +669,8 @@ static void test_compression_matrix(void) {
 			gdTestAssertMsg(page.compression == opts.compression,
 							"unexpected CCITT compression tag %d",
 							page.compression);
+			if (im != NULL)
+				gdImageDestroy(im);
 			gdTiffReadClose(reader);
 		}
 		gdFree(data);
@@ -713,6 +730,7 @@ static void test_writer_entry_points_and_validation(void) {
 										"unexpected FILE writer page index");
 						if (dst != NULL) {
 							assert_pixel_rgb(dst, 0, 0, 12, 34, 56);
+							gdImageDestroy(dst);
 						}
 						pages++;
 					}

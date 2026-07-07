@@ -1064,7 +1064,6 @@ BGD_DECLARE(void) gdTiffReadClose(gdTiffReadPtr tiff);
 BGD_DECLARE(int) gdTiffReadGetInfo(gdTiffReadPtr tiff, gdTiffInfo *info);
 BGD_DECLARE(int)
 gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image);
-BGD_DECLARE(gdImagePtr) gdTiffReadCloneImage(gdTiffReadPtr tiff);
 
 /* TIFF Write API */
 #define GD_TIFF_RGB 1

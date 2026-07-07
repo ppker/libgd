@@ -89,12 +89,12 @@ int main(int argc, char **argv)
                pageInfo.planar, pageInfo.hasAlpha, pageInfo.isTiled, pageInfo.xResolution,
                pageInfo.yResolution, pageInfo.resolutionUnit);
 
-        /* image is borrowed from the reader and is valid until the next
-         * iterator call. */
         if (!write_png(image, argv[2], pageCount)) {
+            gdImageDestroy(image);
             gdTiffReadClose(tiff);
             return 1;
         }
+        gdImageDestroy(image);
         pageCount++;
     }
 

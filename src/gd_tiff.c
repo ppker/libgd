@@ -1171,7 +1171,6 @@ typedef struct gdTiffReadStruct {
     gdIOCtx *memCtx;
     int pageCount;
     int currentPage;
-    gdImagePtr image;
 } gdTiffRead;
 
 static uint8_t *TiffReadCtxData(gdIOCtx *infile, size_t *size)
@@ -1345,7 +1344,6 @@ static gdTiffReadPtr TiffReadOpenFromData(uint8_t *data, size_t size)
         return NULL;
     }
     tiff->currentPage = -1;
-    tiff->image = NULL;
 
     return tiff;
 }
@@ -1411,9 +1409,6 @@ BGD_DECLARE(void) gdTiffReadClose(gdTiffReadPtr tiff)
     if (tiff == NULL) {
         return;
     }
-    if (tiff->image != NULL) {
-        gdImageDestroy(tiff->image);
-    }
     if (tiff->tif != NULL) {
         TIFFClose(tiff->tif);
     }
@@ -1446,6 +1441,7 @@ BGD_DECLARE(int) gdTiffReadGetInfo(gdTiffReadPtr tiff, gdTiffInfo *info)
 BGD_DECLARE(int)
 gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image)
 {
+    gdImagePtr decoded;
     int ok;
 
     if (image != NULL) {
@@ -1473,44 +1469,19 @@ gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image)
 
     TiffFillPageInfo(tiff->tif, info, tiff->currentPage);
 
-    if (tiff->image != NULL) {
-        gdImageDestroy(tiff->image);
-        tiff->image = NULL;
-    }
-
-    tiff->image = TiffDecodeCurrentDirectory(tiff->tif);
-    if (tiff->image == NULL) {
+    decoded = TiffDecodeCurrentDirectory(tiff->tif);
+    if (decoded == NULL) {
         ok = TIFFSetDirectory(tiff->tif, TIFFCurrentDirectory(tiff->tif));
         (void)ok;
         return -1;
     }
 
     if (image != NULL) {
-        *image = tiff->image;
+        *image = decoded;
+    } else {
+        gdImageDestroy(decoded);
     }
     return 1;
-}
-
-BGD_DECLARE(gdImagePtr) gdTiffReadCloneImage(gdTiffReadPtr tiff)
-{
-    gdImagePtr dst;
-    int x, y;
-
-    if (tiff == NULL || tiff->image == NULL) {
-        return NULL;
-    }
-    dst = gdImageCreateTrueColor(gdImageSX(tiff->image), gdImageSY(tiff->image));
-    if (dst == NULL) {
-        return NULL;
-    }
-    gdImageAlphaBlending(dst, 0);
-    gdImageSaveAlpha(dst, tiff->image->saveAlphaFlag);
-    for (y = 0; y < gdImageSY(tiff->image); y++) {
-        for (x = 0; x < gdImageSX(tiff->image); x++) {
-            dst->tpixels[y][x] = gdImageGetPixel(tiff->image, x, y);
-        }
-    }
-    return dst;
 }
 
 BGD_DECLARE(int) gdTiffIsMultiPage(FILE *fd)
@@ -2340,13 +2311,6 @@ gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image)
     ARG_NOT_USED(image);
     _noTiffError();
     return -1;
-}
-
-BGD_DECLARE(gdImagePtr) gdTiffReadCloneImage(gdTiffReadPtr tiff)
-{
-    ARG_NOT_USED(tiff);
-    _noTiffError();
-    return NULL;
 }
 
 BGD_DECLARE(int) gdTiffIsMultiPage(FILE *fd)

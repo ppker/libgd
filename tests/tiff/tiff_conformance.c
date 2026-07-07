@@ -36,6 +36,7 @@ static void test_two_ifds_fixture(void) {
 			gdTestAssertMsg(
 				gdImageSX(im) == page.width && gdImageSY(im) == page.height,
 				"page %d dimensions disagree with page info", pages);
+			gdImageDestroy(im);
 		}
 		pages++;
 	}
