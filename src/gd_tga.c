@@ -198,7 +198,9 @@ int read_header_tga(gdIOCtx *ctx, oTga *tga)
     switch (tga->imagetype) {
     case TGA_TYPE_INDEXED:
     case TGA_TYPE_INDEXED_RLE:
-        if (tga->colormaptype != 1 || tga->bits != TGA_BPP_8) {
+        if (tga->colormaptype != 1 || tga->bits != TGA_BPP_8 ||
+            !(tga->colormapbits == 15 || tga->colormapbits == 16 || tga->colormapbits == 24 ||
+              tga->colormapbits == 32)) {
             gd_error_ex(GD_WARNING, "gd-tga: unsupported color mapped image\n");
             return -1;
         }

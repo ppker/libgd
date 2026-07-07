@@ -1062,6 +1062,7 @@ BGD_DECLARE(gdTiffReadPtr) gdTiffReadOpenCtx(gdIOCtxPtr in);
 BGD_DECLARE(gdTiffReadPtr) gdTiffReadOpenPtr(int size, void *data);
 BGD_DECLARE(void) gdTiffReadClose(gdTiffReadPtr tiff);
 BGD_DECLARE(int) gdTiffReadGetInfo(gdTiffReadPtr tiff, gdTiffInfo *info);
+/* On success, ownership of *image is transferred to the caller. */
 BGD_DECLARE(int)
 gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image);
 
@@ -1070,6 +1071,28 @@ gdTiffReadNextImage(gdTiffReadPtr tiff, gdTiffPageInfo *info, gdImagePtr *image)
 #define GD_TIFF_RGBA 2
 #define GD_TIFF_GRAY 3
 #define GD_TIFF_BILEVEL 4
+
+#define GD_TIFF_COMPRESSION_NONE 1
+#define GD_TIFF_COMPRESSION_CCITT_RLE 2
+#define GD_TIFF_COMPRESSION_CCITT_FAX3 3
+#define GD_TIFF_COMPRESSION_CCITT_FAX4 4
+#define GD_TIFF_COMPRESSION_LZW 5
+#define GD_TIFF_COMPRESSION_JPEG 7
+#define GD_TIFF_COMPRESSION_ADOBE_DEFLATE 8
+#define GD_TIFF_COMPRESSION_DEFLATE 32946
+#define GD_TIFF_COMPRESSION_PACKBITS 32773
+
+#define GD_TIFF_PHOTOMETRIC_MINISWHITE 0
+#define GD_TIFF_PHOTOMETRIC_MINISBLACK 1
+#define GD_TIFF_PHOTOMETRIC_RGB 2
+#define GD_TIFF_PHOTOMETRIC_PALETTE 3
+#define GD_TIFF_PHOTOMETRIC_TRANSPARENCY_MASK 4
+#define GD_TIFF_PHOTOMETRIC_SEPARATED 5
+#define GD_TIFF_PHOTOMETRIC_YCBCR 6
+#define GD_TIFF_PHOTOMETRIC_CIELAB 8
+
+#define GD_TIFF_PLANARCONFIG_CONTIG 1
+#define GD_TIFF_PLANARCONFIG_SEPARATE 2
 
 #define GD_TIFF_RESUNIT_NONE 1
 #define GD_TIFF_RESUNIT_INCH 2

@@ -480,7 +480,6 @@ gdImageColorClosestAlpha(gdImagePtr im, int r, int g, int b, int a)
  * conversion to/from RBG and HWB colour systems. It has been modified to return
  * the converted value as a * parameter.
  */
-
 #define RETURN_HWB(h, w, b)                                                                        \
     {                                                                                              \
         HWB->H = h;                                                                                \
@@ -734,6 +733,7 @@ gdImageColorAllocateAlpha(gdImagePtr im, int r, int g, int b, int a)
     im->blue[ct] = b;
     im->alpha[ct] = a;
     im->open[ct] = 0;
+
     return ct;
 }
 
