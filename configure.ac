@@ -306,7 +306,7 @@ GD_LIB_PKG_CHECK([LIBTIFF], [TIFF], [libtiff-4], [
 ])
 
 dnl Check for webp support.
-GD_LIB_PKG_CHECK([LIBWEBP], [WEBP], [libwebp >= 0.2.0 libwebpdemux libwebpmux], [
+GD_LIB_PKG_CHECK([LIBWEBP], [WEBP], [libwebp >= 1.3.0 libwebpdemux libwebpmux], [
   AC_CHECK_LIB([webp], [WebPGetInfo], [dnl
     AC_CHECK_LIB([webpdemux], [WebPDemux], [dnl
       AC_CHECK_LIB([webpmux], [WebPAnimEncoderNewInternal], [dnl

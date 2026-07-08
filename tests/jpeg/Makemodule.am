@@ -9,7 +9,9 @@ libgd_test_programs += \
 	jpeg/jpeg_im2im \
 	jpeg/jpeg_null \
 	jpeg/jpeg_ptr_double_free \
-	jpeg/jpeg_resolution
+	jpeg/jpeg_read_options \
+	jpeg/jpeg_resolution \
+	jpeg/jpeg_write_options
 
 if HAVE_LIBPNG
 libgd_test_programs += \

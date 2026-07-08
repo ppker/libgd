@@ -836,6 +836,67 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromWBMPCtx(gdIOCtxPtr infile);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromWBMPPtr(int size, void *data);
 
 /* JPEG */
+enum {
+    GD_JPEG_COLOR_SPACE_UNKNOWN = 0,
+    GD_JPEG_COLOR_SPACE_GRAYSCALE = 1,
+    GD_JPEG_COLOR_SPACE_RGB = 2,
+    GD_JPEG_COLOR_SPACE_YCBCR = 3,
+    GD_JPEG_COLOR_SPACE_CMYK = 4,
+    GD_JPEG_COLOR_SPACE_YCCK = 5
+};
+
+enum {
+    GD_JPEG_DENSITY_UNIT_NONE = 0,
+    GD_JPEG_DENSITY_UNIT_DPI = 1,
+    GD_JPEG_DENSITY_UNIT_DPCM = 2
+};
+
+enum {
+    GD_JPEG_DCT_DEFAULT = 0,
+    GD_JPEG_DCT_SLOW = 1,
+    GD_JPEG_DCT_FAST = 2,
+    GD_JPEG_DCT_FLOAT = 3
+};
+
+typedef struct {
+    size_t struct_size;
+    int width;
+    int height;
+    int bits_per_sample;
+    int components;
+    int color_space;
+    int progressive;
+    int density_unit;
+    int x_density;
+    int y_density;
+    int has_exif;
+    int has_xmp;
+    int has_icc;
+    int has_iptc;
+} gdJpegInfo;
+
+typedef struct {
+    size_t struct_size;
+    int ignore_warning;
+    unsigned int scale_num;
+    unsigned int scale_denom;
+    int dct_method;
+} gdJpegReadOptions;
+
+typedef struct {
+    size_t struct_size;
+    int quality;
+    int progressive;
+    int force_no_subsampling;
+    const gdImageMetadata *metadata;
+} gdJpegWriteOptions;
+
+BGD_DECLARE(void) gdJpegInfoInit(gdJpegInfo *info);
+BGD_DECLARE(void) gdJpegReadOptionsInit(gdJpegReadOptions *options);
+BGD_DECLARE(void) gdJpegWriteOptionsInit(gdJpegWriteOptions *options);
+BGD_DECLARE(int) gdJpegGetInfo(FILE *infile, gdJpegInfo *info);
+BGD_DECLARE(int) gdJpegGetInfoCtx(gdIOCtxPtr infile, gdJpegInfo *info);
+BGD_DECLARE(int) gdJpegGetInfoPtr(int size, const void *data, gdJpegInfo *info);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromJpeg(FILE *infile);
 BGD_DECLARE(gdImagePtr)
 gdImageCreateFromJpegEx(FILE *infile, int ignore_warning);
@@ -847,9 +908,13 @@ gdImageCreateFromJpegCtxWithMetadata(gdIOCtxPtr infile, gdImageMetadata *metadat
 BGD_DECLARE(gdImagePtr)
 gdImageCreateFromJpegCtxExWithMetadata(gdIOCtxPtr infile, int ignore_warning,
                                        gdImageMetadata *metadata);
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegCtxWithOptions(gdIOCtxPtr infile, const gdJpegReadOptions *options);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromJpegPtr(int size, void *data);
 BGD_DECLARE(gdImagePtr)
 gdImageCreateFromJpegPtrEx(int size, void *data, int ignore_warning);
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromJpegPtrWithOptions(int size, void *data, const gdJpegReadOptions *options);
 BGD_DECLARE(gdImagePtr)
 gdImageCreateFromJpegPtrWithMetadata(int size, void *data, gdImageMetadata *metadata);
 BGD_DECLARE(gdImagePtr)
@@ -1436,11 +1501,17 @@ BGD_DECLARE(void) gdImageJpegCtx(gdImagePtr im, gdIOCtxPtr out, int quality);
 BGD_DECLARE(void)
 gdImageJpegCtxWithMetadata(gdImagePtr im, gdIOCtxPtr out, int quality,
                            const gdImageMetadata *metadata);
+BGD_DECLARE(int)
+gdImageJpegWithOptions(gdImagePtr im, FILE *out, const gdJpegWriteOptions *options);
+BGD_DECLARE(int)
+gdImageJpegCtxWithOptions(gdImagePtr im, gdIOCtxPtr out, const gdJpegWriteOptions *options);
 
 /* Best to free this memory with gdFree(), not free() */
 BGD_DECLARE(void *) gdImageJpegPtr(gdImagePtr im, int *size, int quality);
 BGD_DECLARE(void *)
 gdImageJpegPtrWithMetadata(gdImagePtr im, int *size, int quality, const gdImageMetadata *metadata);
+BGD_DECLARE(void *)
+gdImageJpegPtrWithOptions(gdImagePtr im, int *size, const gdJpegWriteOptions *options);
 
 /**
  * Group: WebP

@@ -4,7 +4,9 @@ LIST(APPEND TESTS_FILES
 	jpeg_im2im
 	jpeg_ptr_double_free
 	jpeg_null
+	jpeg_read_options
 	jpeg_resolution
+	jpeg_write_options
 )
 
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../conformance/jpeg/conformance")
