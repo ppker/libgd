@@ -1123,8 +1123,26 @@ typedef const char *gdHeifChroma;
 #define GD_HEIF_CHROMA_422 "422"
 #define GD_HEIF_CHROMA_444 "444"
 
+typedef struct {
+    size_t struct_size;
+    int ignore_transformations;
+} gdHeifReadOptions;
+
+typedef struct {
+    size_t struct_size;
+    int quality;
+    int lossless;
+    gdHeifCodec codec;
+    gdHeifChroma chroma;
+} gdHeifWriteOptions;
+
+BGD_DECLARE(void) gdHeifReadOptionsInit(gdHeifReadOptions *options);
+BGD_DECLARE(void) gdHeifWriteOptionsInit(gdHeifWriteOptions *options);
+
 BGD_DECLARE(gdImagePtr) gdImageCreateFromHeif(FILE *inFile);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromHeifPtr(int size, void *data);
+BGD_DECLARE(gdImagePtr)
+gdImageCreateFromHeifPtrWithOptions(int size, void *data, const gdHeifReadOptions *options);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromHeifCtx(gdIOCtxPtr infile);
 
 BGD_DECLARE(void)
@@ -1133,6 +1151,8 @@ BGD_DECLARE(void) gdImageHeif(gdImagePtr im, FILE *outFile);
 BGD_DECLARE(void *) gdImageHeifPtr(gdImagePtr im, int *size);
 BGD_DECLARE(void *)
 gdImageHeifPtrEx(gdImagePtr im, int *size, int quality, gdHeifCodec codec, gdHeifChroma chroma);
+BGD_DECLARE(void *)
+gdImageHeifPtrWithOptions(gdImagePtr im, int *size, const gdHeifWriteOptions *options);
 BGD_DECLARE(void)
 gdImageHeifCtx(gdImagePtr im, gdIOCtxPtr outfile, int quality, gdHeifCodec codec,
                gdHeifChroma chroma);
@@ -1142,12 +1162,29 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromAvif(FILE *inFile);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromAvifPtr(int size, void *data);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromAvifCtx(gdIOCtxPtr infile);
 
+enum {
+    GD_AVIF_CHROMA_SUBSAMPLING_AUTO = 0,
+    GD_AVIF_CHROMA_SUBSAMPLING_YUV420 = 1,
+    GD_AVIF_CHROMA_SUBSAMPLING_YUV444 = 2
+};
+
+typedef struct {
+    size_t struct_size;
+    int quality;
+    int speed;
+    int lossless;
+    int chroma_subsampling;
+} gdAvifWriteOptions;
+
+BGD_DECLARE(void) gdAvifWriteOptionsInit(gdAvifWriteOptions *options);
 BGD_DECLARE(void) gdImageAvif(gdImagePtr im, FILE *outFile);
 BGD_DECLARE(void)
 gdImageAvifEx(gdImagePtr im, FILE *outFile, int quality, int speed);
 BGD_DECLARE(void *) gdImageAvifPtr(gdImagePtr im, int *size);
 BGD_DECLARE(void *)
 gdImageAvifPtrEx(gdImagePtr im, int *size, int quality, int speed);
+BGD_DECLARE(void *)
+gdImageAvifPtrWithOptions(gdImagePtr im, int *size, const gdAvifWriteOptions *options);
 BGD_DECLARE(void)
 gdImageAvifCtx(gdImagePtr im, gdIOCtxPtr outfile, int quality, int speed);
 
