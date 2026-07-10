@@ -97,6 +97,16 @@ static int quality2Quantizer(int quality)
     return round(scaleFactor * (MAX_QUALITY - clampedQuality));
 }
 
+BGD_DECLARE(void) gdAvifWriteOptionsInit(gdAvifWriteOptions *options)
+{
+    memset(options, 0, sizeof(*options));
+    options->struct_size = sizeof(*options);
+    options->quality = QUALITY_DEFAULT;
+    options->speed = SPEED_DEFAULT;
+    options->lossless = GD_FALSE;
+    options->chroma_subsampling = GD_AVIF_CHROMA_SUBSAMPLING_AUTO;
+}
+
 /*
          As of February 2021, this algorithm reflects the latest research on how
    many tiles and threads to include for a given image size. This is subject to
@@ -532,19 +542,32 @@ cleanup:
 
          This function returns 0 on success, or 1 on failure.
  */
-static avifBool _gdImageAvifCtx(gdImagePtr im, gdIOCtx *outfile, int quality, int speed)
+static avifBool _gdImageAvifCtx(gdImagePtr im, gdIOCtx *outfile, const gdAvifWriteOptions *options)
 {
     avifResult result;
     avifRGBImage rgb = {0};
     avifRWData avifOutput = AVIF_DATA_EMPTY;
     avifBool failed = AVIF_FALSE;
-    avifBool lossless = quality == 100;
+    avifBool lossless;
     avifEncoder *encoder = NULL;
     avifImage *avifIm = NULL;
+    gdAvifWriteOptions default_options;
+    int quality, speed, chroma_subsampling, subsampling_quality;
 
     uint32_t val;
     uint8_t *p;
     uint32_t x, y;
+
+    if (options == NULL) {
+        gdAvifWriteOptionsInit(&default_options);
+        options = &default_options;
+    }
+
+    quality = options->quality;
+    speed = options->speed;
+    chroma_subsampling = options->chroma_subsampling;
+    lossless = options->lossless || quality == 100;
+    subsampling_quality = lossless ? 100 : quality;
 
     if (im == NULL)
         return 1;
@@ -566,9 +589,20 @@ static avifBool _gdImageAvifCtx(gdImagePtr im, gdIOCtx *outfile, int quality, in
 
     speed = CLAMP(speed, AVIF_SPEED_SLOWEST, AVIF_SPEED_FASTEST);
 
-    avifPixelFormat subsampling = quality >= HIGH_QUALITY_SUBSAMPLING_THRESHOLD
+    avifPixelFormat subsampling;
+    switch (chroma_subsampling) {
+    case GD_AVIF_CHROMA_SUBSAMPLING_YUV420:
+        subsampling = AVIF_PIXEL_FORMAT_YUV420;
+        break;
+    case GD_AVIF_CHROMA_SUBSAMPLING_YUV444:
+        subsampling = AVIF_PIXEL_FORMAT_YUV444;
+        break;
+    default:
+        subsampling = subsampling_quality >= HIGH_QUALITY_SUBSAMPLING_THRESHOLD
                                       ? CHROMA_SUBAMPLING_HIGH_QUALITY
                                       : CHROMA_SUBSAMPLING_DEFAULT;
+        break;
+    }
 
     // Create the AVIF image.
     // Set the ICC to sRGB, as that's what gd supports right now.
@@ -623,7 +657,8 @@ static avifBool _gdImageAvifCtx(gdImagePtr im, gdIOCtx *outfile, int quality, in
     }
 
     int quantizerQuality =
-        quality == QUALITY_DEFAULT ? QUANTIZER_DEFAULT : quality2Quantizer(quality);
+        lossless ? quality2Quantizer(100)
+                 : (quality == QUALITY_DEFAULT ? QUANTIZER_DEFAULT : quality2Quantizer(quality));
 
     encoder->minQuantizer = quantizerQuality;
     encoder->maxQuantizer = quantizerQuality;
@@ -670,11 +705,15 @@ BGD_DECLARE(void)
 gdImageAvifEx(gdImagePtr im, FILE *outFile, int quality, int speed)
 {
     gdIOCtx *out = gdNewFileCtx(outFile);
+    gdAvifWriteOptions options;
 
     if (out == NULL)
         return;
 
-    gdImageAvifCtx(im, out, quality, speed);
+    gdAvifWriteOptionsInit(&options);
+    options.quality = quality;
+    options.speed = speed;
+    _gdImageAvifCtx(im, out, &options);
     out->gd_free(out);
 }
 
@@ -686,6 +725,17 @@ BGD_DECLARE(void) gdImageAvif(gdImagePtr im, FILE *outFile)
 BGD_DECLARE(void *)
 gdImageAvifPtrEx(gdImagePtr im, int *size, int quality, int speed)
 {
+    gdAvifWriteOptions options;
+
+    gdAvifWriteOptionsInit(&options);
+    options.quality = quality;
+    options.speed = speed;
+    return gdImageAvifPtrWithOptions(im, size, &options);
+}
+
+BGD_DECLARE(void *)
+gdImageAvifPtrWithOptions(gdImagePtr im, int *size, const gdAvifWriteOptions *options)
+{
     void *rv;
     gdIOCtx *out = gdNewDynamicCtx(NEW_DYNAMIC_CTX_SIZE, NULL);
 
@@ -693,7 +743,7 @@ gdImageAvifPtrEx(gdImagePtr im, int *size, int quality, int speed)
         return NULL;
     }
 
-    if (_gdImageAvifCtx(im, out, quality, speed))
+    if (_gdImageAvifCtx(im, out, options))
         rv = NULL;
     else
         rv = gdDPExtractData(out, size);
@@ -710,7 +760,12 @@ BGD_DECLARE(void *) gdImageAvifPtr(gdImagePtr im, int *size)
 BGD_DECLARE(void)
 gdImageAvifCtx(gdImagePtr im, gdIOCtx *outfile, int quality, int speed)
 {
-    _gdImageAvifCtx(im, outfile, quality, speed);
+    gdAvifWriteOptions options;
+
+    gdAvifWriteOptionsInit(&options);
+    options.quality = quality;
+    options.speed = speed;
+    _gdImageAvifCtx(im, outfile, &options);
 }
 
 #else /* !HAVE_LIBAVIF */
@@ -719,6 +774,16 @@ static void *_noAvifError(void)
 {
     gd_error("AVIF image support has been disabled\n");
     return NULL;
+}
+
+BGD_DECLARE(void) gdAvifWriteOptionsInit(gdAvifWriteOptions *options)
+{
+    memset(options, 0, sizeof(*options));
+    options->struct_size = sizeof(*options);
+    options->quality = -1;
+    options->speed = 6;
+    options->lossless = GD_FALSE;
+    options->chroma_subsampling = GD_AVIF_CHROMA_SUBSAMPLING_AUTO;
 }
 
 BGD_DECLARE(gdImagePtr) gdImageCreateFromAvif(FILE *ctx)
@@ -782,6 +847,15 @@ gdImageAvifPtrEx(gdImagePtr im, int *size, int quality, int speed)
     ARG_NOT_USED(size);
     ARG_NOT_USED(quality);
     ARG_NOT_USED(speed);
+    return _noAvifError();
+}
+
+BGD_DECLARE(void *)
+gdImageAvifPtrWithOptions(gdImagePtr im, int *size, const gdAvifWriteOptions *options)
+{
+    ARG_NOT_USED(im);
+    ARG_NOT_USED(size);
+    ARG_NOT_USED(options);
     return _noAvifError();
 }
 
