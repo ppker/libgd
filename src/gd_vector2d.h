@@ -2,6 +2,7 @@
 #define GD_VECTOR2D_H
 
 #include "gd.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +20,8 @@ typedef struct gdPaintStruct gdPaint;
 typedef gdPaint *gdPaintPtr;
 typedef struct gdPathPatternStruct gdPathPattern;
 typedef gdPathPattern *gdPathPatternPtr;
+typedef struct gdFontFaceStruct gdFontFace;
+typedef gdFontFace *gdFontFacePtr;
 
 typedef struct gdPathMatrixStruct {
     double m00, m10, m01, m11, m02, m12;
@@ -73,6 +76,43 @@ typedef gdCompositeOperator gdImageOp;
 #define gdImageOpsDstIn GD_OP_DEST_IN
 #define gdImageOpsDstOut GD_OP_DEST_OUT
 
+typedef enum {
+    GD_TEXT_OK = 0,
+    GD_TEXT_E_INVALID_ARGUMENT,
+    GD_TEXT_E_UNAVAILABLE,
+    GD_TEXT_E_FONT,
+    GD_TEXT_E_LAYOUT,
+    GD_TEXT_E_MEMORY
+} gdTextStatus;
+
+#define GD_TEXT_ERROR_MESSAGE_SIZE 128
+
+typedef struct {
+    gdTextStatus code;
+    int provider_code;
+    char message[GD_TEXT_ERROR_MESSAGE_SIZE];
+} gdTextError;
+
+typedef struct {
+    double x_bearing, y_bearing;
+    double width, height;
+    double x_advance, y_advance;
+} gdTextExtents;
+
+typedef enum {
+    GD_TEXT_SHAPING_NONE = 0,
+    GD_TEXT_SHAPING_RAQM = 1
+} gdTextShaping;
+
+typedef struct {
+    gdTextShaping shaping;
+    double line_spacing;
+    unsigned int reserved_flags;
+    double reserved_double;
+} gdTextOptions;
+
+BGD_DECLARE(void) gdTextOptionsInit(gdTextOptions *options);
+
 BGD_DECLARE(gdContextPtr) gdContextCreateForImage(gdImagePtr image);
 BGD_DECLARE(void) gdContextFlushImage(gdContextPtr context);
 BGD_DECLARE(int) gdContextReloadImage(gdContextPtr context);
@@ -93,6 +133,17 @@ gdContextSetSourceImage(gdContextPtr context, gdImagePtr image, double x, double
 BGD_DECLARE(void) gdContextSetSource(gdContextPtr context, gdPaintPtr source);
 BGD_DECLARE(void) gdContextSetOperator(gdContextPtr context, gdCompositeOperator op);
 BGD_DECLARE(void) gdContextSetOpacity(gdContextPtr context, double opacity);
+BGD_DECLARE(void) gdContextSetFontFace(gdContextPtr context, gdFontFacePtr face);
+BGD_DECLARE(void) gdContextSetFontSize(gdContextPtr context, double size);
+BGD_DECLARE(gdTextStatus)
+gdContextTextPath(gdContextPtr context, const char *utf8, double x, double y,
+                  const gdTextOptions *options, gdTextError *err);
+BGD_DECLARE(gdTextStatus)
+gdContextShowText(gdContextPtr context, const char *utf8, double x, double y,
+                  const gdTextOptions *options, gdTextError *err);
+BGD_DECLARE(gdTextStatus)
+gdContextTextExtents(gdContextPtr context, const char *utf8, const gdTextOptions *options,
+                     gdTextExtents *extents, gdTextError *err);
 BGD_DECLARE(void) gdContextMoveTo(gdContextPtr context, double x, double y);
 BGD_DECLARE(void) gdContextRelMoveTo(gdContextPtr context, double dx, double dy);
 BGD_DECLARE(void) gdContextLineTo(gdContextPtr context, double x, double y);
@@ -129,6 +180,13 @@ BGD_DECLARE(void) gdContextStrokePreserve(gdContextPtr context);
 BGD_DECLARE(void) gdContextFill(gdContextPtr context);
 BGD_DECLARE(void) gdContextFillPreserve(gdContextPtr context);
 BGD_DECLARE(void) gdContextPaint(gdContextPtr context);
+
+BGD_DECLARE(gdFontFacePtr)
+gdFontFaceCreateFromFile(const char *path, int face_index, gdTextError *err);
+BGD_DECLARE(gdFontFacePtr)
+gdFontFaceCreateFromData(const unsigned char *data, size_t size, int face_index, gdTextError *err);
+BGD_DECLARE(gdFontFacePtr) gdFontFaceAddRef(gdFontFacePtr face);
+BGD_DECLARE(void) gdFontFaceDestroy(gdFontFacePtr face);
 
 BGD_DECLARE(gdPaintPtr) gdPaintCreateFromPattern(gdPathPatternPtr pattern);
 BGD_DECLARE(gdPaintPtr) gdPaintCreateLinear(double x0, double y0, double x1, double y1);

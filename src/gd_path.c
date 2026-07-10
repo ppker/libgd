@@ -224,7 +224,7 @@ gdStatePtr gdStateCreate()
     if (!state) {
         return NULL;
     }
-    // state->font = NULL;
+    state->font_face = NULL;
     state->source = gdPaintCreateRgba(0, 0, 0, 1.0);
     if (!state->source) {
         gdFree(state);
@@ -238,8 +238,8 @@ gdStatePtr gdStateCreate()
     state->stroke.join = gdLineJoinMiter;
     state->stroke.dash = NULL;
     state->op = GD_OP_OVER;
-    // state->fontsize = 12.0;
     state->opacity = 1.0;
+    state->font_size = 12.0;
     state->clippath = NULL;
     state->next = NULL;
     return state;
@@ -247,9 +247,9 @@ gdStatePtr gdStateCreate()
 
 void gdStateDestroy(gdStatePtr state)
 {
-    // state->font
     gdSpanRleDestroy(state->clippath);
     gdPaintDestroy(state->source);
+    gdFontFaceDestroy(state->font_face);
     gdPathDashDestroy(state->stroke.dash);
     gdFree(state);
 }
@@ -298,10 +298,13 @@ BGD_DECLARE(gdPathPtr) gdPathDuplicate(const gdPathPtr path)
 
 BGD_DECLARE(void) gdPathAppendPath(gdPathPtr path, const gdPathPtr source)
 {
-    gdArrayAppendMultiple(&path->elements, gdArrayGetData(&source->elements),
-                          gdArrayNumElements(&source->elements));
-    gdArrayAppendMultiple(&path->points, gdArrayGetData(&source->points),
-                          gdArrayNumElements(&source->points));
+    unsigned int num_elements = gdArrayNumElements(&source->elements);
+    unsigned int num_points = gdArrayNumElements(&source->points);
+
+    if (num_elements)
+        gdArrayAppendMultiple(&path->elements, gdArrayGetData(&source->elements), num_elements);
+    if (num_points)
+        gdArrayAppendMultiple(&path->points, gdArrayGetData(&source->points), num_points);
 
     path->contours += source->contours;
     path->start = source->start;

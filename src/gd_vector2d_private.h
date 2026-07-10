@@ -86,11 +86,13 @@ typedef gdStroke *gdStrokePtr;
 typedef struct gdStateStruct {
     gdSpanRlePtr clippath;
     gdPaintPtr source;
+    gdFontFacePtr font_face;
     gdPathMatrix matrix;
     gdFillRule winding;
     gdStroke stroke;
     gdCompositeOperator op;
     double opacity;
+    double font_size;
     struct gdStateStruct *next;
 } gdState;
 typedef gdState *gdStatePtr;

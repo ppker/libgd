@@ -104,6 +104,7 @@ libgd_la_SOURCES = \
 	gd_security.c \
 	gd_ss.c \
 	gd_span_rle.c gd_span_rle.h gd_surface.c gd_surface.h \
+	gd_text.c \
 	gd_tga.c \
 	gd_tga.h \
 	gd_tiff.c \

@@ -41,6 +41,7 @@ SET (LIBGD_SRC_FILES
 	gd_ss.c
 	gd_span_rle.c
 	gd_surface.c
+	gd_text.c
 	gd_tga.c
 	gd_tiff.c
 	gd_topal.c

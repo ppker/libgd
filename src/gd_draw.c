@@ -337,11 +337,13 @@ gdContextSave(gdContextPtr context)
     }
     *saved = *current;
     saved->source = gdPaintAddRef(current->source);
+    saved->font_face = gdFontFaceAddRef(current->font_face);
     saved->clippath = gdSpanRleRetain(current->clippath);
     saved->stroke.dash = gdPathDashClone(current->stroke.dash);
     if (current->stroke.dash != NULL && saved->stroke.dash == NULL) {
         gdSpanRleDestroy(saved->clippath);
         gdPaintDestroy(saved->source);
+        gdFontFaceDestroy(saved->font_face);
         gdFree(saved);
         gd_error("gdContextSave: failed to clone dash state");
         return 0;
