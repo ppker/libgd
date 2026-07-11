@@ -1,5 +1,6 @@
 LIST(APPEND TESTS_FILES
 	alpha_weight
+	cache_locality
 	gdBicubicFixed
 	gdModesAndPalettes
 	gdTrivialResize

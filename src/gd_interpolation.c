@@ -127,6 +127,22 @@ typedef struct {
         LineLength;               /* Length of line (no. or rows / cols) */
 } LineContribType;
 
+typedef struct {
+    unsigned int Dst;
+    double Weight;
+} InvertedContributionType;
+
+typedef struct {
+    InvertedContributionType *Contrib;
+    unsigned int Count;
+} InvertedContributionRowType;
+
+typedef struct {
+    InvertedContributionRowType *Rows;
+    InvertedContributionType *Storage;
+    unsigned int SourceLength;
+} InvertedLineContribType;
+
 static double KernelBessel_J1(const double x)
 {
     double p, q;
@@ -1037,6 +1053,128 @@ static inline LineContribType *_gdContributionsCalc(unsigned int line_size, unsi
     return res;
 }
 
+static inline void _gdInvertedContributionsFree(InvertedLineContribType *p)
+{
+    if (p == NULL) {
+        return;
+    }
+    gdFree(p->Storage);
+    gdFree(p->Rows);
+    gdFree(p);
+}
+
+static inline InvertedLineContribType *_gdContributionsInvert(LineContribType *contrib,
+                                                              unsigned int src_size)
+{
+    InvertedLineContribType *res;
+    unsigned int *counts;
+    unsigned int *offsets;
+    unsigned int total = 0;
+    unsigned int dst;
+    unsigned int src;
+
+    if (overflow2(src_size, sizeof(unsigned int))) {
+        return NULL;
+    }
+
+    counts = (unsigned int *)gdCalloc(src_size, sizeof(unsigned int));
+    if (counts == NULL) {
+        return NULL;
+    }
+    offsets = (unsigned int *)gdCalloc(src_size, sizeof(unsigned int));
+    if (offsets == NULL) {
+        gdFree(counts);
+        return NULL;
+    }
+
+    for (dst = 0; dst < contrib->LineLength; dst++) {
+        int i;
+
+        for (i = contrib->ContribRow[dst].Left; i <= contrib->ContribRow[dst].Right; i++) {
+            counts[i]++;
+            if (counts[i] == 0) {
+                gdFree(offsets);
+                gdFree(counts);
+                return NULL;
+            }
+        }
+    }
+
+    res = (InvertedLineContribType *)gdMalloc(sizeof(InvertedLineContribType));
+    if (res == NULL) {
+        gdFree(offsets);
+        gdFree(counts);
+        return NULL;
+    }
+    res->Rows = NULL;
+    res->Storage = NULL;
+    res->SourceLength = src_size;
+
+    if (overflow2(src_size, sizeof(InvertedContributionRowType))) {
+        _gdInvertedContributionsFree(res);
+        gdFree(offsets);
+        gdFree(counts);
+        return NULL;
+    }
+    res->Rows =
+        (InvertedContributionRowType *)gdMalloc(src_size * sizeof(InvertedContributionRowType));
+    if (res->Rows == NULL) {
+        _gdInvertedContributionsFree(res);
+        gdFree(offsets);
+        gdFree(counts);
+        return NULL;
+    }
+
+    for (src = 0; src < src_size; src++) {
+        if (UINT_MAX - total < counts[src]) {
+            _gdInvertedContributionsFree(res);
+            gdFree(offsets);
+            gdFree(counts);
+            return NULL;
+        }
+        res->Rows[src].Count = counts[src];
+        res->Rows[src].Contrib = NULL;
+        offsets[src] = total;
+        total += counts[src];
+    }
+
+    if (overflow2(total, sizeof(InvertedContributionType))) {
+        _gdInvertedContributionsFree(res);
+        gdFree(offsets);
+        gdFree(counts);
+        return NULL;
+    }
+    res->Storage = (InvertedContributionType *)gdMalloc(total * sizeof(InvertedContributionType));
+    if (res->Storage == NULL) {
+        _gdInvertedContributionsFree(res);
+        gdFree(offsets);
+        gdFree(counts);
+        return NULL;
+    }
+
+    for (src = 0; src < src_size; src++) {
+        res->Rows[src].Contrib = &res->Storage[offsets[src]];
+        counts[src] = 0;
+    }
+
+    for (dst = 0; dst < contrib->LineLength; dst++) {
+        int i;
+
+        for (i = contrib->ContribRow[dst].Left; i <= contrib->ContribRow[dst].Right; i++) {
+            const unsigned int source = (unsigned int)i;
+            const unsigned int index = offsets[source] + counts[source]++;
+
+            res->Storage[index].Dst = dst;
+            res->Storage[index].Weight =
+                contrib->ContribRow[dst].Weights[i - contrib->ContribRow[dst].Left];
+        }
+    }
+
+    gdFree(offsets);
+    gdFree(counts);
+    return res;
+}
+
 static inline gdLinearPixel *gdLinearBufferCreate(const unsigned int width,
                                                   const unsigned int height)
 {
@@ -1050,6 +1188,18 @@ static inline gdLinearPixel *gdLinearBufferCreate(const unsigned int width,
         return NULL;
     }
     return (gdLinearPixel *)gdMalloc(count * sizeof(gdLinearPixel));
+}
+
+static inline void gdLinearBufferClear(gdLinearPixel *buffer, const unsigned int width,
+                                       const unsigned int height)
+{
+    const gdLinearPixel zero = {0.0, 0.0, 0.0, 0.0};
+    const size_t count = (size_t)width * (size_t)height;
+    size_t i;
+
+    for (i = 0; i < count; i++) {
+        buffer[i] = zero;
+    }
 }
 
 static inline void _gdScaleOneAxisFromGd(const gdImagePtr pSrc, gdLinearPixel *dst,
@@ -1107,6 +1257,73 @@ static inline void _gdScaleOneAxisLinear(const gdLinearPixel *pSrc, const unsign
     }
 }
 
+static inline int _gdScaleVerticalFromGdScatter(const gdImagePtr pSrc, gdLinearPixel *dst,
+                                                const unsigned int dst_width,
+                                                const unsigned int dst_height,
+                                                InvertedLineContribType *contrib)
+{
+    gdLinearPixel *src_row;
+    unsigned int src_y;
+
+    src_row = gdLinearBufferCreate(dst_width, 1);
+    if (src_row == NULL) {
+        return 0;
+    }
+    gdLinearBufferClear(dst, dst_width, dst_height);
+
+    for (src_y = 0; src_y < contrib->SourceLength; src_y++) {
+        InvertedContributionRowType *row_contrib = &contrib->Rows[src_y];
+        unsigned int contrib_ndx;
+        unsigned int x;
+
+        for (x = 0; x < dst_width; x++) {
+            src_row[x] = gdPixelToLinear(pSrc->tpixels[src_y][x]);
+        }
+
+        for (contrib_ndx = 0; contrib_ndx < row_contrib->Count; contrib_ndx++) {
+            const unsigned int dst_y = row_contrib->Contrib[contrib_ndx].Dst;
+            const double weight = row_contrib->Contrib[contrib_ndx].Weight;
+            gdLinearPixel *dst_row = &dst[dst_y * dst_width];
+
+            for (x = 0; x < dst_width; x++) {
+                gdLinearPixelAdd(&dst_row[x], src_row[x], weight);
+            }
+        }
+    }
+
+    gdFree(src_row);
+    return 1;
+}
+
+static inline void _gdScaleVerticalLinearScatter(const gdLinearPixel *pSrc,
+                                                 const unsigned int src_width,
+                                                 gdLinearPixel *dst,
+                                                 const unsigned int dst_width,
+                                                 const unsigned int dst_height,
+                                                 InvertedLineContribType *contrib)
+{
+    unsigned int src_y;
+
+    gdLinearBufferClear(dst, dst_width, dst_height);
+
+    for (src_y = 0; src_y < contrib->SourceLength; src_y++) {
+        const gdLinearPixel *src_row = &pSrc[src_y * src_width];
+        InvertedContributionRowType *row_contrib = &contrib->Rows[src_y];
+        unsigned int contrib_ndx;
+
+        for (contrib_ndx = 0; contrib_ndx < row_contrib->Count; contrib_ndx++) {
+            const unsigned int dst_y = row_contrib->Contrib[contrib_ndx].Dst;
+            const double weight = row_contrib->Contrib[contrib_ndx].Weight;
+            gdLinearPixel *dst_row = &dst[dst_y * dst_width];
+            unsigned int x;
+
+            for (x = 0; x < dst_width; x++) {
+                gdLinearPixelAdd(&dst_row[x], src_row[x], weight);
+            }
+        }
+    }
+}
+
 static inline int _gdScalePassFromGd(const gdImagePtr pSrc, const unsigned int src_len,
                                      gdLinearPixel *pDst, const unsigned int dst_width,
                                      const unsigned int dst_len, const unsigned int num_lines,
@@ -1122,6 +1339,23 @@ static inline int _gdScalePassFromGd(const gdImagePtr pSrc, const unsigned int s
                                    filter->support, filter->function);
     if (contrib == NULL) {
         return 0;
+    }
+
+    if (axis == VERTICAL) {
+        InvertedLineContribType *inverted = _gdContributionsInvert(contrib, src_len);
+
+        if (inverted == NULL) {
+            _gdContributionsFree(contrib);
+            return 0;
+        }
+        if (!_gdScaleVerticalFromGdScatter(pSrc, pDst, dst_width, dst_len, inverted)) {
+            _gdInvertedContributionsFree(inverted);
+            _gdContributionsFree(contrib);
+            return 0;
+        }
+        _gdInvertedContributionsFree(inverted);
+        _gdContributionsFree(contrib);
+        return 1;
     }
 
     /* Scale each line */
@@ -1147,6 +1381,19 @@ static inline int _gdScalePassLinear(const gdLinearPixel *pSrc, const unsigned i
                                    filter->support, filter->function);
     if (contrib == NULL) {
         return 0;
+    }
+
+    if (axis == VERTICAL) {
+        InvertedLineContribType *inverted = _gdContributionsInvert(contrib, src_len);
+
+        if (inverted == NULL) {
+            _gdContributionsFree(contrib);
+            return 0;
+        }
+        _gdScaleVerticalLinearScatter(pSrc, src_width, pDst, dst_width, dst_len, inverted);
+        _gdInvertedContributionsFree(inverted);
+        _gdContributionsFree(contrib);
+        return 1;
     }
 
     for (line_ndx = 0; line_ndx < num_lines; line_ndx++) {

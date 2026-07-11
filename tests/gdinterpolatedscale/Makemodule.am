@@ -1,5 +1,6 @@
 libgd_test_programs += \
 	gdinterpolatedscale/alpha_weight \
+	gdinterpolatedscale/cache_locality \
 	gdinterpolatedscale/gdBicubicFixed \
 	gdinterpolatedscale/gdModesAndPalettes \
 	gdinterpolatedscale/gdTrivialResize \
