@@ -672,9 +672,39 @@ typedef struct {
     double opacity;
 } gdAlphaWeightedColor;
 
+typedef struct {
+    double red;
+    double green;
+    double blue;
+    double opacity;
+} gdLinearPixel;
+
 static inline double gdAlphaToOpacity(const int alpha)
 {
     return (double)(gdAlphaMax - alpha) / (double)gdAlphaMax;
+}
+
+static inline double srgb_u8_to_linear(const int value)
+{
+    const double srgb = (double)CLAMP(value, 0, 255) / 255.0;
+
+    if (srgb <= 0.04045) {
+        return srgb / 12.92;
+    }
+    return pow((srgb + 0.055) / 1.055, 2.4);
+}
+
+static inline unsigned char linear_to_srgb_u8(double linear)
+{
+    double srgb;
+
+    linear = CLAMP(linear, 0.0, 1.0);
+    if (linear <= 0.0031308) {
+        srgb = 12.92 * linear;
+    } else {
+        srgb = 1.055 * pow(linear, 1.0 / 2.4) - 0.055;
+    }
+    return uchar_clamp(srgb * 255.0, 0xFF);
 }
 
 static inline void gdAlphaWeightedColorAdd(gdAlphaWeightedColor *acc, const int color,
@@ -704,6 +734,46 @@ static inline int gdAlphaWeightedColorResolve(const gdAlphaWeightedColor *acc,
     blue = uchar_clamp((acc->blue / opacity) * rgb_scale, 0xFF);
 
     opacity = CLAMP(opacity, 0.0, 1.0);
+    alpha = uchar_clamp((double)gdAlphaMax - opacity * (double)gdAlphaMax, 0x7F);
+
+    return gdTrueColorAlpha(red, green, blue, alpha);
+}
+
+static inline gdLinearPixel gdPixelToLinear(const int color)
+{
+    gdLinearPixel pixel;
+
+    pixel.opacity = gdAlphaToOpacity(gdTrueColorGetAlpha(color));
+    pixel.red = srgb_u8_to_linear(gdTrueColorGetRed(color)) * pixel.opacity;
+    pixel.green = srgb_u8_to_linear(gdTrueColorGetGreen(color)) * pixel.opacity;
+    pixel.blue = srgb_u8_to_linear(gdTrueColorGetBlue(color)) * pixel.opacity;
+
+    return pixel;
+}
+
+static inline void gdLinearPixelAdd(gdLinearPixel *acc, const gdLinearPixel pixel,
+                                    const double weight)
+{
+    acc->red += pixel.red * weight;
+    acc->green += pixel.green * weight;
+    acc->blue += pixel.blue * weight;
+    acc->opacity += pixel.opacity * weight;
+}
+
+static inline int gdLinearPixelToTrueColor(const gdLinearPixel *pixel)
+{
+    double opacity;
+    const double out_opacity = pixel->opacity;
+    unsigned char red, green, blue, alpha;
+
+    if (out_opacity <= 0.0) {
+        return gdTrueColorAlpha(0, 0, 0, gdAlphaTransparent);
+    }
+
+    red = linear_to_srgb_u8(pixel->red / out_opacity);
+    green = linear_to_srgb_u8(pixel->green / out_opacity);
+    blue = linear_to_srgb_u8(pixel->blue / out_opacity);
+    opacity = CLAMP(out_opacity, 0.0, 1.0);
     alpha = uchar_clamp((double)gdAlphaMax - opacity * (double)gdAlphaMax, 0x7F);
 
     return gdTrueColorAlpha(red, green, blue, alpha);
@@ -967,16 +1037,34 @@ static inline LineContribType *_gdContributionsCalc(unsigned int line_size, unsi
     return res;
 }
 
-static inline void _gdScaleOneAxis(gdImagePtr pSrc, gdImagePtr dst, unsigned int dst_len,
-                                   unsigned int row, LineContribType *contrib, gdAxis axis)
+static inline gdLinearPixel *gdLinearBufferCreate(const unsigned int width,
+                                                  const unsigned int height)
+{
+    size_t count;
+
+    if (overflow2(width, height)) {
+        return NULL;
+    }
+    count = (size_t)width * (size_t)height;
+    if (overflow2(count, sizeof(gdLinearPixel))) {
+        return NULL;
+    }
+    return (gdLinearPixel *)gdMalloc(count * sizeof(gdLinearPixel));
+}
+
+static inline void _gdScaleOneAxisFromGd(const gdImagePtr pSrc, gdLinearPixel *dst,
+                                         const unsigned int dst_width,
+                                         const unsigned int dst_len, const unsigned int row,
+                                         LineContribType *contrib, gdAxis axis)
 {
     unsigned int ndx;
 
     for (ndx = 0; ndx < dst_len; ndx++) {
-        gdAlphaWeightedColor acc = {0.0, 0.0, 0.0, 0.0};
+        gdLinearPixel acc = {0.0, 0.0, 0.0, 0.0};
         const int left = contrib->ContribRow[ndx].Left;
         const int right = contrib->ContribRow[ndx].Right;
-        int *dest = (axis == HORIZONTAL) ? &dst->tpixels[row][ndx] : &dst->tpixels[ndx][row];
+        gdLinearPixel *dest = (axis == HORIZONTAL) ? &dst[row * dst_width + ndx]
+                                                   : &dst[ndx * dst_width + row];
 
         int i;
 
@@ -984,17 +1072,45 @@ static inline void _gdScaleOneAxis(gdImagePtr pSrc, gdImagePtr dst, unsigned int
             const int left_channel = i - left;
             const int srcpx = (axis == HORIZONTAL) ? pSrc->tpixels[row][i] : pSrc->tpixels[i][row];
 
-            gdAlphaWeightedColorAdd(&acc, srcpx, contrib->ContribRow[ndx].Weights[left_channel]);
+            gdLinearPixelAdd(&acc, gdPixelToLinear(srcpx),
+                             contrib->ContribRow[ndx].Weights[left_channel]);
         } /* for */
 
-        *dest = gdAlphaWeightedColorResolve(&acc, 1.0);
+        *dest = acc;
     } /* for */
-} /* _gdScaleOneAxis*/
+}
 
-static inline int _gdScalePass(const gdImagePtr pSrc, const unsigned int src_len,
-                               const gdImagePtr pDst, const unsigned int dst_len,
-                               const unsigned int num_lines, const gdAxis axis,
-                               const FilterInfo *filter)
+static inline void _gdScaleOneAxisLinear(const gdLinearPixel *pSrc, const unsigned int src_width,
+                                         gdLinearPixel *dst, const unsigned int dst_width,
+                                         const unsigned int dst_len, const unsigned int row,
+                                         LineContribType *contrib, gdAxis axis)
+{
+    unsigned int ndx;
+
+    for (ndx = 0; ndx < dst_len; ndx++) {
+        gdLinearPixel acc = {0.0, 0.0, 0.0, 0.0};
+        const int left = contrib->ContribRow[ndx].Left;
+        const int right = contrib->ContribRow[ndx].Right;
+        gdLinearPixel *dest = (axis == HORIZONTAL) ? &dst[row * dst_width + ndx]
+                                                   : &dst[ndx * dst_width + row];
+        int i;
+
+        for (i = left; i <= right; i++) {
+            const int left_channel = i - left;
+            const gdLinearPixel srcpx =
+                (axis == HORIZONTAL) ? pSrc[row * src_width + i] : pSrc[i * src_width + row];
+
+            gdLinearPixelAdd(&acc, srcpx, contrib->ContribRow[ndx].Weights[left_channel]);
+        }
+
+        *dest = acc;
+    }
+}
+
+static inline int _gdScalePassFromGd(const gdImagePtr pSrc, const unsigned int src_len,
+                                     gdLinearPixel *pDst, const unsigned int dst_width,
+                                     const unsigned int dst_len, const unsigned int num_lines,
+                                     const gdAxis axis, const FilterInfo *filter)
 {
     unsigned int line_ndx;
     LineContribType *contrib;
@@ -1010,11 +1126,57 @@ static inline int _gdScalePass(const gdImagePtr pSrc, const unsigned int src_len
 
     /* Scale each line */
     for (line_ndx = 0; line_ndx < num_lines; line_ndx++) {
-        _gdScaleOneAxis(pSrc, pDst, dst_len, line_ndx, contrib, axis);
+        _gdScaleOneAxisFromGd(pSrc, pDst, dst_width, dst_len, line_ndx, contrib, axis);
     }
     _gdContributionsFree(contrib);
     return 1;
-} /* _gdScalePass*/
+}
+
+static inline int _gdScalePassLinear(const gdLinearPixel *pSrc, const unsigned int src_width,
+                                     const unsigned int src_len, gdLinearPixel *pDst,
+                                     const unsigned int dst_width, const unsigned int dst_len,
+                                     const unsigned int num_lines, const gdAxis axis,
+                                     const FilterInfo *filter)
+{
+    unsigned int line_ndx;
+    LineContribType *contrib;
+
+    assert(dst_len != src_len);
+
+    contrib = _gdContributionsCalc(dst_len, src_len, (double)dst_len / (double)src_len,
+                                   filter->support, filter->function);
+    if (contrib == NULL) {
+        return 0;
+    }
+
+    for (line_ndx = 0; line_ndx < num_lines; line_ndx++) {
+        _gdScaleOneAxisLinear(pSrc, src_width, pDst, dst_width, dst_len, line_ndx, contrib, axis);
+    }
+    _gdContributionsFree(contrib);
+    return 1;
+}
+
+static gdImagePtr gdLinearBufferToImage(const gdLinearPixel *buffer, const unsigned int width,
+                                        const unsigned int height, gdInterpolationMethod method)
+{
+    gdImagePtr dst;
+    unsigned int y;
+
+    dst = gdImageCreateTrueColor(width, height);
+    if (dst == NULL) {
+        return NULL;
+    }
+    gdImageSetInterpolationMethod(dst, method);
+
+    for (y = 0; y < height; y++) {
+        unsigned int x;
+        for (x = 0; x < width; x++) {
+            dst->tpixels[y][x] = gdLinearPixelToTrueColor(&buffer[y * width + x]);
+        }
+    }
+
+    return dst;
+}
 
 static const FilterInfo filters[GD_METHOD_COUNT + 1] = {
     {filter_box, 0.0},
@@ -1064,7 +1226,8 @@ static gdImagePtr gdImageScaleTwoPass(const gdImagePtr src, const unsigned int n
 {
     const unsigned int src_width = src->sx;
     const unsigned int src_height = src->sy;
-    gdImagePtr tmp_im = NULL;
+    gdLinearPixel *tmp_buf = NULL;
+    gdLinearPixel *dst_buf = NULL;
     gdImagePtr dst = NULL;
     int scale_pass_res;
     const FilterInfo *filter = _get_filterinfo_for_id(src->interpolation_id);
@@ -1081,47 +1244,56 @@ static gdImagePtr gdImageScaleTwoPass(const gdImagePtr src, const unsigned int n
 
     /* Scale horizontally unless sizes are the same. */
     if (src_width == new_width) {
-        tmp_im = src;
+        dst_buf = gdLinearBufferCreate(new_width, new_height);
+        if (dst_buf == NULL) {
+            return NULL;
+        }
+        scale_pass_res =
+            _gdScalePassFromGd(src, src_height, dst_buf, new_width, new_height, new_width,
+                               VERTICAL, filter);
+        if (scale_pass_res != 1) {
+            gdFree(dst_buf);
+            return NULL;
+        }
     } else {
-        tmp_im = gdImageCreateTrueColor(new_width, src_height);
-        if (tmp_im == NULL) {
+        tmp_buf = gdLinearBufferCreate(new_width, src_height);
+        if (tmp_buf == NULL) {
             return NULL;
         }
-        gdImageSetInterpolationMethod(tmp_im, src->interpolation_id);
 
-        scale_pass_res =
-            _gdScalePass(src, src_width, tmp_im, new_width, src_height, HORIZONTAL, filter);
+        scale_pass_res = _gdScalePassFromGd(src, src_width, tmp_buf, new_width, new_width,
+                                            src_height, HORIZONTAL, filter);
         if (scale_pass_res != 1) {
-            gdImageDestroy(tmp_im);
+            gdFree(tmp_buf);
             return NULL;
         }
-    }
 
-    /* If vertical sizes match, we're done. */
-    if (src_height == new_height) {
-        assert(tmp_im != src);
-        return tmp_im;
-    }
-
-    /* Otherwise, we need to scale vertically. */
-    dst = gdImageCreateTrueColor(new_width, new_height);
-    if (dst != NULL) {
-        gdImageSetInterpolationMethod(dst, src->interpolation_id);
-        scale_pass_res =
-            _gdScalePass(tmp_im, src_height, dst, new_height, new_width, VERTICAL, filter);
-        if (scale_pass_res != 1) {
-            gdImageDestroy(dst);
-            if (src != tmp_im) {
-                gdImageDestroy(tmp_im);
+        if (src_height == new_height) {
+            dst_buf = tmp_buf;
+            tmp_buf = NULL;
+        } else {
+            dst_buf = gdLinearBufferCreate(new_width, new_height);
+            if (dst_buf == NULL) {
+                gdFree(tmp_buf);
+                return NULL;
             }
-            return NULL;
+            scale_pass_res =
+                _gdScalePassLinear(tmp_buf, new_width, src_height, dst_buf, new_width,
+                                   new_height, new_width, VERTICAL, filter);
+            if (scale_pass_res != 1) {
+                gdFree(dst_buf);
+                gdFree(tmp_buf);
+                return NULL;
+            }
         }
     }
 
-    if (src != tmp_im) {
-        gdImageDestroy(tmp_im);
-    }
+    dst = gdLinearBufferToImage(dst_buf, new_width, new_height, src->interpolation_id);
 
+    gdFree(dst_buf);
+    if (tmp_buf != NULL) {
+        gdFree(tmp_buf);
+    }
     return dst;
 } /* gdImageScaleTwoPass*/
 

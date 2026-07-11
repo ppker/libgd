@@ -3,6 +3,7 @@ LIST(APPEND TESTS_FILES
 	gdBicubicFixed
 	gdModesAndPalettes
 	gdTrivialResize
+	linear_light
 )
 
 ADD_GD_TESTS()

@@ -2,7 +2,8 @@ libgd_test_programs += \
 	gdinterpolatedscale/alpha_weight \
 	gdinterpolatedscale/gdBicubicFixed \
 	gdinterpolatedscale/gdModesAndPalettes \
-	gdinterpolatedscale/gdTrivialResize
+	gdinterpolatedscale/gdTrivialResize \
+	gdinterpolatedscale/linear_light
 
 EXTRA_DIST += \
 	gdinterpolatedscale/CMakeLists.txt
