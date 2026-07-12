@@ -8,6 +8,7 @@ endif
 
 libgd_test_programs += \
 	gdimagerotate/alpha_weight \
+	gdimagerotate/gd223 \
 	gdimagerotate/uniform_transparent
 
 EXTRA_DIST += \

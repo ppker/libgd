@@ -9,6 +9,7 @@ ENDIF(PNG_FOUND)
 
 LIST(APPEND TESTS_FILES
 	alpha_weight
+	gd223
 	uniform_transparent
 )
 
