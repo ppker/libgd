@@ -67,7 +67,7 @@ copyresized/resampled)
 /* Comment out this line to enable asserts.
  * TODO: This logic really belongs in cmake and configure.
  */
-// #define NDEBUG 1
+/* #define NDEBUG 1 */
 #include <assert.h>
 
 #include "gd.h"
@@ -1525,8 +1525,7 @@ static gdImagePtr gdImageScaleTwoPassWithMethod(const gdImagePtr src, const unsi
                 gdFree(tmp_buf);
                 return NULL;
             }
-            scale_pass_res =
-                _gdScalePassLinear(tmp_buf, new_width, src_height, dst_buf, new_width,
+            scale_pass_res = _gdScalePassLinear(tmp_buf, new_width, src_height, dst_buf, new_width,
                                    new_height, new_width, VERTICAL, filter);
             if (scale_pass_res != 1) {
                 gdFree(dst_buf);
@@ -1666,8 +1665,7 @@ static gdImagePtr gdImageScaleBilinearPalette(gdImagePtr im, const unsigned int 
                 gdAlphaWeightedColorAdd(&acc, pixel3, f_w3);
                 gdAlphaWeightedColorAdd(&acc, pixel4, f_w4);
 
-                new_img->tpixels[dst_offset_v][dst_offset_h] =
-                    gdAlphaWeightedColorResolve(&acc, 1.0);
+                new_img->tpixels[dst_offset_v][dst_offset_h] = gdAlphaWeightedColorResolve(&acc, 1.0);
             }
 
             dst_offset_h++;
@@ -1730,8 +1728,7 @@ static gdImagePtr gdImageScaleBilinearTC(gdImagePtr im, const unsigned int new_w
                 gdAlphaWeightedColorAdd(&acc, pixel3, f_w3);
                 gdAlphaWeightedColorAdd(&acc, pixel4, f_w4);
 
-                new_img->tpixels[dst_offset_v][dst_offset_h] =
-                    gdAlphaWeightedColorResolve(&acc, 1.0);
+                new_img->tpixels[dst_offset_v][dst_offset_h] = gdAlphaWeightedColorResolve(&acc, 1.0);
             }
 
             dst_offset_h++;
