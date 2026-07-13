@@ -83,6 +83,7 @@ libgd_la_SOURCES = \
 	gd_heif.c \
 	gd_intern.h \
 	gd_interpolation.c \
+	gd_interesting.c \
 	gd_io.c \
 	gd_io.h \
 	gd_io_dp.c \
