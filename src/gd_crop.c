@@ -268,6 +268,41 @@ break4:
     return gdImageCrop(im, &crop);
 }
 
+BGD_DECLARE(gdImagePtr)
+gdImageAutoCropWithOptions(gdImagePtr src, const gdAutoCropOptions *options)
+{
+    gdAutoCropOptions default_options;
+
+    if (src == NULL) {
+        return NULL;
+    }
+
+    if (options == NULL) {
+        default_options.mode = GD_CROP_DEFAULT;
+        default_options.threshold = 0.5f;
+        default_options.color = -1;
+        options = &default_options;
+    }
+
+    switch (options->mode) {
+    case GD_CROP_DEFAULT:
+    case GD_CROP_TRANSPARENT:
+    case GD_CROP_BLACK:
+    case GD_CROP_WHITE:
+    case GD_CROP_SIDES:
+        return gdImageCropAuto(src, options->mode);
+
+    case GD_CROP_THRESHOLD:
+        if (options->color < 0) {
+            return NULL;
+        }
+        return gdImageCropThreshold(src, (unsigned int) options->color, options->threshold);
+
+    default:
+        return NULL;
+    }
+}
+
 /* This algorithm comes from pnmcrop (http://netpbm.sourceforge.net/)
  * Three steps:
  *  - if 3 corners are equal.

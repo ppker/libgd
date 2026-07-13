@@ -18,10 +18,6 @@
 #include "gd_compositor.h"
 #endif
 
-/* 2.0.12: this now checks the clipping rectangle */
-#define gdImageBoundsSafeMacro(im, x, y)                                                           \
-    (!((((y) < (im)->cy1) || ((y) > (im)->cy2)) || (((x) < (im)->cx1) || ((x) > (im)->cx2))))
-
 #ifdef _OSD_POSIX /* BS2000 uses the EBCDIC char set instead of ASCII */
 #define CHARSET_EBCDIC
 #define __attribute__(any) /*nothing */

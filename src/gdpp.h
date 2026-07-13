@@ -22,7 +22,7 @@
 #ifndef _gdpp_h
 #define _gdpp_h
 #ifdef __cplusplus
-
+#include "gd_intern.h"
 #include "gd_io_stream.h"
 #include <string>
 
@@ -766,7 +766,7 @@ class BGD_EXPORT_DATA_PROT Image {
         s.set(p2.X() - p.X(), p2.Y() - p.Y());
     }
 
-    bool BoundsSafe(int x, int y) const { return (gdImageBoundsSafe(im, x, y) ? true : false); }
+    bool BoundsSafe(int x, int y) const { return (gdImageBoundsSafeMacro(im, x, y) ? true : false); }
     bool BoundsSafe(const Point &p) const { return BoundsSafe(p.X(), p.Y()); }
 
     void Char(gdFontPtr f, int x, int y, int c, int color) { gdImageChar(im, f, x, y, c, color); }

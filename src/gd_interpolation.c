@@ -46,12 +46,6 @@
         function is recommended.
 */
 
-/*
-TODO:
- - Optimize pixel accesses and loops once we have continuous buffer
- - Add scale support for a portion only of an image (equivalent of
-copyresized/resampled)
- */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -627,7 +621,7 @@ static inline int _setEdgePixel(const gdImagePtr src, unsigned int x, unsigned i
 static inline int getPixelOverflowTC(gdImagePtr im, const int x, const int y,
                                      const int bgColor /* 31bit ARGB TC */)
 {
-    if (gdImageBoundsSafe(im, x, y)) {
+    if (gdImageBoundsSafeMacro(im, x, y)) {
         const int c = im->tpixels[y][x];
         if (c == im->transparent) {
             return bgColor == -1 ? gdTrueColorAlpha(0, 0, 0, 127) : bgColor;
@@ -1909,6 +1903,308 @@ gdImageScale(const gdImagePtr src, const unsigned int new_width, const unsigned 
     }
 
     return im_scaled;
+}
+
+static gdImagePtr gdImagePrepareScaleSource(const gdImagePtr src, int *background_color)
+{
+    gdImagePtr prepared = gdImageClone((gdImagePtr)src);
+
+    if (prepared == NULL) {
+        return NULL;
+    }
+
+    if (!gdImageTrueColor(prepared)) {
+        if (*background_color >= 0 && *background_color < gdImageColorsTotal(prepared)) {
+            *background_color = gdTrueColorAlpha(
+                prepared->red[*background_color],
+                prepared->green[*background_color],
+                prepared->blue[*background_color],
+                prepared->alpha[*background_color]);
+        }
+        if (!gdImagePaletteToTrueColor(prepared)) {
+            gdImageDestroy(prepared);
+            return NULL;
+        }
+    }
+
+    for (int y = 0; y < gdImageSY(prepared); y++) {
+        for (int x = 0; x < gdImageSX(prepared); x++) {
+            if (gdTrueColorGetAlpha(prepared->tpixels[y][x]) == gdAlphaTransparent) {
+                prepared->tpixels[y][x] = *background_color;
+            }
+        }
+    }
+
+    prepared->alphaBlendingFlag = gdEffectReplace;
+    prepared->saveAlphaFlag = 1;
+
+    return prepared;
+}
+
+static gdImagePtr gdImageScaleWithMethod(gdImagePtr src, int width, int height, int method)
+{
+    if (method == GD_SCALE_INTERPOLATION_AUTO) {
+        method = gdImageScaleIsDownscaleOrMixed(src, (unsigned int)width, (unsigned int)height)
+            ? GD_CATMULLROM
+            : GD_BICUBIC_FIXED;
+    }
+
+    if (!gdImageSetInterpolationMethod(src, (gdInterpolationMethod)method)) {
+        return NULL;
+    }
+
+    return gdImageScale(src, (unsigned int)width, (unsigned int)height);
+}
+
+static gdImagePtr gdImageCreateScaleCanvas(int width, int height, int background_color)
+{
+    gdImagePtr canvas = gdImageCreateTrueColor(width, height);
+
+    if (canvas == NULL) {
+        return NULL;
+    }
+
+    gdImageAlphaBlending(canvas, gdEffectReplace);
+    gdImageSaveAlpha(canvas, 1);
+    gdImageFilledRectangle(canvas, 0, 0, width - 1, height - 1, background_color);
+
+    return canvas;
+}
+
+static int gdScaleAnchorOffset(int available, int axis)
+{
+    switch (axis) {
+        case 0:
+            return 0;
+        case 2:
+            return available;
+        default:
+            return available / 2;
+    }
+}
+
+static int gdScaleGravityAxes(gdScaleGravity gravity, int *x_axis, int *y_axis)
+{
+    switch (gravity) {
+        case GD_SCALE_GRAVITY_NORTHWEST:
+            *x_axis = 0;
+            *y_axis = 0;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_NORTH:
+            *x_axis = 1;
+            *y_axis = 0;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_NORTHEAST:
+            *x_axis = 2;
+            *y_axis = 0;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_WEST:
+            *x_axis = 0;
+            *y_axis = 1;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_CENTER:
+            *x_axis = 1;
+            *y_axis = 1;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_EAST:
+            *x_axis = 2;
+            *y_axis = 1;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_SOUTHWEST:
+            *x_axis = 0;
+            *y_axis = 2;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_SOUTH:
+            *x_axis = 1;
+            *y_axis = 2;
+            return GD_TRUE;
+        case GD_SCALE_GRAVITY_SOUTHEAST:
+            *x_axis = 2;
+            *y_axis = 2;
+            return GD_TRUE;
+        default:
+            return GD_FALSE;
+    }
+}
+
+static gdImagePtr gdImageScaleCompose(
+    gdImagePtr prepared,
+    int target_width,
+    int target_height,
+    int background_color,
+    int method,
+    gdScaleFit fit,
+    gdScaleGravity gravity)
+{
+    gdImagePtr scaled, canvas;
+    int scaled_width, scaled_height;
+    int x_axis, y_axis;
+    double ratio;
+
+    switch (fit) {
+        case GD_SCALE_FIT_FILL:
+            return gdImageScaleWithMethod(prepared, target_width, target_height, method);
+
+        case GD_SCALE_FIT_CONTAIN:
+        case GD_SCALE_FIT_INSIDE:
+            ratio = fmin(
+                (double)target_width / (double)gdImageSX(prepared),
+                (double)target_height / (double)gdImageSY(prepared));
+            scaled_width = (int)fmax(1.0, floor((double)gdImageSX(prepared) * ratio));
+            scaled_height = (int)fmax(1.0, floor((double)gdImageSY(prepared) * ratio));
+            break;
+
+        case GD_SCALE_FIT_COVER:
+        case GD_SCALE_FIT_OUTSIDE:
+            ratio = fmax(
+                (double)target_width / (double)gdImageSX(prepared),
+                (double)target_height / (double)gdImageSY(prepared));
+            scaled_width = (int)fmax(1.0, ceil((double)gdImageSX(prepared) * ratio));
+            scaled_height = (int)fmax(1.0, ceil((double)gdImageSY(prepared) * ratio));
+            break;
+
+        default:
+            return NULL;
+    }
+
+    scaled = gdImageScaleWithMethod(prepared, scaled_width, scaled_height, method);
+    if (scaled == NULL) {
+        return NULL;
+    }
+
+    if (fit == GD_SCALE_FIT_INSIDE || fit == GD_SCALE_FIT_OUTSIDE) {
+        return scaled;
+    }
+
+    canvas = gdImageCreateScaleCanvas(target_width, target_height, background_color);
+    if (canvas == NULL) {
+        gdImageDestroy(scaled);
+        return NULL;
+    }
+
+    if (!gdScaleGravityAxes(gravity, &x_axis, &y_axis)) {
+        gdImageDestroy(scaled);
+        gdImageDestroy(canvas);
+        return NULL;
+    }
+
+    if (fit == GD_SCALE_FIT_CONTAIN) {
+        const int dst_x = gdScaleAnchorOffset(target_width - scaled_width, x_axis);
+        const int dst_y = gdScaleAnchorOffset(target_height - scaled_height, y_axis);
+
+        gdImageCopy(canvas, scaled, dst_x, dst_y, 0, 0, scaled_width, scaled_height);
+    } else {
+        const int src_x = gdScaleAnchorOffset(scaled_width - target_width, x_axis);
+        const int src_y = gdScaleAnchorOffset(scaled_height - target_height, y_axis);
+
+        gdImageCopy(canvas, scaled, 0, 0, src_x, src_y, target_width, target_height);
+    }
+
+    gdImageDestroy(scaled);
+
+    return canvas;
+}
+
+static gdImagePtr gdImageScaleInterestingCover(
+    gdImagePtr prepared,
+    int target_width,
+    int target_height,
+    int method,
+    gdScaleStrategy strategy,
+    int *used_interesting)
+{
+    gdInterestingMethod interesting_method;
+    gdRect crop;
+    gdImagePtr cropped, scaled;
+
+    *used_interesting = GD_FALSE;
+
+    switch (strategy) {
+        case GD_SCALE_STRATEGY_ENTROPY:
+            interesting_method = GD_INTERESTING_ENTROPY;
+            break;
+        case GD_SCALE_STRATEGY_ATTENTION:
+            interesting_method = GD_INTERESTING_ATTENTION;
+            break;
+        default:
+            return NULL;
+    }
+
+    if (!gdImageInterestingCropRegion(prepared, target_width, target_height, interesting_method, &crop)) {
+        return NULL;
+    }
+
+    *used_interesting = GD_TRUE;
+    cropped = gdImageCrop(prepared, &crop);
+    if (cropped == NULL) {
+        return NULL;
+    }
+
+    gdImageAlphaBlending(cropped, gdEffectReplace);
+    gdImageSaveAlpha(cropped, 1);
+    scaled = gdImageScaleWithMethod(cropped, target_width, target_height, method);
+    gdImageDestroy(cropped);
+
+    return scaled;
+}
+
+BGD_DECLARE(gdImagePtr)
+gdImageScaleWithOptions(const gdImagePtr src, const unsigned int new_width,
+                        const unsigned int new_height, const gdScaleOptions *options)
+{
+    gdScaleOptions default_options = {
+        GD_SCALE_FIT_COVER,
+        GD_SCALE_GRAVITY_CENTER,
+        GD_SCALE_STRATEGY_NONE,
+        0x7f000000,
+        GD_SCALE_INTERPOLATION_AUTO
+    };
+    const gdScaleOptions *scale_options = options != NULL ? options : &default_options;
+    gdImagePtr prepared, dst;
+    int background_color;
+
+    if (src == NULL || new_width == 0 || new_height == 0) {
+        return NULL;
+    }
+
+    if (scale_options->interpolation != GD_SCALE_INTERPOLATION_AUTO
+            && (scale_options->interpolation < GD_DEFAULT
+                || scale_options->interpolation >= GD_METHOD_COUNT)) {
+        return NULL;
+    }
+
+    if (scale_options->strategy != GD_SCALE_STRATEGY_NONE && scale_options->fit != GD_SCALE_FIT_COVER) {
+        return NULL;
+    }
+
+    if (scale_options->strategy != GD_SCALE_STRATEGY_NONE
+            && scale_options->strategy != GD_SCALE_STRATEGY_ENTROPY
+            && scale_options->strategy != GD_SCALE_STRATEGY_ATTENTION) {
+        return NULL;
+    }
+
+    background_color = scale_options->background_color;
+    prepared = gdImagePrepareScaleSource(src, &background_color);
+    if (prepared == NULL) {
+        return NULL;
+    }
+
+    if (scale_options->strategy != GD_SCALE_STRATEGY_NONE) {
+        int used_interesting = GD_FALSE;
+        dst = gdImageScaleInterestingCover(prepared, (int)new_width, (int)new_height,
+            scale_options->interpolation, scale_options->strategy, &used_interesting);
+        if (!used_interesting) {
+            dst = gdImageScaleCompose(prepared, (int)new_width, (int)new_height,
+                background_color, scale_options->interpolation, scale_options->fit, scale_options->gravity);
+        }
+    } else {
+        dst = gdImageScaleCompose(prepared, (int)new_width, (int)new_height,
+            background_color, scale_options->interpolation, scale_options->fit, scale_options->gravity);
+    }
+
+    gdImageDestroy(prepared);
+
+    return dst;
 }
 
 static int gdRotatedImageSize(gdImagePtr src, const float angle, gdRectPtr bbox)

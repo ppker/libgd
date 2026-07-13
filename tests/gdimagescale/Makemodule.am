@@ -2,7 +2,12 @@ libgd_test_programs += \
 	gdimagescale/bug00329 \
 	gdimagescale/bug00330 \
 	gdimagescale/github_bug_00218 \
-	gdimagescale/bug_overflow_large_new_size
+	gdimagescale/bug_overflow_large_new_size \
+	gdimagescale/options_fit \
+	gdimagescale/options_content_aware
 
 EXTRA_DIST += \
-	gdimagescale/CMakeLists.txt
+	gdimagescale/CMakeLists.txt \
+	gdimagescale/gd_image_scale_entropy_portrait_right_side.jpg \
+	gdimagescale/gd_image_scale_entropy_portrait_right_side_expected.jpg \
+	gdimagescale/gd_image_scale_attention_portrait_right_side_expected.jpg

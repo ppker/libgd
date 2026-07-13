@@ -1411,6 +1411,15 @@ BGD_DECLARE(void) gdUhdrImageDestroy(gdUhdrImagePtr im);
 BGD_DECLARE(gdImagePtr) gdImageCreateFromFile(const char *filename);
 BGD_DECLARE(gdImagePtr) gdImageReadFile(const char *filename);
 BGD_DECLARE(gdImagePtr) gdImageReadCtx(gdIOCtxPtr ctx);
+typedef enum {
+	gdImageReadStatusOk = 0,
+	gdImageReadStatusUnrecognized,
+	gdImageReadStatusUnsupportedFormat,
+	gdImageReadStatusCodecUnavailable,
+	gdImageReadStatusDecodeFailed
+} gdImageReadStatus;
+#define GD_IMAGE_READ_RESTRICT_CODEC_API 1
+BGD_DECLARE(gdImagePtr) gdImageReadCtxEx(gdIOCtxPtr ctx, int flags, gdImageReadStatus *status, const char **format_name);
 
 /*
   Group: Types
@@ -1496,8 +1505,6 @@ gdImageBmpCtxEx(gdImagePtr im, gdIOCtxPtr out, int bpp, int compression, int fla
 
 BGD_DECLARE(void) gdImageWBMP(gdImagePtr image, int fg, FILE *out);
 BGD_DECLARE(void) gdImageWBMPCtx(gdImagePtr image, int fg, gdIOCtxPtr out);
-
-
 
 BGD_DECLARE(int) gdUhdrIsAvailable(void);
 BGD_DECLARE(int) gdUhdrImageWidth(gdUhdrImagePtr im);
@@ -1768,30 +1775,22 @@ BGD_DECLARE(int) gdImageGetTrueColorPixel(gdImagePtr im, int x, int y);
 
 BGD_DECLARE(void) gdImageAABlend(gdImagePtr im);
 
-BGD_DECLARE(void)
-gdImageLine(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
+BGD_DECLARE(void) gdImageLine(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
 
 /* For backwards compatibility only. Use gdImageSetStyle()
    for much more flexible line drawing. */
-BGD_DECLARE(void)
-gdImageDashedLine(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
+BGD_DECLARE(void) gdImageDashedLine(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
 /* Corners specified (not width and height). Upper left first, lower right
    second. */
-BGD_DECLARE(void)
-gdImageRectangle(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
+BGD_DECLARE(void) gdImageRectangle(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
 /* Solid bar. Upper left corner first, lower right corner second. */
-BGD_DECLARE(void)
-gdImageFilledRectangle(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
+BGD_DECLARE(void) gdImageFilledRectangle(gdImagePtr im, int x1, int y1, int x2, int y2, int color);
 BGD_DECLARE(void) gdImageSetClip(gdImagePtr im, int x1, int y1, int x2, int y2);
-BGD_DECLARE(void)
-gdImageGetClip(gdImagePtr im, int *x1P, int *y1P, int *x2P, int *y2P);
+BGD_DECLARE(void) gdImageGetClip(gdImagePtr im, int *x1P, int *y1P, int *x2P, int *y2P);
 BGD_DECLARE(void)
 gdImageSetResolution(gdImagePtr im, const unsigned int res_x, const unsigned int res_y);
-BGD_DECLARE(int) gdImageBoundsSafe(gdImagePtr im, int x, int y);
-BGD_DECLARE(void)
-gdImageChar(gdImagePtr im, gdFontPtr f, int x, int y, int c, int color);
-BGD_DECLARE(void)
-gdImageCharUp(gdImagePtr im, gdFontPtr f, int x, int y, int c, int color);
+BGD_DECLARE(void) gdImageChar(gdImagePtr im, gdFontPtr f, int x, int y, int c, int color);
+BGD_DECLARE(void) gdImageCharUp(gdImagePtr im, gdFontPtr f, int x, int y, int c, int color);
 BGD_DECLARE(void)
 gdImageString(gdImagePtr im, gdFontPtr f, int x, int y, unsigned char *s, int color);
 BGD_DECLARE(void)
@@ -2397,12 +2396,75 @@ BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode);
 BGD_DECLARE(gdImagePtr)
 gdImageCropThreshold(gdImagePtr im, const unsigned int color, const float threshold);
 
+typedef struct {
+    enum gdCropMode mode;
+    float threshold;
+    int color;
+} gdAutoCropOptions;
+
+BGD_DECLARE(gdImagePtr)
+gdImageAutoCropWithOptions(gdImagePtr src, const gdAutoCropOptions *options);
+
 BGD_DECLARE(int)
 gdImageSetInterpolationMethod(gdImagePtr im, gdInterpolationMethod id);
 BGD_DECLARE(gdInterpolationMethod) gdImageGetInterpolationMethod(gdImagePtr im);
 
 BGD_DECLARE(gdImagePtr)
 gdImageScale(const gdImagePtr src, const unsigned int new_width, const unsigned int new_height);
+
+typedef enum {
+    GD_SCALE_FIT_COVER,
+    GD_SCALE_FIT_CONTAIN,
+    GD_SCALE_FIT_FILL,
+    GD_SCALE_FIT_INSIDE,
+    GD_SCALE_FIT_OUTSIDE
+} gdScaleFit;
+
+typedef enum {
+    GD_SCALE_GRAVITY_NORTHWEST,
+    GD_SCALE_GRAVITY_NORTH,
+    GD_SCALE_GRAVITY_NORTHEAST,
+    GD_SCALE_GRAVITY_WEST,
+    GD_SCALE_GRAVITY_CENTER,
+    GD_SCALE_GRAVITY_EAST,
+    GD_SCALE_GRAVITY_SOUTHWEST,
+    GD_SCALE_GRAVITY_SOUTH,
+    GD_SCALE_GRAVITY_SOUTHEAST
+} gdScaleGravity;
+
+typedef enum {
+    GD_SCALE_STRATEGY_NONE,
+    GD_SCALE_STRATEGY_ENTROPY,
+    GD_SCALE_STRATEGY_ATTENTION
+} gdScaleStrategy;
+
+typedef struct {
+    gdScaleFit fit;
+    gdScaleGravity gravity;
+    gdScaleStrategy strategy;
+    int background_color;
+    int interpolation;
+} gdScaleOptions;
+
+#define GD_SCALE_INTERPOLATION_AUTO -1
+
+BGD_DECLARE(gdImagePtr)
+gdImageScaleWithOptions(const gdImagePtr src, const unsigned int new_width,
+                        const unsigned int new_height, const gdScaleOptions *options);
+
+typedef enum {
+	GD_INTERESTING_ENTROPY,
+	GD_INTERESTING_ATTENTION
+} gdInterestingMethod;
+
+BGD_DECLARE(int)
+gdImageInterestingCropRegion(const gdImagePtr src, unsigned int target_width,
+                             unsigned int target_height, gdInterestingMethod method,
+                             gdRectPtr crop);
+
+BGD_DECLARE(int)
+gdImageEntropyCropRegion(const gdImagePtr src, unsigned int target_width,
+                         unsigned int target_height, gdRectPtr crop);
 
 BGD_DECLARE(gdImagePtr)
 gdImageRotateInterpolated(const gdImagePtr src, const float angle, int bgcolor);

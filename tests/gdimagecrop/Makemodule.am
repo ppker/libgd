@@ -1,4 +1,5 @@
 libgd_test_programs += \
+	gdimagecrop/autocrop_options \
 	gdimagecrop/bug00297 \
 	gdimagecrop/bug00432 \
 	gdimagecrop/bug00485_auto \

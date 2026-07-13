@@ -19,6 +19,7 @@ SET (LIBGD_SRC_FILES
 	gd_gif_in.c
 	gd_gif_out.c
 	gd_heif.c
+	gd_interesting.c
 	gd_interpolation.c
 	gd_jxl.c
 	gd_io.c

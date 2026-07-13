@@ -53,6 +53,9 @@
 #endif
 #define MAX3(a, b, c) ((a) < (b) ? (MAX(b, c)) : (MAX(a, c)))
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+/* 2.0.12: this now checks the clipping rectangle */
+#define gdImageBoundsSafeMacro(im, x, y)                                                           \
+    (!((((y) < (im)->cy1) || ((y) > (im)->cy2)) || (((x) < (im)->cx1) || ((x) > (im)->cx2))))
 
 #ifdef _MSC_VER
 #define gd_strcasecmp _stricmp

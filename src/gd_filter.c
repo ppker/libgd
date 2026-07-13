@@ -105,7 +105,7 @@ BGD_DECLARE(int) gdImageScatterEx(gdImagePtr im, gdScatterPtr scatter)
                 dest_x = (int)(x + ((rand() % (plus - sub)) + sub));
                 dest_y = (int)(y + ((rand() % (plus - sub)) + sub));
 
-                if (!gdImageBoundsSafe(im, dest_x, dest_y)) {
+                if (!gdImageBoundsSafeMacro(im, dest_x, dest_y)) {
                     continue;
                 }
 
