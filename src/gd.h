@@ -2118,21 +2118,291 @@ BGD_DECLARE(int) gdImageScatter(gdImagePtr im, int sub, int plus);
 BGD_DECLARE(int)
 gdImageScatterColor(gdImagePtr im, int sub, int plus, int colors[], unsigned int num_colors);
 BGD_DECLARE(int) gdImageScatterEx(gdImagePtr im, gdScatterPtr s);
+
+/**
+ * Function: gdImageSmooth
+ *
+ * Smooth an image
+ *
+ * (see smooth.jpg)
+ *
+ * Parameters:
+ *   im     - The image.
+ *   weight - The strength of the smoothing.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageConvolution>
+ */
 BGD_DECLARE(int) gdImageSmooth(gdImagePtr im, float weight);
+
+/**
+ * Function: gdImageMeanRemoval
+ *
+ * Mean removal of an image
+ *
+ * (see mean_removal.jpg)
+ *
+ * Parameters:
+ *   im - The image.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageEdgeDetectQuick>
+ *   - <gdImageConvolution>
+ */
 BGD_DECLARE(int) gdImageMeanRemoval(gdImagePtr im);
+
+/**
+ * Function: gdImageEmboss
+ *
+ * Emboss an image
+ *
+ * (see emboss.jpg)
+ *
+ * Parameters:
+ *   im - The image.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageConvolution>
+ */
 BGD_DECLARE(int) gdImageEmboss(gdImagePtr im);
+
+/*
+  Function: gdImageGaussianBlur
+
+        <gdImageGaussianBlur> performs a Gaussian blur of radius 1 on the
+        image.  The image is modified in place.
+
+        *NOTE:* You will almost certain want to use
+        <gdImageCopyGaussianBlurred> instead, as it allows you to change
+        your kernel size and sigma value.  Future versions of this
+        function may fall back to calling it instead of
+        <gdImageConvolution>, causing subtle changes so be warned.
+
+  Parameters:
+        im  - The image to blur
+
+  Returns:
+        GD_TRUE (1) on success, GD_FALSE (0) on failure.
+
+*/
 BGD_DECLARE(int) gdImageGaussianBlur(gdImagePtr im);
+
+/**
+ * Function: gdImageEdgeDetectQuick
+ *
+ * Edge detection of an image
+ *
+ * (see edge_detect_quick.jpg)
+ *
+ * Parameters:
+ *   src - The image.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageMeanRemoval>
+ *   - <gdImageConvolution>
+ */
 BGD_DECLARE(int) gdImageEdgeDetectQuick(gdImagePtr src);
+
+/*
+        Function: gdImageSelectiveBlur
+ */
 BGD_DECLARE(int) gdImageSelectiveBlur(gdImagePtr src);
+
+/**
+ * Function: gdImageConvolution
+ *
+ * Apply a convolution matrix to an image
+ *
+ * Depending on the matrix a wide range of effects can be accomplished, e.g.
+ * blurring, sharpening, embossing and edge detection.
+ *
+ * Parameters:
+ *   src        - The image.
+ *   filter     - The 3x3 convolution matrix.
+ *   filter_div - The value to divide the convoluted channel values by.
+ *   offset     - The value to add to the convoluted channel values.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageEdgeDetectQuick>
+ *   - <gdImageGaussianBlur>
+ *   - <gdImageEmboss>
+ *   - <gdImageMeanRemoval>
+ *   - <gdImageSmooth>
+ */
 BGD_DECLARE(int)
 gdImageConvolution(gdImagePtr src, float filter[3][3], float filter_div, float offset);
+
+/**
+ * Function: gdImageColor
+ *
+ * Change channel values of an image
+ *
+ * Parameters:
+ *   src   - The image.
+ *   red   - The value to add to the red channel of all pixels.
+ *   green - The value to add to the green channel of all pixels.
+ *   blue  - The value to add to the blue channel of all pixels.
+ *   alpha - The value to add to the alpha channel of all pixels.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageBrightness>
+ */
 BGD_DECLARE(int)
 gdImageColor(gdImagePtr src, const int red, const int green, const int blue, const int alpha);
+
+/**
+ * Function: gdImageContrast
+ *
+ * Change the contrast of an image
+ *
+ * Parameters:
+ *   src      - The image.
+ *   contrast - The contrast adjustment value. Negative values increase, postive
+ *              values decrease the contrast. The larger the absolute value, the
+ *              stronger the effect.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageBrightness>
+ */
 BGD_DECLARE(int) gdImageContrast(gdImagePtr src, double contrast);
+
+/**
+ * Function: gdImageBrightness
+ *
+ * Change the brightness of an image
+ *
+ * Parameters:
+ *   src        - The image.
+ *   brightness - The value to add to the color channels of all pixels.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ *
+ * See also:
+ *   - <gdImageContrast>
+ *   - <gdImageColor>
+ */
 BGD_DECLARE(int) gdImageBrightness(gdImagePtr src, int brightness);
+
+
+/**
+ * Function: gdImageGrayScale
+ *
+ * Convert an image to grayscale
+ *
+ * The red, green and blue components of each pixel are replaced by their
+ * weighted sum using the same coefficients as the REC.601 luma (Y')
+ * calculation. The alpha components are retained.
+ *
+ * For palette images the result may differ due to palette limitations.
+ *
+ * Parameters:
+ *   src - The image.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ */
 BGD_DECLARE(int) gdImageGrayScale(gdImagePtr src);
+
+/**
+ * Function: gdImageNegate
+ *
+ * Invert an image
+ *
+ * Parameters:
+ *   src - The image.
+ *
+ * Returns:
+ *   Non-zero on success, zero on failure.
+ */
 BGD_DECLARE(int) gdImageNegate(gdImagePtr src);
 
+/*
+  Function: gdImageCopyGaussianBlurred
+
+        Return a copy of the source image _src_ blurred according to the
+        parameters using the Gaussian Blur algorithm.
+
+        _radius_ is a radius, not a diameter so a radius of 2 (for
+        example) will blur across a region 5 pixels across (2 to the
+        center, 1 for the center itself and another 2 to the other edge).
+
+        _sigma_ represents the "fatness" of the curve (lower == fatter).
+        If _sigma_ is less than or equal to 0,
+        <gdImageCopyGaussianBlurred> ignores it and instead computes an
+        "optimal" value.  Be warned that future versions of this function
+        may compute sigma differently.
+
+        The resulting image is always truecolor.
+
+  More Details:
+
+        A Gaussian Blur is generated by replacing each pixel's color
+        values with the average of the surrounding pixels' colors.  This
+        region is a circle whose radius is given by argument _radius_.
+        Thus, a larger radius will yield a blurrier image.
+
+        This average is not a simple mean of the values.  Instead, values
+        are weighted using the Gaussian function (roughly a bell curve
+        centered around the destination pixel) giving it much more
+        influence on the result than its neighbours.  Thus, a fatter curve
+        will give the center pixel more weight and make the image less
+        blurry; lower _sigma_ values will yield flatter curves.
+
+        Currently, <gdImageCopyGaussianBlurred> computes the default sigma
+        as
+
+                (2/3)*radius
+
+        Note, however that we reserve the right to change this if we find
+        a better ratio.  If you absolutely need the current sigma value,
+        you should set it yourself.
+
+  Parameters:
+
+        src     - the source image
+        radius  - the blur radius (*not* diameter--range is 2*radius + 1)
+        sigma   - the sigma value or a value <= 0.0 to use the computed default
+
+  Returns:
+
+        The new image or NULL if an error occurred.  The result is always
+        truecolor.
+
+  Example:
+        (start code)
+
+        FILE *in;
+        gdImagePtr result, src;
+
+        in = fopen("foo.png", "rb");
+        src = gdImageCreateFromPng(in);
+
+        result = gdImageCopyGaussianBlurred(im, src->sx / 10, -1.0);
+
+        (end code)
+*/
 BGD_DECLARE(gdImagePtr)
 gdImageCopyGaussianBlurred(gdImagePtr src, int radius, double sigma);
 
@@ -2418,8 +2688,67 @@ enum gdCropMode {
     GD_CROP_THRESHOLD
 };
 
+/**
+ * Function: gdImageCrop
+ *
+ * Crop an image to a given rectangle
+ *
+ * Parameters:
+ *   src  - The image.
+ *   crop - The cropping rectangle, see <gdRect>.
+ *
+ * Returns:
+ *   The newly created cropped image, or NULL on failure.
+ *
+ * See also:
+ *   - <gdImageCropAuto>
+ *   - <gdImageCropThreshold>
+ */
 BGD_DECLARE(gdImagePtr) gdImageCrop(gdImagePtr src, const gdRect *crop);
+
+
+/**
+ * Function: gdImageCropAuto
+ *
+ * Crop an image automatically
+ *
+ * This function detects the cropping area according to the given _mode_.
+ *
+ * Parameters:
+ *   im   - The image.
+ *   mode - The cropping mode, see <gdCropMode>.
+ *
+ * Returns:
+ *   The newly created cropped image, or NULL on failure.
+ *
+ * See also:
+ *   - <gdImageCrop>
+ *   - <gdImageCropThreshold>
+ */
 BGD_DECLARE(gdImagePtr) gdImageCropAuto(gdImagePtr im, const unsigned int mode);
+
+
+/**
+ * Function: gdImageCropThreshold
+ *
+ * Crop an image using a given color
+ *
+ * The _threshold_ defines the tolerance to be used while comparing the image
+ * color and the color to crop. The method used to calculate the color
+ * difference is based on the color distance in the RGB(A) cube.
+ *
+ * Parameters:
+ *   im        - The image.
+ *   color     - The crop color.
+ *   threshold - The crop threshold.
+ *
+ * Returns:
+ *   The newly created cropped image, or NULL on failure.
+ *
+ * See also:
+ *   - <gdImageCrop>
+ *   - <gdImageCropAuto>
+ */
 BGD_DECLARE(gdImagePtr)
 gdImageCropThreshold(gdImagePtr im, const unsigned int color, const float threshold);
 
