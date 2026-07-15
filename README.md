@@ -26,7 +26,7 @@ We also have a mailing list. To subscribe to any mailing list,
 send an email to gd-devel-subscribe@lists.php.net.
 Then emails can be sent to gd-devel@lists.php.net.
 
-See the APIs docs for the massive additions to the next major release of GD  [here](https://libgd.github.io/manuals/2.4.0-dev/).
+See the APIs docs for the massive additions to the next major release of GD  [here](https://libgd.github.io/manuals/2.4.0/).
 
 ## Downloads
 
