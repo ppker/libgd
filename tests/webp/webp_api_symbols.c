@@ -5,33 +5,33 @@ int main(void)
 {
 	gdWebpReadOptions readOptions;
 	gdWebpWriteOptions writeOptions;
-	void (*readOptionsInit)(gdWebpReadOptions *) = gdWebpReadOptionsInit;
-	void (*writeOptionsInit)(gdWebpWriteOptions *) = gdWebpWriteOptionsInit;
-	int (*isAnimated)(FILE *) = gdWebpIsAnimated;
-	int (*isAnimatedCtx)(gdIOCtxPtr) = gdWebpIsAnimatedCtx;
-	int (*isAnimatedPtr)(int, void *) = gdWebpIsAnimatedPtr;
-	gdWebpReadPtr (*readOpen)(FILE *, const gdWebpReadOptions *) =
+	void (BGD_STDCALL *readOptionsInit)(gdWebpReadOptions *) = gdWebpReadOptionsInit;
+	void (BGD_STDCALL *writeOptionsInit)(gdWebpWriteOptions *) = gdWebpWriteOptionsInit;
+	int (BGD_STDCALL *isAnimated)(FILE *) = gdWebpIsAnimated;
+	int (BGD_STDCALL *isAnimatedCtx)(gdIOCtxPtr) = gdWebpIsAnimatedCtx;
+	int (BGD_STDCALL *isAnimatedPtr)(int, void *) = gdWebpIsAnimatedPtr;
+	gdWebpReadPtr (BGD_STDCALL *readOpen)(FILE *, const gdWebpReadOptions *) =
 		gdWebpReadOpen;
-	gdWebpReadPtr (*readOpenCtx)(gdIOCtxPtr, const gdWebpReadOptions *) =
+	gdWebpReadPtr (BGD_STDCALL *readOpenCtx)(gdIOCtxPtr, const gdWebpReadOptions *) =
 		gdWebpReadOpenCtx;
-	gdWebpReadPtr (*readOpenPtr)(int, void *, const gdWebpReadOptions *) =
+	gdWebpReadPtr (BGD_STDCALL *readOpenPtr)(int, void *, const gdWebpReadOptions *) =
 		gdWebpReadOpenPtr;
-	int (*readGetInfo)(gdWebpReadPtr, gdWebpInfo *) = gdWebpReadGetInfo;
-	int (*readNextFrame)(gdWebpReadPtr, gdWebpFrameInfo *, gdImagePtr *) =
+	int (BGD_STDCALL *readGetInfo)(gdWebpReadPtr, gdWebpInfo *) = gdWebpReadGetInfo;
+	int (BGD_STDCALL *readNextFrame)(gdWebpReadPtr, gdWebpFrameInfo *, gdImagePtr *) =
 		gdWebpReadNextFrame;
-	int (*readNextImage)(gdWebpReadPtr, gdWebpFrameInfo *, gdImagePtr *) =
+	int (BGD_STDCALL *readNextImage)(gdWebpReadPtr, gdWebpFrameInfo *, gdImagePtr *) =
 		gdWebpReadNextImage;
-	void (*readClose)(gdWebpReadPtr) = gdWebpReadClose;
-	gdWebpWritePtr (*writeOpen)(FILE *, const gdWebpWriteOptions *) =
+	void (BGD_STDCALL *readClose)(gdWebpReadPtr) = gdWebpReadClose;
+	gdWebpWritePtr (BGD_STDCALL *writeOpen)(FILE *, const gdWebpWriteOptions *) =
 		gdWebpWriteOpen;
-	gdWebpWritePtr (*writeOpenCtx)(gdIOCtxPtr, const gdWebpWriteOptions *) =
+	gdWebpWritePtr (BGD_STDCALL *writeOpenCtx)(gdIOCtxPtr, const gdWebpWriteOptions *) =
 		gdWebpWriteOpenCtx;
-	gdWebpWritePtr (*writeOpenPtr)(const gdWebpWriteOptions *) =
+	gdWebpWritePtr (BGD_STDCALL *writeOpenPtr)(const gdWebpWriteOptions *) =
 		gdWebpWriteOpenPtr;
-	int (*writeAddImage)(gdWebpWritePtr, gdImagePtr, int) =
+	int (BGD_STDCALL *writeAddImage)(gdWebpWritePtr, gdImagePtr, int) =
 		gdWebpWriteAddImage;
-	void (*writeClose)(gdWebpWritePtr) = gdWebpWriteClose;
-	void *(*writePtrFinish)(gdWebpWritePtr, int *) = gdWebpWritePtrFinish;
+	void (BGD_STDCALL *writeClose)(gdWebpWritePtr) = gdWebpWriteClose;
+	void *(BGD_STDCALL *writePtrFinish)(gdWebpWritePtr, int *) = gdWebpWritePtrFinish;
 
 	gdWebpReadOptionsInit(&readOptions);
 	gdWebpWriteOptionsInit(&writeOptions);
