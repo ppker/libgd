@@ -30,7 +30,7 @@ int main() {
 	gdTestAssert(info.delay_ms == 120);
 	gdTestAssert(info.width == 4);
 	gdTestAssert(info.height == 4);
-	gdTestAssert(info.blend_mode == GD_JXL_BLEND_REPLACE);
+	gdTestAssert(info.blend_mode == gdJxlBlendReplace);
 	gdImageDestroy(frame);
 
 	gdTestAssert(gdJxlReadNextFrame(reader, &info, &frame) == 1);
