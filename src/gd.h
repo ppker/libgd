@@ -2678,7 +2678,7 @@ gdImageJxlCtxEx(gdImagePtr im, gdIOCtxPtr outfile, int lossless, float distance,
 
 /** @} */
 
-/** @name JPEG XL Animation Types And Constants */
+/** @name JPEG XL Multi-Image Types And Constants */
 /** @{ */
 
 /**
@@ -2741,7 +2741,7 @@ typedef struct {
 } gdJxlReadOptions;
 
 /**
- * @brief JPEG XL multi-image writer options.
+ * @brief JPEG XL multi-image/animation writer options.
  */
 typedef struct {
     size_t struct_size; /**< Size of this structure, set by gdJxlWriteOptionsInit(). */
@@ -2753,7 +2753,26 @@ typedef struct {
     int loopCount;      /**< Animation loop count, or 0 for infinite looping. */
 } gdJxlWriteOptions;
 
+/**
+ * @brief Initialize JPEG XL multi-image read options with gd defaults.
+ *
+ * The default reader mode is coalesced, so gdJxlReadNextImage() returns
+ * full-canvas rendered images. Set gdJxlReadOptions::coalesced to zero before
+ * opening the reader to read raw frame rectangles with gdJxlReadNextFrame().
+ *
+ * @param options Pointer to the read options structure to initialize.
+ */
 BGD_DECLARE(void) gdJxlReadOptionsInit(gdJxlReadOptions *options);
+
+/**
+ * @brief Initialize JPEG XL multi-image/animation write options with gd defaults.
+ *
+ * The default writer infers the canvas size from the first frame, writes lossy
+ * JPEG XL with distance 1.0 and effort 7, and uses loopCount 0 for infinite
+ * looping.
+ *
+ * @param options Pointer to the write options structure to initialize.
+ */
 BGD_DECLARE(void) gdJxlWriteOptionsInit(gdJxlWriteOptions *options);
 
 /** @} */
@@ -2761,13 +2780,100 @@ BGD_DECLARE(void) gdJxlWriteOptionsInit(gdJxlWriteOptions *options);
 /** @name JPEG XL Multi-Image Reading */
 /** @{ */
 
+/**
+ * @brief Open a JPEG XL multi-image/animation reader from a stdio file.
+ *
+ * gdJxlReadOpen() reads the JPEG XL data into the reader and does not close
+ * inFile. Pass NULL for options to use gd defaults. The returned handle must be
+ * closed with gdJxlReadClose().
+ *
+ * @param inFile Pointer to the input FILE stream.
+ * @param options Pointer to read options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL reader handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlReadPtr) gdJxlReadOpen(FILE *inFile, const gdJxlReadOptions *options);
+
+/**
+ * @brief Open a JPEG XL multi-image/animation reader from a gdIOCtx.
+ *
+ * gdJxlReadOpenCtx() reads the JPEG XL data into the reader and does not close
+ * inCtx. Pass NULL for options to use gd defaults. The returned handle must be
+ * closed with gdJxlReadClose().
+ *
+ * @param inCtx Pointer to the gdIOCtx input context.
+ * @param options Pointer to read options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL reader handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlReadPtr) gdJxlReadOpenCtx(gdIOCtxPtr inCtx, const gdJxlReadOptions *options);
+
+/**
+ * @brief Open a JPEG XL multi-image/animation reader from a memory buffer.
+ *
+ * The data buffer is borrowed for the duration of the call. Pass NULL for
+ * options to use gd defaults. The returned handle owns its copy of the JPEG XL
+ * data and must be closed with gdJxlReadClose().
+ *
+ * @param size Size of the JPEG XL memory buffer in bytes.
+ * @param data Pointer to the JPEG XL memory buffer.
+ * @param options Pointer to read options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL reader handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlReadPtr)
 gdJxlReadOpenPtr(int size, void *data, const gdJxlReadOptions *options);
+
+/**
+ * @brief Get JPEG XL image or animation information from a reader.
+ *
+ * The returned gdJxlInfo describes the canvas size and animation loop count
+ * reported by the JPEG XL stream.
+ *
+ * @param reader JPEG XL reader handle.
+ * @param info Pointer to a gdJxlInfo structure to receive image information.
+ *
+ * @return Returns 1 on success, or 0 on failure.
+ */
 BGD_DECLARE(int) gdJxlReadGetInfo(gdJxlReadPtr reader, gdJxlInfo *info);
+
+/**
+ * @brief Read the next coalesced JPEG XL image.
+ *
+ * This function is used with coalesced readers. When image is not NULL and the
+ * function returns 1, *image receives a caller-owned full-canvas truecolor image
+ * that must be destroyed with gdImageDestroy(). Passing NULL for image advances
+ * the reader without returning the decoded image.
+ *
+ * @param reader JPEG XL reader handle opened with coalesced mode.
+ * @param delay_ms Pointer to receive the frame duration in milliseconds, or NULL.
+ * @param image Pointer to receive the caller-owned image, or NULL.
+ *
+ * @return Returns 1 when an image is read, 0 at end of stream, or -1 on error.
+ */
 BGD_DECLARE(int) gdJxlReadNextImage(gdJxlReadPtr reader, int *delay_ms, gdImagePtr *image);
+
+/**
+ * @brief Read the next raw JPEG XL frame rectangle.
+ *
+ * This function is used with non-coalesced readers. When frame is not NULL and
+ * the function returns 1, *frame receives a caller-owned truecolor frame
+ * rectangle that must be destroyed with gdImageDestroy(). Passing NULL for frame
+ * advances the reader without returning the decoded image.
+ *
+ * @param reader JPEG XL reader handle opened with raw-frame mode.
+ * @param info Pointer to receive raw frame information.
+ * @param frame Pointer to receive the caller-owned frame image, or NULL.
+ *
+ * @return Returns 1 when a frame is read, 0 at end of stream, or -1 on error.
+ */
 BGD_DECLARE(int) gdJxlReadNextFrame(gdJxlReadPtr reader, gdJxlFrameInfo *info, gdImagePtr *frame);
+
+/**
+ * @brief Close a JPEG XL multi-image reader.
+ *
+ * @param reader JPEG XL reader handle to close, or NULL.
+ */
 BGD_DECLARE(void) gdJxlReadClose(gdJxlReadPtr reader);
 
 /** @} */
@@ -2775,11 +2881,81 @@ BGD_DECLARE(void) gdJxlReadClose(gdJxlReadPtr reader);
 /** @name JPEG XL Multi-Image Writing */
 /** @{ */
 
+/**
+ * @brief Open a JPEG XL multi-image/animation writer for a stdio file.
+ *
+ * gdJxlWriteOpen() does not close outFile. Pass NULL for options to use gd
+ * defaults. The returned handle must be closed with gdJxlWriteClose().
+ *
+ * @param outFile Pointer to the output FILE stream.
+ * @param options Pointer to write options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL writer handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlWritePtr) gdJxlWriteOpen(FILE *outFile, const gdJxlWriteOptions *options);
+
+/**
+ * @brief Open a JPEG XL multi-image/animation writer for a gdIOCtx.
+ *
+ * The output context is borrowed and is not closed by gdJxlWriteClose(). Pass
+ * NULL for options to use gd defaults. The returned handle must be closed with
+ * gdJxlWriteClose().
+ *
+ * @param outCtx Pointer to the gdIOCtx output context.
+ * @param options Pointer to write options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL writer handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlWritePtr) gdJxlWriteOpenCtx(gdIOCtxPtr outCtx, const gdJxlWriteOptions *options);
+
+/**
+ * @brief Open a JPEG XL multi-image/animation writer that returns a memory buffer.
+ *
+ * Pass NULL for options to use gd defaults. The returned handle must be finished
+ * with gdJxlWritePtrFinish().
+ *
+ * @param options Pointer to write options, or NULL for defaults.
+ *
+ * @return Returns a JPEG XL memory writer handle on success, or NULL on failure.
+ */
 BGD_DECLARE(gdJxlWritePtr) gdJxlWriteOpenPtr(const gdJxlWriteOptions *options);
+
+/**
+ * @brief Add a full-canvas image to a JPEG XL multi-image/animation writer.
+ *
+ * The image is borrowed for the duration of the call and remains owned by the
+ * caller. The image must be truecolor. All images must match the resolved
+ * canvas size; when the writer canvas is zero, the first image sets it.
+ *
+ * @param writer JPEG XL writer handle.
+ * @param image Image to add as the next frame.
+ * @param delay_ms Frame duration in milliseconds.
+ *
+ * @return Returns 1 on success, or 0 on failure.
+ */
 BGD_DECLARE(int) gdJxlWriteAddImage(gdJxlWritePtr writer, gdImagePtr image, int delay_ms);
+
+/**
+ * @brief Add a full-canvas image to a JPEG XL multi-image/animation writer.
+ *
+ * Use this for handles returned by gdJxlWriteOpen() or gdJxlWriteOpenCtx(). For
+ * memory writers returned by gdJxlWriteOpenPtr(), use gdJxlWritePtrFinish().
+ *
+ * @param writer JPEG XL writer handle to finish and close, or NULL.
+ */
 BGD_DECLARE(void) gdJxlWriteClose(gdJxlWritePtr writer);
+
+/**
+ * @brief Finish a JPEG XL multi-image/animation memory writer and return the encoded buffer.
+ *
+ * This closes writer whether encoding succeeds or fails. The returned buffer is
+ * caller-owned and must be freed with gdFree().
+ *
+ * @param writer JPEG XL memory writer handle returned by gdJxlWriteOpenPtr().
+ * @param size Pointer to an integer that receives the returned buffer size.
+ *
+ * @return Returns a pointer to the newly allocated JPEG XL buffer, or NULL on failure.
+ */
 BGD_DECLARE(void *) gdJxlWritePtrFinish(gdJxlWritePtr writer, int *size);
 
 /** @} */
