@@ -140,7 +140,8 @@ int main() {
 		blue_size = 0, end_size = 0;
 	int total_size;
 	unsigned char *gif;
-	GifInfo info;
+	GifInfo info = {0, 0, 0};
+	int parsed;
 
 	redFrame = create_frame(255, 0, 0);
 	greenFrame1 = create_frame(0, 255, 0);
@@ -190,8 +191,12 @@ int main() {
 	memcpy(gif + begin_size + red_size + green1_size + green2_size + blue_size,
 		   end, end_size);
 
-	gdTestAssertMsg(parse_gif_info(gif, total_size, &info),
-					"expected parseable GIF animation");
+	parsed = parse_gif_info(gif, total_size, &info);
+	gdTestAssertMsg(parsed, "expected parseable GIF animation");
+	if (!parsed) {
+		free(gif);
+		goto done;
+	}
 	gdTestAssertMsg(info.frame_count == 4, "expected 4 image frames, got %d",
 					info.frame_count);
 	gdTestAssertMsg(info.total_delay == 400, "expected total delay 400, got %d",

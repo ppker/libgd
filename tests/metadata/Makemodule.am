@@ -4,7 +4,7 @@ libgd_test_programs += \
 
 metadata_codec_metadata_SOURCES = metadata/codec_metadata.c
 metadata_codec_metadata_LDADD = libgdtest.a ../src/libgd.la
-metadata_codec_metadata_CPPFLAGS =
+metadata_codec_metadata_CPPFLAGS = $(AM_CPPFLAGS)
 if HAVE_LIBJPEG
 metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_JPEG
 endif

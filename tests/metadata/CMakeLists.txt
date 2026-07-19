@@ -3,7 +3,7 @@ LIST(APPEND TESTS_FILES
 )
 
 add_executable(test_metadata_codec_metadata codec_metadata.c)
-target_link_libraries(test_metadata_codec_metadata gdTest gd)
+target_link_libraries(test_metadata_codec_metadata gdTest ${GD_LIB})
 add_test(NAME test_metadata_codec_metadata COMMAND test_metadata_codec_metadata)
 if(JPEG_FOUND)
 	target_compile_definitions(test_metadata_codec_metadata PRIVATE GD_TEST_HAVE_JPEG=1)
