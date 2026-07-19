@@ -5044,7 +5044,7 @@ gdImageXbmCtx(gdImagePtr image, char *file_name, int fg, gdIOCtxPtr out);
  * @defgroup gdCodecXpm XPM
  * @brief Read and write X PixMap images.
  * @ingroup gdCodecs
- *
+ */
  /** 
  * @brief Read X PixMap images.
  * @ingroup gdCodecs
