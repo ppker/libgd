@@ -1002,31 +1002,108 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromQoiCtx(gdIOCtxPtr in);
  */
 BGD_DECLARE(gdImagePtr) gdImageCreateFromQoiPtr(int size, void *data);
 
+/** 
+ * @brief Information read from a QOI data
+ */
 typedef struct {
-    unsigned int width;
-    unsigned int height;
-    int channels;
-    int colorspace;
+    unsigned int width; /**< Image width in pixels. */
+    unsigned int height; /**< Image height in pixels. */
+    int channels; /**< Number of color channels (3 for RGB, 4 for RGBA). */
+    int colorspace; /**< QOI colorspace flag (GD_QOI_SRGB or GD_QOI_LINEAR). */
 } gdQoiInfo;
 
+/**
+ * @brief Initialize a gdQoiInfo structure to default values.
+ * 
+ * The default may change in future versions, so it is recommended to call this function before using the structure.
+ * Default values update is not considered a breaking change, but it is still recommended to call this function to ensure proper initialization.
+ * 
+ * @param info Pointer to the gdQoiInfo structure to initialize.
+ */
 BGD_DECLARE(void) gdQoiInfoInit(gdQoiInfo *info);
+
+/**
+ * @brief Read QOI header information from a stdio file.
+ * 
+ * @param infile Pointer to the input FILE stream.
+ * @param info Pointer to the gdQoiInfo structure to populate.
+ * 
+ * @return Returns 0 on success, or 1 on failure.
+ */
 BGD_DECLARE(int) gdQoiGetInfo(FILE *infile, gdQoiInfo *info);
+
+/**
+ * @brief Read QOI header information from a gdIOCtx.
+ * 
+ * @param infile Pointer to the gdIOCtx input context.
+ * @param info Pointer to the gdQoiInfo structure to populate.
+ * 
+ * @return Returns 0 on success, or 1 on failure.
+ */
 BGD_DECLARE(int) gdQoiGetInfoCtx(gdIOCtxPtr infile, gdQoiInfo *info);
+
+/**
+ * @brief Read QOI header information from a memory buffer.
+ * 
+ * @param size Size of the QOI memory buffer in bytes.
+ * @param data Pointer to the QOI memory buffer.
+ * @param info Pointer to the gdQoiInfo structure to populate.
+ * 
+ * @return Returns 0 on success, or 1 on failure.
+ */
 BGD_DECLARE(int) gdQoiGetInfoPtr(int size, const void *data, gdQoiInfo *info);
 
+/**
+ * @brief Options for writing QOI data.
+ */
 typedef struct {
-    int colorspace;
+    int colorspace; /**< QOI colorspace flag, either GD_QOI_SRGB or GD_QOI_LINEAR. */
     const gdImageMetadata *metadata; /**< Optional metadata, ignored by QOI. */
 } gdQoiWriteOptions;
 
+/**
+ * @brief Initialize a gdQoiWriteOptions structure to default values.
+ * 
+ * The default may change in future versions, so it is recommended to call this function before using the structure.
+ * Default values update is not considered a breaking change, but it is still recommended to call this function to ensure proper initialization.
+ * 
+ * @param options Pointer to the gdQoiWriteOptions structure to initialize.
+ */
 BGD_DECLARE(void) gdQoiWriteOptionsInit(gdQoiWriteOptions *options);
 
+/**
+ * @brief Write an image as QOI data to a stdio file with options.
+ *
+ * @param im The image to write.
+ * @param out The stdio file to write the QOI data to.
+ * @param options Pointer to the gdQoiWriteOptions structure specifying write options.
+ *
+ * @return Returns 0 on success, or 1 on failure.
+ */
 BGD_DECLARE(int)
 gdImageQoiWithOptions(gdImagePtr im, FILE *out, const gdQoiWriteOptions *options);
 
+/** 
+ * @brief Write an image as QOI data to a gdIOCtx with options.
+ * 
+ * @param im The image to write.
+ * @param out The gdIOCtx to write the QOI data to.
+ * @param options Pointer to the gdQoiWriteOptions structure specifying write options.
+ *
+ * @return Returns 0 on success, or 1 on failure.
+ */
 BGD_DECLARE(int)
 gdImageQoiCtxWithOptions(gdImagePtr im, gdIOCtxPtr out, const gdQoiWriteOptions *options);
 
+/**
+ * @brief Write an image as QOI data to a newly allocated memory buffer with options.
+ * 
+ * @param im The image to write.
+ * @param size Pointer to an integer that receives the returned buffer size.
+ * @param options Pointer to the gdQoiWriteOptions structure specifying write options.
+ * 
+ * @return A pointer to the newly allocated QOI data, or NULL on failure.
+ */
 BGD_DECLARE(void *)
 gdImageQoiPtrWithOptions(gdImagePtr im, int *size, const gdQoiWriteOptions *options);
 
@@ -1085,7 +1162,20 @@ enum {
     GD_QOI_LINEAR = 1 /**< Pixel data is encoded with linear transfer characteristics. */
 };
 
+/**
+ * @brief Write an image as QOI data to a stdio file with an explicit colorspace flag.
+ * 
+ * @param im The image to write.
+ * @param out The stdio file to write the QOI data to.
+ */
 BGD_DECLARE(void) gdImageQoi(gdImagePtr im, FILE *out);
+
+/**
+ * @brief Write an image as QOI data to a gdIOCtx with an explicit colorspace flag.
+ * 
+ * @param im The image to write.
+ * @param out The gdIOCtx to write the QOI data to.
+  */
 BGD_DECLARE(void) gdImageQoiCtx(gdImagePtr im, gdIOCtxPtr out);
 
 /**
