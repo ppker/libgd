@@ -42,7 +42,7 @@ if(DOXYGEN_FOUND)
                          DOXYGEN_CONFIG_CONTENT
                          "${DOXYGEN_CONFIG_CONTENT}")
     string(REGEX REPLACE "INPUT[ \t]*=[^\n\r]*"
-                         "INPUT                  = src ${DOXYGEN_MAINPAGE_FILE}"
+                         "INPUT                  = src ${DOXYGEN_MAINPAGE_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/metadata.md"
                          DOXYGEN_CONFIG_CONTENT
                          "${DOXYGEN_CONFIG_CONTENT}")
     file(WRITE "${DOXYGEN_CONFIG_FILE_OUT}" "${DOXYGEN_CONFIG_CONTENT}")

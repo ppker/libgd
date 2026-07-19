@@ -131,6 +131,8 @@ int main(int argc, char **argv)
 	const unsigned char *profile;
 	size_t profile_size;
 	ExifData *exif = NULL;
+	unsigned char *libexif_data = NULL;
+	size_t libexif_size;
 	unsigned char *serialized = NULL;
 	unsigned int serialized_size = 0;
 	int ok = 0;
@@ -165,7 +167,19 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	exif = exif_data_new_from_data(profile, (unsigned int)profile_size);
+	if (profile_size > (size_t)UINT_MAX - 6) {
+		fprintf(stderr, "input JPEG EXIF profile is too large\n");
+		goto cleanup;
+	}
+	libexif_size = profile_size + 6;
+	libexif_data = (unsigned char *)malloc(libexif_size);
+	if (libexif_data == NULL) {
+		fprintf(stderr, "could not allocate EXIF input buffer\n");
+		goto cleanup;
+	}
+	memcpy(libexif_data, "Exif\0\0", 6);
+	memcpy(libexif_data + 6, profile, profile_size);
+	exif = exif_data_new_from_data(libexif_data, (unsigned int)libexif_size);
 	if (exif == NULL) {
 		fprintf(stderr, "libexif could not parse the EXIF profile\n");
 		goto cleanup;
@@ -201,6 +215,7 @@ int main(int argc, char **argv)
 
 cleanup:
 	free(serialized);
+	free(libexif_data);
 	if (exif != NULL) {
 		exif_data_unref(exif);
 	}
