@@ -378,7 +378,8 @@ static int JxlEncoderAddMetadata(JxlEncoder *enc, const gdImageMetadata *metadat
             continue;
         }
         if (strcmp(key, "exif") == 0) {
-            if (size > SIZE_MAX - 4) {
+            if (gdMetadataGetExifTiff(data, size, &data, &size) != GD_META_OK ||
+                size > SIZE_MAX - 4) {
                 return 0;
             }
             exif = gdMalloc(size + 4);
@@ -1364,11 +1365,21 @@ BGD_DECLARE(int) gdJxlReadGetMetadata(gdJxlReadPtr reader, gdImageMetadata *meta
                 }
                 offset = ((size_t)buffer[0] << 24) | ((size_t)buffer[1] << 16) |
                     ((size_t)buffer[2] << 8) | (size_t)buffer[3];
-                if (offset > used - 4 || gdImageMetadataSetProfile(metadata, "exif", buffer + 4 + offset,
-                        used - 4 - offset) != GD_META_OK) {
+                if (offset > used - 4) {
                     result = GD_META_ERR_FORMAT;
                     gdFree(buffer);
                     goto metadata_done;
+                }
+                {
+                    const unsigned char *tiff;
+                    size_t tiff_size;
+                    if (gdMetadataGetExifTiff(buffer + 4 + offset, used - 4 - offset,
+                                              &tiff, &tiff_size) != GD_META_OK ||
+                        gdImageMetadataSetProfile(metadata, "exif", tiff, tiff_size) != GD_META_OK) {
+                        result = GD_META_ERR_FORMAT;
+                        gdFree(buffer);
+                        goto metadata_done;
+                    }
                 }
             } else if (gdImageMetadataSetProfile(metadata, "xmp", buffer, used) != GD_META_OK) {
                 result = GD_META_ERR_FORMAT;

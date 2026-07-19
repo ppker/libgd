@@ -507,7 +507,6 @@ BGD_DECLARE(int) gdWebpReadGetMetadata(gdWebpReadPtr webp, gdImageMetadata *meta
     } chunks[] = {
         {"EXIF", "exif", EXIF_FLAG},
         {"XMP ", "xmp", XMP_FLAG},
-        {"ICCP", "icc", ICCP_FLAG},
     };
     uint32_t flags;
     size_t i;
@@ -524,7 +523,16 @@ BGD_DECLARE(int) gdWebpReadGetMetadata(gdWebpReadPtr webp, gdImageMetadata *meta
             continue;
         }
         {
-            int metadata_status = gdImageMetadataSetProfile(metadata, chunks[i].key, iter.chunk.bytes, iter.chunk.size);
+            const unsigned char *data = iter.chunk.bytes;
+            size_t size = iter.chunk.size;
+            int metadata_status;
+
+            if (strcmp(chunks[i].key, "exif") == 0 &&
+                gdMetadataGetExifTiff(data, size, &data, &size) != GD_META_OK) {
+                WebPDemuxReleaseChunkIterator(&iter);
+                return GD_META_ERR_PARSE;
+            }
+            metadata_status = gdImageMetadataSetProfile(metadata, chunks[i].key, data, size);
             if (metadata_status != GD_META_OK) {
                 WebPDemuxReleaseChunkIterator(&iter);
                 return metadata_status;
@@ -798,9 +806,18 @@ static int WebpWriteApplyMetadata(void **data, int *size, const gdImageMetadata 
             WebPMuxDelete(mux);
             return GD_META_ERR_INVALID;
         }
-        if (strcmp(key, "exif") == 0) chunk_id = "EXIF";
+        if (strcmp(key, "exif") == 0) {
+            const unsigned char *tiff;
+            size_t tiff_size;
+            if (gdMetadataGetExifTiff(profile, profile_size, &tiff, &tiff_size) != GD_META_OK) {
+                WebPMuxDelete(mux);
+                return GD_META_ERR_PARSE;
+            }
+            profile = tiff;
+            profile_size = tiff_size;
+            chunk_id = "EXIF";
+        }
         else if (strcmp(key, "xmp") == 0) chunk_id = "XMP ";
-        else if (strcmp(key, "icc") == 0) chunk_id = "ICCP";
         else continue;
         chunk.bytes = profile;
         chunk.size = profile_size;

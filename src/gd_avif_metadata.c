@@ -3,6 +3,7 @@
 #endif
 
 #include "gd_avif_metadata.h"
+#include "gd_intern.h"
 #include "gdhelpers.h"
 
 #include <limits.h>
@@ -23,11 +24,9 @@ static int gd_avif_set_profile(gdImageMetadata *metadata, const char *key,
         return GD_META_OK;
     }
     if (strcmp(key, "exif") == 0) {
-        if (size < 4) {
+        if (gdMetadataGetExifTiff(data, size, &data, &size) != GD_META_OK) {
             return GD_META_ERR_PARSE;
         }
-        data += 4;
-        size -= 4;
     }
     return gdImageMetadataSetProfile(metadata, key, data, size);
 }
@@ -204,17 +203,10 @@ int gdAvifApplyMetadata(avifImage *image, const gdImageMetadata *metadata)
 
     data = gdImageMetadataGetProfile(metadata, "exif", &size);
     if (data != NULL) {
-        if (size > INT_MAX) {
-            return GD_META_ERR_LIMIT;
+        if (gdMetadataGetExifTiff(data, size, &data, &size) != GD_META_OK) {
+            return GD_META_ERR_PARSE;
         }
-        unsigned char *exif = gdMalloc(size + 4);
-        if (exif == NULL) {
-            return GD_META_ERR_NOMEM;
-        }
-        memset(exif, 0, 4);
-        memcpy(exif + 4, data, size);
-        result = avifImageSetMetadataExif(image, exif, size + 4);
-        gdFree(exif);
+        result = avifImageSetMetadataExif(image, data, size);
         if (result != AVIF_RESULT_OK) {
             return GD_META_ERR_INVALID;
         }

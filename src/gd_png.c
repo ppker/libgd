@@ -5,6 +5,7 @@
 #include "gd.h"
 #include "gd_errors.h"
 #include "gd_intern.h"
+#include <ctype.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -51,6 +52,133 @@ static int gdPngIsRawProfile(const unsigned char *data, size_t size, const char 
     return size > prefix_size + profile_type_size && memcmp(data, prefix, prefix_size) == 0 &&
            memcmp(data + prefix_size, profile_type, profile_type_size) == 0 &&
            data[prefix_size + profile_type_size] == 0;
+}
+
+static int gdPngDecodeRawProfile(const unsigned char *data, size_t size,
+                                 const char *profile_type, unsigned char **decoded,
+                                 size_t *decoded_size)
+{
+    const unsigned char *nul;
+    const unsigned char *line;
+    const unsigned char *end;
+    unsigned char *inflated = NULL;
+    unsigned char *result = NULL;
+    size_t compressed_size;
+    size_t capacity;
+    size_t length = 0;
+    size_t hex_count = 0;
+    size_t i;
+    uLongf inflated_size;
+    int zstatus;
+
+    if (decoded == NULL || decoded_size == NULL || data == NULL ||
+        !gdPngIsRawProfile(data, size, profile_type)) {
+        return GD_META_ERR_INVALID;
+    }
+    *decoded = NULL;
+    *decoded_size = 0;
+
+    nul = (const unsigned char *)memchr(data, 0, size);
+    if (nul == NULL || (size_t)(nul - data) > size - 2 || data[nul - data + 1] != 0) {
+        return GD_META_ERR_PARSE;
+    }
+    compressed_size = size - (size_t)(nul - data) - 2;
+    if (compressed_size == 0) {
+        return GD_META_ERR_PARSE;
+    }
+
+    capacity = compressed_size > (SIZE_MAX - 64) / 2 ? SIZE_MAX : compressed_size * 2 + 64;
+    if (capacity == SIZE_MAX || capacity > ULONG_MAX) {
+        capacity = ULONG_MAX;
+    }
+    for (;;) {
+        unsigned char *new_inflated = (unsigned char *)gdRealloc(inflated, capacity);
+        if (new_inflated == NULL) {
+            gdFree(inflated);
+            return GD_META_ERR_NOMEM;
+        }
+        inflated = new_inflated;
+        inflated_size = (uLongf)capacity;
+        zstatus = uncompress(inflated, &inflated_size, nul + 2, (uLong)compressed_size);
+        if (zstatus == Z_OK) {
+            break;
+        }
+        if (zstatus != Z_BUF_ERROR || capacity > SIZE_MAX / 2 || capacity >= ULONG_MAX) {
+            gdFree(inflated);
+            return GD_META_ERR_PARSE;
+        }
+        capacity *= 2;
+    }
+
+    line = (const unsigned char *)memchr(inflated, '\n', (size_t)inflated_size);
+    if (line == NULL || line + 1 >= inflated + inflated_size) {
+        gdFree(inflated);
+        return GD_META_ERR_PARSE;
+    }
+    line++;
+    end = (const unsigned char *)memchr(line, '\n', (size_t)(inflated + inflated_size - line));
+    if (end == NULL) {
+        gdFree(inflated);
+        return GD_META_ERR_PARSE;
+    }
+    line = end + 1;
+    end = (const unsigned char *)memchr(line, '\n', (size_t)(inflated + inflated_size - line));
+    if (end == NULL) {
+        gdFree(inflated);
+        return GD_META_ERR_PARSE;
+    }
+    for (i = (size_t)(line - inflated); i < (size_t)(end - inflated); i++) {
+        if (isspace(inflated[i])) {
+            continue;
+        }
+        if (inflated[i] < '0' || inflated[i] > '9' ||
+            length > (SIZE_MAX - (inflated[i] - '0')) / 10) {
+            gdFree(inflated);
+            return GD_META_ERR_PARSE;
+        }
+        length = length * 10 + (inflated[i] - '0');
+    }
+    if (length == 0 || length > SIZE_MAX / 2) {
+        gdFree(inflated);
+        return GD_META_ERR_LIMIT;
+    }
+    result = (unsigned char *)gdMalloc(length);
+    if (result == NULL) {
+        gdFree(inflated);
+        return GD_META_ERR_NOMEM;
+    }
+
+    line = end + 1;
+    for (i = 0; line + i < inflated + inflated_size; i++) {
+        unsigned char c = line[i];
+        if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+            hex_count++;
+            if (hex_count > length * 2) {
+                gdFree(result);
+                gdFree(inflated);
+                return GD_META_ERR_PARSE;
+            }
+            if ((hex_count & 1) != 0) {
+                result[hex_count / 2] = (unsigned char)((c <= '9') ? c - '0' :
+                    (c >= 'a' ? c - 'a' + 10 : c - 'A' + 10)) << 4;
+            } else {
+                result[hex_count / 2 - 1] |= (unsigned char)((c <= '9') ? c - '0' :
+                    (c >= 'a' ? c - 'a' + 10 : c - 'A' + 10));
+            }
+        } else if (!isspace(c)) {
+            gdFree(result);
+            gdFree(inflated);
+            return GD_META_ERR_PARSE;
+        }
+    }
+    gdFree(inflated);
+    if (hex_count != length * 2) {
+        gdFree(result);
+        return GD_META_ERR_PARSE;
+    }
+    *decoded = result;
+    *decoded_size = length;
+    return GD_META_OK;
 }
 
 static int gdPngSetTextProfile(gdImageMetadata *metadata, const unsigned char *data, size_t size)
@@ -760,11 +888,20 @@ BGD_DECLARE(int) gdPngGetInfoPtr(int size, const void *data, gdPngInfo *info)
             if (metadata != NULL) {
                 int status;
                 if (chunk_size >= 6 && memcmp(chunk_data, "Exif\0\0", 6) == 0) {
-                    status = gdImageMetadataSetProfile(metadata, "exif", chunk_data + 6,
-                                                       (size_t)chunk_size - 6);
-                } else {
                     status = gdImageMetadataSetProfile(metadata, "exif", chunk_data,
                                                        chunk_size);
+                } else if (sizeof(size_t) < sizeof(uint64_t) && chunk_size > UINT32_MAX - 6) {
+                    return 1;
+                } else {
+                    unsigned char *exif = gdMalloc((size_t)chunk_size + 6);
+                    if (exif == NULL) {
+                        return 1;
+                    }
+                    memcpy(exif, "Exif\0\0", 6);
+                    memcpy(exif + 6, chunk_data, chunk_size);
+                    status = gdImageMetadataSetProfile(metadata, "exif", exif,
+                                                       (size_t)chunk_size + 6);
+                    gdFree(exif);
                 }
                 if (status != GD_META_OK) {
                     return 1;
@@ -774,8 +911,15 @@ BGD_DECLARE(int) gdPngGetInfoPtr(int size, const void *data, gdPngInfo *info)
                    (gdPngIsRawProfile(chunk_data, chunk_size, "exif") ||
                     gdPngIsRawProfile(chunk_data, chunk_size, "xmp"))) {
             const char *key = gdPngIsRawProfile(chunk_data, chunk_size, "exif") ? "exif" : "xmp";
-            if (metadata != NULL && gdImageMetadataSetProfile(metadata, key, chunk_data,
-                                                               chunk_size) != GD_META_OK) {
+            unsigned char *decoded = NULL;
+            size_t decoded_size = 0;
+            int status = gdPngDecodeRawProfile(chunk_data, chunk_size, key, &decoded, &decoded_size);
+            if (metadata != NULL && status == GD_META_OK &&
+                gdImageMetadataSetProfile(metadata, key, decoded, decoded_size) != GD_META_OK) {
+                status = GD_META_ERR_LIMIT;
+            }
+            gdFree(decoded);
+            if (status != GD_META_OK) {
                 return 1;
             }
         } else if (gdPngChunkIs(type, "iTXt")) {
@@ -865,6 +1009,18 @@ static unsigned int gdPngWriteOptionResolutionY(gdImagePtr im,
     return im->res_y;
 }
 
+static void gdPngFreeOwnedMetadata(unsigned char **owned_data, size_t count)
+{
+    size_t i;
+    if (owned_data == NULL) {
+        return;
+    }
+    for (i = 0; i < count; i++) {
+        gdFree(owned_data[i]);
+    }
+    gdFree(owned_data);
+}
+
 static int gdPngSetMetadata(png_structp png_ptr, png_infop info_ptr,
                             const gdImageMetadata *metadata)
 {
@@ -901,35 +1057,41 @@ static int gdPngSetMetadata(png_structp png_ptr, png_infop info_ptr,
 
         if (gdImageMetadataGetProfileAt(metadata, i, &key, &data, &size) != GD_META_OK ||
             key == NULL || (data == NULL && size != 0)) {
-            gdFree(owned_data);
+            gdPngFreeOwnedMetadata(owned_data, chunk_count);
             gdFree(chunks);
             return GD_META_ERR_INVALID;
         }
 
         if (strcmp(key, "exif") == 0) {
-            chunk_name = gdPngIsRawProfile(data, size, "exif") ? "zTXt" : "eXIf";
+            const unsigned char *tiff_data;
+            size_t tiff_size;
+
+            if (gdPngIsRawProfile(data, size, "exif")) {
+                unsigned char *decoded = NULL;
+                size_t decoded_size = 0;
+                if (gdPngDecodeRawProfile(data, size, "exif", &decoded, &decoded_size) != GD_META_OK) {
+                    gdPngFreeOwnedMetadata(owned_data, chunk_count);
+                    gdFree(chunks);
+                    return GD_META_ERR_PARSE;
+                }
+                owned_data[chunk_count] = decoded;
+                data = decoded;
+                size = decoded_size;
+            }
+            if (gdMetadataGetExifTiff(data, size, &tiff_data, &tiff_size) != GD_META_OK) {
+                gdPngFreeOwnedMetadata(owned_data, chunk_count);
+                gdFree(chunks);
+                return GD_META_ERR_PARSE;
+            }
+            data = tiff_data;
+            size = tiff_size;
+            chunk_name = "eXIf";
         } else if (strcmp(key, "xmp") == 0) {
             chunk_name = gdPngIsRawProfile(data, size, "xmp") ? "zTXt" : "iTXt";
         } else if (strncmp(key, "png:text:", 9) == 0) {
             chunk_name = "tEXt";
         } else {
             continue;
-        }
-
-        if (strcmp(key, "exif") == 0 && size >= 6 && memcmp(data, "Exif\0\0", 6) == 0) {
-            unsigned char *tiff_data = gdMalloc(size - 6 == 0 ? 1 : size - 6);
-            if (tiff_data == NULL) {
-                for (size_t j = 0; j < chunk_count; j++) {
-                    gdFree(owned_data[j]);
-                }
-                gdFree(owned_data);
-                gdFree(chunks);
-                return GD_META_ERR_NOMEM;
-            }
-            memcpy(tiff_data, data + 6, size - 6);
-            owned_data[chunk_count] = tiff_data;
-            data = tiff_data;
-            size -= 6;
         }
 
         memcpy(chunks[chunk_count].name, chunk_name, 4);
@@ -947,10 +1109,7 @@ static int gdPngSetMetadata(png_structp png_ptr, png_infop info_ptr,
             png_set_unknown_chunk_location(png_ptr, info_ptr, (int)i, PNG_HAVE_IHDR);
         }
     }
-    for (i = 0; i < chunk_count; i++) {
-        gdFree(owned_data[i]);
-    }
-    gdFree(owned_data);
+    gdPngFreeOwnedMetadata(owned_data, chunk_count);
     gdFree(chunks);
     return GD_META_OK;
 #else

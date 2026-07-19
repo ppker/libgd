@@ -6,6 +6,7 @@
 #include "gd.h"
 
 #include <limits.h>
+#include <string.h>
 
 #ifndef MAXPATHLEN
 #ifdef PATH_MAX
@@ -96,6 +97,30 @@ static inline unsigned char uchar_clamp(double clr, unsigned char max)
 } /* uchar_clamp*/
 
 /* Internal prototypes: */
+
+/* gd_metadata.c */
+static inline int gdMetadataGetExifTiff(const unsigned char *data, size_t size,
+                                        const unsigned char **tiff, size_t *tiff_size)
+{
+    static const unsigned char exif_signature[] = {'E', 'x', 'i', 'f', '\0', '\0'};
+
+    if (tiff == NULL || tiff_size == NULL || (data == NULL && size != 0)) {
+        return GD_META_ERR_INVALID;
+    }
+    if (size >= sizeof(exif_signature) &&
+        memcmp(data, exif_signature, sizeof(exif_signature)) == 0) {
+        data += sizeof(exif_signature);
+        size -= sizeof(exif_signature);
+    }
+    if (size < 8 || data == NULL ||
+        !((data[0] == 'I' && data[1] == 'I' && data[2] == 42 && data[3] == 0) ||
+          (data[0] == 'M' && data[1] == 'M' && data[2] == 0 && data[3] == 42))) {
+        return GD_META_ERR_PARSE;
+    }
+    *tiff = data;
+    *tiff_size = size;
+    return GD_META_OK;
+}
 
 /* gd_jpeg.c */
 

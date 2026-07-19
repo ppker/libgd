@@ -4239,9 +4239,6 @@ BGD_DECLARE(gdImagePtr) gdImageCreateFromTgaPtr(int size, void *data);
  * @{
  */
 
-/** @name BMP Reading */
-/** @{ */
-
 /**
  * @brief Create an image from a BMP stdio file.
  *
@@ -4309,7 +4306,186 @@ BGD_DECLARE(int) gdBmpGetInfo(FILE *infile, gdBmpInfo *info);
 BGD_DECLARE(int) gdBmpGetInfoCtx(gdIOCtxPtr infile, gdBmpInfo *info);
 BGD_DECLARE(int) gdBmpGetInfoPtr(int size, const void *data, gdBmpInfo *info);
 
-/** @} */
+/**
+ * @brief Write an image as BMP data to a newly allocated memory buffer.
+ *
+ * gdImageBmpPtr() uses automatic BMP bit-depth selection. A zero compression
+ * value writes uncompressed BMP data; a nonzero value requests legacy RLE
+ * output when the automatically selected BMP bit depth supports it. The image
+ * is borrowed for the duration of the call. On success, the returned buffer
+ * must be freed with gdFree().
+ *
+ * @param im The image to write.
+ * @param size Output location for the returned buffer size in bytes.
+ * @param compression Legacy compression selector; zero disables RLE, nonzero
+ *        requests RLE when supported by the selected output bit depth.
+ * @return A newly allocated BMP buffer, or NULL on error.
+ */
+BGD_DECLARE(void *) gdImageBmpPtr(gdImagePtr im, int *size, int compression);
+
+/**
+ * @brief Write an image as BMP data to a stdio file.
+ *
+ * gdImageBmp() uses automatic BMP bit-depth selection. A zero compression
+ * value writes uncompressed BMP data; a nonzero value requests legacy RLE
+ * output when the automatically selected BMP bit depth supports it. The image
+ * and outFile are borrowed for the duration of the call, and outFile is not
+ * closed by gd.
+ *
+ * @param im The image to write.
+ * @param outFile Pointer to the output FILE stream.
+ * @param compression Legacy compression selector; zero disables RLE, nonzero
+ *        requests RLE when supported by the selected output bit depth.
+ */
+BGD_DECLARE(void) gdImageBmp(gdImagePtr im, FILE *outFile, int compression);
+
+/**
+ * @brief Write an image as BMP data to a gdIOCtx.
+ *
+ * gdImageBmpCtx() uses automatic BMP bit-depth selection. A zero compression
+ * value writes uncompressed BMP data; a nonzero value requests legacy RLE
+ * output when the automatically selected BMP bit depth supports it. The image
+ * and out context are borrowed for the duration of the call, and out is not
+ * closed by gd.
+ *
+ * @param im The image to write.
+ * @param out Pointer to the gdIOCtx output context.
+ * @param compression Legacy compression selector; zero disables RLE, nonzero
+ *        requests RLE when supported by the selected output bit depth.
+ */
+BGD_DECLARE(void) gdImageBmpCtx(gdImagePtr im, gdIOCtxPtr out, int compression);
+
+/** @brief Write uncompressed BMP pixel data. */
+#define GD_BMP_COMPRESS_NONE 0 
+/** @brief Write BI_RLE8 compressed pixel data; valid only for 8 bpp output. */
+#define GD_BMP_COMPRESS_RLE8 1
+/** @brief Write BI_RLE4 compressed pixel data; valid only for 4 bpp output. */
+#define GD_BMP_COMPRESS_RLE4 2
+
+/** @brief Use default BMP writer behavior. */
+#define GD_BMP_FLAG_NONE 0
+/** @brief Force output to use a BITMAPV4HEADER. */
+#define GD_BMP_FLAG_FORCE_V4HDR (1 << 0)
+/** @brief Allow lossy truecolor-to-indexed conversion for 1, 4, or 8 bpp output. */
+#define GD_BMP_FLAG_QUANTIZE (1 << 1)
+/** @brief Use RGB555 bit masks instead of RGB565 for 16 bpp output. */
+#define GD_BMP_FLAG_RGB555 (1 << 2)
+
+/**
+ * @brief Structured BMP writer options.
+ */
+typedef struct {
+	int bits_per_pixel; /**< Requested output bit depth, or 0 for automatic selection. */
+	int compression; /**< One of GD_BMP_COMPRESS_* values. */
+	int flags; /**< Bitwise OR of GD_BMP_FLAG_* values. */
+	const gdImageMetadata *metadata; /**< Reserved and ignored for BMP. */
+} gdBmpWriteOptions;
+
+/**
+ * @brief Initialize a gdBmpWriteOptions structure to default values.
+ * 
+ * Updates or changes to the default values are not guaranteed to be compatible with future versions of gd. Callers should not assume that the default values will remain the same across versions.
+ * This is not considered part of the API contract and may change without notice. Callers should always explicitly set the fields they care about after calling this function.
+ */
+BGD_DECLARE(void) gdBmpWriteOptionsInit(gdBmpWriteOptions *options);
+
+/**
+ * @brief Write an image as BMP data to a stdio file with explicit options.
+ * 
+ * @param im The image to write.
+ * @param outFile Pointer to the output FILE stream.
+ * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
+ * 
+ * @return 0 on success, or a nonzero error code on failure.
+ * 
+ * @see gdBmpWriteOptionsInit gdBmpWriteOptions
+ */
+BGD_DECLARE(int) gdImageBmpWithOptions(gdImagePtr im, FILE *outFile, const gdBmpWriteOptions *options);
+
+/**
+ * @brief Write an image as BMP data to a gdIOCtx with explicit options.
+ * 
+ * @param im The image to write.
+ * @param out Pointer to the gdIOCtx output context.
+ * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
+ * 
+ * @return 0 on success, or a nonzero error code on failure.
+ * @see gdBmpWriteOptionsInit gdBmpWriteOptions
+ */
+BGD_DECLARE(int) gdImageBmpCtxWithOptions(gdImagePtr im, gdIOCtxPtr out, const gdBmpWriteOptions *options);
+
+/**
+ * @brief Write an image as BMP data to a newly allocated memory buffer with explicit options.
+ * 
+ * @param im The image to write.
+ * @param size Output location for the returned buffer size in bytes.
+ * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
+ * 
+ * @return A newly allocated BMP buffer, or NULL on error. The caller is responsible for freeing the buffer with gdFree().
+ * 
+ * @see gdBmpWriteOptionsInit gdBmpWriteOptions
+ */
+BGD_DECLARE(void *) gdImageBmpPtrWithOptions(gdImagePtr im, int *size, const gdBmpWriteOptions *options);
+
+/**
+ * @brief Write an image as BMP data to a newly allocated memory buffer.
+ *
+ * gdImageBmpPtrEx() writes BMP output with explicit control over output bit
+ * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
+ * or as one of 1, 4, 8, 16, 24, or 32. Explicit indexed output from a
+ * truecolor image is lossy and fails unless GD_BMP_FLAG_QUANTIZE is set. The
+ * image is borrowed for the duration of the call. On success, the returned
+ * buffer must be freed with gdFree().
+ *
+ * @param im The image to write.
+ * @param size Output location for the returned buffer size in bytes.
+ * @param bpp Requested output bit depth, or 0 for automatic selection.
+ * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
+ *        GD_BMP_COMPRESS_RLE4.
+ * @param flags Bitwise OR of GD_BMP_FLAG_* values.
+ * @return A newly allocated BMP buffer, or NULL on error.
+ */
+BGD_DECLARE(void *)
+gdImageBmpPtrEx(gdImagePtr im, int *size, int bpp, int compression, int flags);
+
+/**
+ * @brief Write an image as BMP data to a stdio file.
+ *
+ * gdImageBmpEx() writes BMP output with explicit control over output bit
+ * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
+ * or as one of 1, 4, 8, 16, 24, or 32. RLE4 is valid only for 4 bpp output and
+ * RLE8 is valid only for 8 bpp output. The image and outFile are borrowed for
+ * the duration of the call, and outFile is not closed by gd.
+ *
+ * @param im The image to write.
+ * @param outFile Pointer to the output FILE stream.
+ * @param bpp Requested output bit depth, or 0 for automatic selection.
+ * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
+ *        GD_BMP_COMPRESS_RLE4.
+ * @param flags Bitwise OR of GD_BMP_FLAG_* values.
+ */
+BGD_DECLARE(void)
+gdImageBmpEx(gdImagePtr im, FILE *outFile, int bpp, int compression, int flags);
+
+/**
+ * @brief Write an image as BMP data to a gdIOCtx.
+ *
+ * gdImageBmpCtxEx() writes BMP output with explicit control over output bit
+ * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
+ * or as one of 1, 4, 8, 16, 24, or 32. For 16 bpp output, RGB565 masks are
+ * used by default and GD_BMP_FLAG_RGB555 selects RGB555 masks. The image and
+ * out context are borrowed for the duration of the call, and out is not closed
+ * by gd.
+ *
+ * @param im The image to write.
+ * @param out Pointer to the gdIOCtx output context.
+ * @param bpp Requested output bit depth, or 0 for automatic selection.
+ * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
+ *        GD_BMP_COMPRESS_RLE4.
+ * @param flags Bitwise OR of GD_BMP_FLAG_* values.
+ */
+BGD_DECLARE(void)
+gdImageBmpCtxEx(gdImagePtr im, gdIOCtxPtr out, int bpp, int compression, int flags);
 
 /** @} */
 
@@ -4866,9 +5042,9 @@ gdImageXbmCtx(gdImagePtr image, char *file_name, int fg, gdIOCtxPtr out);
 
 /**
  * @defgroup gdCodecXpm XPM
- * @{
- */
-
+ * @brief Read and write X PixMap images.
+ * @ingroup gdCodecs
+ *
  /** 
  * @brief Read X PixMap images.
  * @ingroup gdCodecs
@@ -4904,212 +5080,6 @@ gdImageXbmCtx(gdImagePtr image, char *file_name, int fg, gdIOCtxPtr out);
  * @return A newly allocated palette image, or NULL on error.
  */
 BGD_DECLARE(gdImagePtr) gdImageCreateFromXpm(char *filename);
-
-/** @} */
-
-/** @} */
-
-/**
- * @addtogroup gdCodecBmp
- * @{
- */
-
-/** @name BMP Legacy Writing */
-/** @{ */
-
-/**
- * @brief Write an image as BMP data to a newly allocated memory buffer.
- *
- * gdImageBmpPtr() uses automatic BMP bit-depth selection. A zero compression
- * value writes uncompressed BMP data; a nonzero value requests legacy RLE
- * output when the automatically selected BMP bit depth supports it. The image
- * is borrowed for the duration of the call. On success, the returned buffer
- * must be freed with gdFree().
- *
- * @param im The image to write.
- * @param size Output location for the returned buffer size in bytes.
- * @param compression Legacy compression selector; zero disables RLE, nonzero
- *        requests RLE when supported by the selected output bit depth.
- * @return A newly allocated BMP buffer, or NULL on error.
- */
-BGD_DECLARE(void *) gdImageBmpPtr(gdImagePtr im, int *size, int compression);
-
-/**
- * @brief Write an image as BMP data to a stdio file.
- *
- * gdImageBmp() uses automatic BMP bit-depth selection. A zero compression
- * value writes uncompressed BMP data; a nonzero value requests legacy RLE
- * output when the automatically selected BMP bit depth supports it. The image
- * and outFile are borrowed for the duration of the call, and outFile is not
- * closed by gd.
- *
- * @param im The image to write.
- * @param outFile Pointer to the output FILE stream.
- * @param compression Legacy compression selector; zero disables RLE, nonzero
- *        requests RLE when supported by the selected output bit depth.
- */
-BGD_DECLARE(void) gdImageBmp(gdImagePtr im, FILE *outFile, int compression);
-
-/**
- * @brief Write an image as BMP data to a gdIOCtx.
- *
- * gdImageBmpCtx() uses automatic BMP bit-depth selection. A zero compression
- * value writes uncompressed BMP data; a nonzero value requests legacy RLE
- * output when the automatically selected BMP bit depth supports it. The image
- * and out context are borrowed for the duration of the call, and out is not
- * closed by gd.
- *
- * @param im The image to write.
- * @param out Pointer to the gdIOCtx output context.
- * @param compression Legacy compression selector; zero disables RLE, nonzero
- *        requests RLE when supported by the selected output bit depth.
- */
-BGD_DECLARE(void) gdImageBmpCtx(gdImagePtr im, gdIOCtxPtr out, int compression);
-
-/** @} */
-
-/** @name BMP Constants */
-/** @addtogroup gdCodecBmp
-  @{ */
-
-/** @brief Write uncompressed BMP pixel data. */
-#define GD_BMP_COMPRESS_NONE 0 
-/** @brief Write BI_RLE8 compressed pixel data; valid only for 8 bpp output. */
-#define GD_BMP_COMPRESS_RLE8 1
-/** @brief Write BI_RLE4 compressed pixel data; valid only for 4 bpp output. */
-#define GD_BMP_COMPRESS_RLE4 2
-
-/** @brief Use default BMP writer behavior. */
-#define GD_BMP_FLAG_NONE 0
-/** @brief Force output to use a BITMAPV4HEADER. */
-#define GD_BMP_FLAG_FORCE_V4HDR (1 << 0)
-/** @brief Allow lossy truecolor-to-indexed conversion for 1, 4, or 8 bpp output. */
-#define GD_BMP_FLAG_QUANTIZE (1 << 1)
-/** @brief Use RGB555 bit masks instead of RGB565 for 16 bpp output. */
-#define GD_BMP_FLAG_RGB555 (1 << 2)
-
-/**
- * @brief Structured BMP writer options.
- */
-typedef struct {
-	int bits_per_pixel; /**< Requested output bit depth, or 0 for automatic selection. */
-	int compression; /**< One of GD_BMP_COMPRESS_* values. */
-	int flags; /**< Bitwise OR of GD_BMP_FLAG_* values. */
-	const gdImageMetadata *metadata; /**< Reserved and ignored for BMP. */
-} gdBmpWriteOptions;
-
-/**
- * @brief Initialize a gdBmpWriteOptions structure to default values.
- * 
- * Updates or changes to the default values are not guaranteed to be compatible with future versions of gd. Callers should not assume that the default values will remain the same across versions.
- * This is not considered part of the API contract and may change without notice. Callers should always explicitly set the fields they care about after calling this function.
- */
-BGD_DECLARE(void) gdBmpWriteOptionsInit(gdBmpWriteOptions *options);
-
-/**
- * @brief Write an image as BMP data to a stdio file with explicit options.
- * 
- * @param im The image to write.
- * @param outFile Pointer to the output FILE stream.
- * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
- * 
- * @return 0 on success, or a nonzero error code on failure.
- * 
- * @see gdBmpWriteOptionsInit gdBmpWriteOptions
- */
-BGD_DECLARE(int) gdImageBmpWithOptions(gdImagePtr im, FILE *outFile, const gdBmpWriteOptions *options);
-
-/**
- * @brief Write an image as BMP data to a gdIOCtx with explicit options.
- * 
- * @param im The image to write.
- * @param out Pointer to the gdIOCtx output context.
- * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
- * 
- * @return 0 on success, or a nonzero error code on failure.
- * @see gdBmpWriteOptionsInit gdBmpWriteOptions
- */
-BGD_DECLARE(int) gdImageBmpCtxWithOptions(gdImagePtr im, gdIOCtxPtr out, const gdBmpWriteOptions *options);
-
-/**
- * @brief Write an image as BMP data to a newly allocated memory buffer with explicit options.
- * 
- * @param im The image to write.
- * @param size Output location for the returned buffer size in bytes.
- * @param options Pointer to a gdBmpWriteOptions structure specifying output options.
- * 
- * @return A newly allocated BMP buffer, or NULL on error. The caller is responsible for freeing the buffer with gdFree().
- * 
- * @see gdBmpWriteOptionsInit gdBmpWriteOptions
- */
-BGD_DECLARE(void *) gdImageBmpPtrWithOptions(gdImagePtr im, int *size, const gdBmpWriteOptions *options);
-
-/** @} */
-
-/** @name BMP Extended Writing
- * @addtogroup gdCodecBmp
- */
-/** @{ */
-
-/**
- * @brief Write an image as BMP data to a newly allocated memory buffer.
- *
- * gdImageBmpPtrEx() writes BMP output with explicit control over output bit
- * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
- * or as one of 1, 4, 8, 16, 24, or 32. Explicit indexed output from a
- * truecolor image is lossy and fails unless GD_BMP_FLAG_QUANTIZE is set. The
- * image is borrowed for the duration of the call. On success, the returned
- * buffer must be freed with gdFree().
- *
- * @param im The image to write.
- * @param size Output location for the returned buffer size in bytes.
- * @param bpp Requested output bit depth, or 0 for automatic selection.
- * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
- *        GD_BMP_COMPRESS_RLE4.
- * @param flags Bitwise OR of GD_BMP_FLAG_* values.
- * @return A newly allocated BMP buffer, or NULL on error.
- */
-BGD_DECLARE(void *)
-gdImageBmpPtrEx(gdImagePtr im, int *size, int bpp, int compression, int flags);
-
-/**
- * @brief Write an image as BMP data to a stdio file.
- *
- * gdImageBmpEx() writes BMP output with explicit control over output bit
- * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
- * or as one of 1, 4, 8, 16, 24, or 32. RLE4 is valid only for 4 bpp output and
- * RLE8 is valid only for 8 bpp output. The image and outFile are borrowed for
- * the duration of the call, and outFile is not closed by gd.
- *
- * @param im The image to write.
- * @param outFile Pointer to the output FILE stream.
- * @param bpp Requested output bit depth, or 0 for automatic selection.
- * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
- *        GD_BMP_COMPRESS_RLE4.
- * @param flags Bitwise OR of GD_BMP_FLAG_* values.
- */
-BGD_DECLARE(void)
-gdImageBmpEx(gdImagePtr im, FILE *outFile, int bpp, int compression, int flags);
-
-/**
- * @brief Write an image as BMP data to a gdIOCtx.
- *
- * gdImageBmpCtxEx() writes BMP output with explicit control over output bit
- * depth, compression, and writer flags. Pass bpp as 0 for automatic selection,
- * or as one of 1, 4, 8, 16, 24, or 32. For 16 bpp output, RGB565 masks are
- * used by default and GD_BMP_FLAG_RGB555 selects RGB555 masks. The image and
- * out context are borrowed for the duration of the call, and out is not closed
- * by gd.
- *
- * @param im The image to write.
- * @param out Pointer to the gdIOCtx output context.
- * @param bpp Requested output bit depth, or 0 for automatic selection.
- * @param compression One of GD_BMP_COMPRESS_NONE, GD_BMP_COMPRESS_RLE8, or
- *        GD_BMP_COMPRESS_RLE4.
- * @param flags Bitwise OR of GD_BMP_FLAG_* values.
- */
-BGD_DECLARE(void)
-gdImageBmpCtxEx(gdImagePtr im, gdIOCtxPtr out, int bpp, int compression, int flags);
 
 /** @} */
 

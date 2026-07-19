@@ -18,7 +18,7 @@ static void assert_profile_equals(gdImageMetadata *metadata, const char *key,
 }
 
 int main(void) {
-	static const unsigned char exif[] = {'M', 'M', 0, 42, 0, 0, 0, 8};
+	static const unsigned char exif[] = {'E', 'x', 'i', 'f', 0, 0, 'M', 'M', 0, 42, 0, 0, 0, 8};
 	static const unsigned char icc[] = {'g', 'd', '-', 'i', 'c',
 										'c', 0,	  0,   'x'};
 	static const unsigned char xmp[] =

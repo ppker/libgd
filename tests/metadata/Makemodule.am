@@ -1,5 +1,30 @@
 libgd_test_programs += \
-	metadata/metadata_core
+	metadata/metadata_core \
+	metadata/codec_metadata
+
+metadata_codec_metadata_SOURCES = metadata/codec_metadata.c
+metadata_codec_metadata_LDADD = libgdtest.a ../src/libgd.la
+if HAVE_LIBJPEG
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_JPEG
+endif
+if HAVE_LIBPNG
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_PNG
+endif
+if HAVE_LIBWEBP
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_WEBP
+endif
+if HAVE_LIBAVIF
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_AVIF
+endif
+if HAVE_LIBHEIF
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_HEIF
+endif
+if HAVE_LIBJXL
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_JXL
+endif
+if HAVE_LIBTIFF
+metadata_codec_metadata_CPPFLAGS += -DGD_TEST_HAVE_TIFF
+endif
 
 if HAVE_LIBJPEG
 libgd_test_programs += \
@@ -31,5 +56,6 @@ endif
 
 EXTRA_DIST += \
 	metadata/CMakeLists.txt \
+	metadata/codec_metadata.c \
 	metadata/jpeg_exiv2.cpp \
 	metadata/png_exiv2.cpp

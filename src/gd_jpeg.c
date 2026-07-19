@@ -447,10 +447,16 @@ static int gdJpegWriteMetadata(j_compress_ptr cinfo, const gdImageMetadata *meta
     }
 
     data = gdImageMetadataGetProfile(metadata, "exif", &size);
-    if (data != NULL && gdJpegWriteProfileMarker(cinfo, JPEG_APP0 + 1,
-                                                  (const unsigned char *)"Exif\0\0", 6,
-                                                  data, size)) {
-        return 1;
+    if (data != NULL) {
+        static const unsigned char exif_signature[] = {'E', 'x', 'i', 'f', '\0', '\0'};
+        const unsigned char *tiff;
+        size_t tiff_size;
+
+        if (gdMetadataGetExifTiff(data, size, &tiff, &tiff_size) != GD_META_OK ||
+            gdJpegWriteProfileMarker(cinfo, JPEG_APP0 + 1, exif_signature,
+                                     sizeof(exif_signature), tiff, tiff_size)) {
+            return 1;
+        }
     }
     data = gdImageMetadataGetProfile(metadata, "xmp", &size);
     if (data != NULL && gdJpegWriteProfileMarker(cinfo, JPEG_APP0 + 1,
@@ -840,8 +846,12 @@ static int gdJpegCollectMetadata(j_decompress_ptr cinfo, gdImageMetadata *metada
     for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
         if (marker->marker == JPEG_APP0 + 1 &&
             gdJpegMarkerStartsWith(marker, exif_signature, sizeof(exif_signature))) {
-            status = gdImageMetadataSetProfile(metadata, "exif", marker->data + sizeof(exif_signature),
-                                               marker->data_length - sizeof(exif_signature));
+            const unsigned char *tiff;
+            size_t tiff_size;
+            status = gdMetadataGetExifTiff(marker->data, marker->data_length, &tiff, &tiff_size);
+            if (status == GD_META_OK) {
+                status = gdImageMetadataSetProfile(metadata, "exif", tiff, tiff_size);
+            }
             if (status != GD_META_OK) {
                 return status;
             }

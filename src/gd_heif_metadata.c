@@ -3,6 +3,7 @@
 #endif
 
 #include "gd_heif_metadata.h"
+#include "gd_intern.h"
 #include "gdhelpers.h"
 
 #include <limits.h>
@@ -53,7 +54,7 @@ static int gd_heif_collect_metadata(const struct heif_image_handle *handle,
         const char *key = NULL;
         size_t size;
         unsigned char *data;
-        unsigned char *profile_data;
+        const unsigned char *profile_data;
         struct heif_error error;
 
         if (type != NULL && strcmp(type, "Exif") == 0) {
@@ -82,13 +83,28 @@ static int gd_heif_collect_metadata(const struct heif_image_handle *handle,
         }
         profile_data = data;
         if (key != NULL && strcmp(key, "exif") == 0) {
+            size_t offset;
+            const unsigned char *tiff_data;
             if (size < 4) {
                 gdFree(data);
                 gdFree(ids);
                 return GD_META_ERR_PARSE;
             }
-            profile_data += 4;
-            size -= 4;
+            offset = ((size_t)data[0] << 24) | ((size_t)data[1] << 16) |
+                ((size_t)data[2] << 8) | (size_t)data[3];
+            if (offset > size - 4) {
+                gdFree(data);
+                gdFree(ids);
+                return GD_META_ERR_PARSE;
+            }
+            profile_data = data + 4 + offset;
+            size -= 4 + offset;
+            if (gdMetadataGetExifTiff(profile_data, size, &tiff_data, &size) != GD_META_OK) {
+                gdFree(data);
+                gdFree(ids);
+                return GD_META_ERR_PARSE;
+            }
+            profile_data = tiff_data;
         }
         if (gd_heif_set_profile(metadata, key, profile_data, size) != GD_META_OK) {
             gdFree(data);
@@ -267,6 +283,9 @@ int gdHeifApplyMetadata(struct heif_context *context, struct heif_image *image,
         return GD_META_ERR_LIMIT;
     }
     if (data != NULL) {
+        if (gdMetadataGetExifTiff(data, size, &data, &size) != GD_META_OK) {
+            return GD_META_ERR_PARSE;
+        }
         error = heif_context_add_exif_metadata(context, handle, data, (int) size);
         if (error.code != heif_error_Ok) {
             return GD_META_ERR_INVALID;
